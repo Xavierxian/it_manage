@@ -1,0 +1,159 @@
+<!-- 通用模态框组件 -->
+<div class="modal fade" id="statusModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 15px; border: none; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);">
+            <div class="modal-body text-center" style="padding: 2rem;">
+                <!-- 成功状态 -->
+                <div id="successState" style="display: none;">
+                    <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #4ade80 0%, #16a34a 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+                        <i class="bi bi-check-lg" style="font-size: 2.5rem; color: white;"></i>
+                    </div>
+                    <h5 style="color: #1e293b; font-weight: 700; margin-bottom: 1rem;">操作成功</h5>
+                    <p id="successMessage" style="color: #64748b; font-size: 1rem; margin-bottom: 0;">操作已成功完成</p>
+                </div>
+                
+                <!-- 错误状态 -->
+                <div id="errorState" style="display: none;">
+                    <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #f87171 0%, #dc2626 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+                        <i class="bi bi-x-lg" style="font-size: 2.5rem; color: white;"></i>
+                    </div>
+                    <h5 style="color: #1e293b; font-weight: 700; margin-bottom: 1rem;">操作失败</h5>
+                    <p id="errorMessage" style="color: #64748b; font-size: 1rem; margin-bottom: 0;">操作未能完成，请重试</p>
+                </div>
+                
+                <!-- 加载状态 -->
+                <div id="loadingState" style="display: none;">
+                    <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+                        <div class="spinner-border text-white" role="status" style="width: 2.5rem; height: 2.5rem;">
+                            <span class="visually-hidden">加载中...</span>
+                        </div>
+                    </div>
+                    <h5 style="color: #1e293b; font-weight: 700; margin-bottom: 1rem;">处理中</h5>
+                    <p style="color: #64748b; font-size: 1rem; margin-bottom: 0;">正在处理您的请求，请稍候...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* 模态框动画 */
+.modal.fade .modal-dialog {
+    transform: translate(0, -50px);
+    transition: transform 0.3s ease-out;
+}
+
+.modal.show .modal-dialog {
+    transform: translate(0, 0);
+}
+
+/* 确保模态框居中 */
+.modal-dialog {
+    display: flex;
+    align-items: center;
+    min-height: calc(100% - 1rem);
+}
+
+@media (min-width: 576px) {
+    .modal-dialog {
+        min-height: calc(100% - 3.5rem);
+    }
+}
+</style>
+
+<script>
+// 显示成功模态框
+function showSuccessModal(message, autoClose = true) {
+    // 隐藏其他状态
+    document.getElementById('errorState').style.display = 'none';
+    document.getElementById('loadingState').style.display = 'none';
+    
+    // 显示成功状态
+    document.getElementById('successState').style.display = 'block';
+    
+    // 设置消息
+    if (message) {
+        document.getElementById('successMessage').textContent = message;
+    }
+    
+    // 显示模态框
+    const modalElement = document.getElementById('statusModal');
+    let modal = bootstrap.Modal.getInstance(modalElement);
+    if (!modal) {
+        modal = new bootstrap.Modal(modalElement, {
+            backdrop: true,
+            keyboard: true
+        });
+    }
+    modal.show();
+    
+    // 自动关闭
+    if (autoClose) {
+        setTimeout(() => {
+            modal.hide();
+        }, 2000);
+    }
+}
+
+// 显示错误模态框
+function showErrorModal(message, autoClose = false) {
+    // 隐藏其他状态
+    document.getElementById('successState').style.display = 'none';
+    document.getElementById('loadingState').style.display = 'none';
+    
+    // 显示错误状态
+    document.getElementById('errorState').style.display = 'block';
+    
+    // 设置消息
+    if (message) {
+        document.getElementById('errorMessage').textContent = message;
+    }
+    
+    // 显示模态框
+    const modalElement = document.getElementById('statusModal');
+    let modal = bootstrap.Modal.getInstance(modalElement);
+    if (!modal) {
+        modal = new bootstrap.Modal(modalElement, {
+            backdrop: true,
+            keyboard: true
+        });
+    }
+    modal.show();
+    
+    // 自动关闭
+    if (autoClose) {
+        setTimeout(() => {
+            modal.hide();
+        }, 3000);
+    }
+}
+
+// 显示加载模态框
+function showLoadingModal() {
+    // 隐藏其他状态
+    document.getElementById('successState').style.display = 'none';
+    document.getElementById('errorState').style.display = 'none';
+    
+    // 显示加载状态
+    document.getElementById('loadingState').style.display = 'block';
+    
+    // 显示模态框
+    const modalElement = document.getElementById('statusModal');
+    let modal = bootstrap.Modal.getInstance(modalElement);
+    if (!modal) {
+        modal = new bootstrap.Modal(modalElement, {
+            backdrop: true,
+            keyboard: true
+        });
+    }
+    modal.show();
+}
+
+// 隐藏模态框
+function hideModal() {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('statusModal'));
+    if (modal) {
+        modal.hide();
+    }
+}
+</script>

@@ -1,0 +1,1642 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BSECP授权查询及修改 - IT运维管理平台</title>
+    <link rel="icon" type="image/png" href="/static/images/title.png">
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            /* 主色调 */
+            --primary-color: #4361ee;
+            --primary-light: #93c5fd;
+            --primary-dark: #3a0ca3;
+            --success-color: #4ade80;
+            --warning-color: #facc15;
+            --danger-color: #f87171;
+            --info-color: #60a5fa;
+            
+            /* 中性色 */
+            --dark-color: #0f172a;
+            --light-color: #f8fafc;
+            --surface-1: #1e293b;
+            --surface-2: #334155;
+            --surface-3: #475569;
+            
+            /* 文字颜色 */
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            
+            /* 边框和背景 */
+            --border-color: #e2e8f0;
+            --background-color: #f1f5f9;
+            --card-bg: rgba(255, 255, 255, 0.9);
+            
+            /* 阴影 */
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --neumorphism-shadow: 8px 8px 16px #e2e8f0, -8px -8px 16px #ffffff;
+            --neumorphism-shadow-inset: inset 4px 4px 8px #e2e8f0, inset -4px -4px 8px #ffffff;
+            
+            /* 圆角 */
+            --border-radius: 16px;
+            --border-radius-sm: 8px;
+            --border-radius-lg: 24px;
+            
+            /* 过渡动画 */
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            
+            /* 渐变 */
+            --gradient-primary: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+            --gradient-success: linear-gradient(135deg, #4ade80 0%, #16a34a 100%);
+            --gradient-warning: linear-gradient(135deg, #facc15 0%, #ea580c 100%);
+            --gradient-danger: linear-gradient(135deg, #f87171 0%, #dc2626 100%);
+            --gradient-info: linear-gradient(135deg, #60a5fa 0%, #1d4ed8 100%);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f1f5f9;
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            /* 防止模态框显示时页面跳动 */
+            padding-right: 0 !important;
+            overflow-y: hidden;
+        }
+
+        .main-content {
+            margin-left: 280px;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* 页面标题 */
+        .page-title {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .page-title i {
+            color: var(--primary-color);
+            background: rgba(99, 102, 241, 0.1);
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 筛选区域 */
+        .filter-section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-title i {
+            color: var(--primary-color);
+        }
+
+        .search-input {
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            transition: var(--transition);
+            font-size: 0.875rem;
+            background: white;
+            color: var(--text-primary);
+            width: 100%;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-input select {
+            cursor: pointer;
+        }
+
+        .search-input-wrapper {
+            position: relative;
+        }
+
+        .search-suggestions {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            max-height: 300px;
+            overflow-y: auto;
+            min-width: 300px;
+        }
+
+        .suggestions-list {
+            padding: 0.5rem 0;
+        }
+
+        .suggestion-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .suggestion-item:hover {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(129, 140, 248, 0.05) 100%);
+        }
+
+        .suggestion-item .customer-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .suggestion-item .customer-info {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .suggestion-item .customer-info span {
+            margin-right: 1rem;
+        }
+
+        .suggestion-item .customer-info span:last-child {
+            margin-right: 0;
+        }
+
+        .suggestions-loading {
+            padding: 1rem;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        .suggestions-loading i {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .suggestions-empty {
+            padding: 1rem;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        .query-tips {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(129, 140, 248, 0.05) 100%);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .query-tips i {
+            color: var(--warning-color);
+            font-size: 1rem;
+        }
+
+        .query-tips span:first-of-type {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            border: 1px solid var(--border-color);
+            background: white;
+            color: var(--text-secondary);
+            border-radius: 8px;
+            padding: 0.625rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: var(--transition);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* 从下往上弹出动画 */
+        @keyframes slideUpFromBottom {
+            0% {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+                filter: blur(2px);
+            }
+            50% {
+                opacity: 0.7;
+                transform: translateY(-5px) scale(1.02);
+                filter: blur(0.5px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+                filter: blur(0);
+            }
+        }
+
+        .animate-stagger > * {
+            opacity: 0;
+            animation: slideUpFromBottom 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+        .animate-stagger > *:nth-child(1) { animation-delay: 0.1s; }
+        .animate-stagger > *:nth-child(2) { animation-delay: 0.2s; }
+        .animate-stagger > *:nth-child(3) { animation-delay: 0.3s; }
+        .animate-stagger > *:nth-child(4) { animation-delay: 0.4s; }
+        .animate-stagger > *:nth-child(5) { animation-delay: 0.5s; }
+        .animate-stagger > *:nth-child(6) { animation-delay: 0.6s; }
+
+        /* 表格样式 */
+        .table-container {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            margin-bottom: 1.5rem;
+        }
+
+        .table-container.animate {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .table {
+            margin-bottom: 0;
+            font-size: 0.85rem;
+            width: 100%;
+        }
+
+        .table th {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            color: var(--text-primary);
+            font-weight: 600;
+            border: none;
+            padding: 0.875rem 0.75rem;
+            white-space: nowrap;
+            font-size: 0.8rem;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .table td {
+            padding: 0.75rem;
+            vertical-align: middle;
+            border-color: var(--border-color);
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+        }
+
+        .table tbody tr {
+            transition: var(--transition);
+        }
+
+        .table tbody tr:hover {
+            background-color: rgba(99, 102, 241, 0.05);
+            transform: translateY(-1px);
+            box-shadow: var(--card-shadow-hover);
+        }
+
+        /* 表格容器滚动区域 */
+        .table-responsive {
+            max-height: 400px;
+            overflow-y: auto;
+            overflow-x: auto;
+        }
+
+        /* 表格统计信息 */
+        .table-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding: 0.75rem 1rem;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(129, 140, 248, 0.05) 100%);
+            border-radius: 8px;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .table-stats-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .table-stats-info i {
+            color: var(--primary-color);
+        }
+
+        .table-stats-count {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        /* 状态标签 */
+        .status-badge {
+            padding: 0.375rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+        }
+
+        .status-pending {
+            background: linear-gradient(135deg, #facc15 0%, #ea580c 100%);
+            color: white;
+        }
+
+        .status-processing {
+            background: linear-gradient(135deg, #60a5fa 0%, #1d4ed8 100%);
+            color: white;
+        }
+
+        .status-completed {
+            background: linear-gradient(135deg, #4ade80 0%, #16a34a 100%);
+            color: white;
+        }
+
+        .status-failed {
+            background: linear-gradient(135deg, #f87171 0%, #dc2626 100%);
+            color: white;
+        }
+
+        /* 加载动画 */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(99, 102, 241, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        
+        /* 查询提示样式 */
+        .query-prompt {
+            position: relative;
+            margin: 4rem auto;
+            text-align: center;
+            z-index: 1000;
+            max-width: 600px;
+        }
+        
+        .query-prompt i {
+            font-size: 4rem;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            animation: bounce 1s infinite alternate;
+        }
+        
+        .query-prompt p {
+            font-size: 1.25rem;
+            color: var(--text-primary);
+            margin: 0;
+            font-weight: 500;
+        }
+        
+        @keyframes pulse {
+            0% {
+                box-shadow: var(--card-shadow);
+            }
+            50% {
+                box-shadow: 0 8px 20px rgba(67, 97, 238, 0.2);
+            }
+            100% {
+                box-shadow: var(--card-shadow);
+            }
+        }
+        
+        @keyframes bounce {
+            from {
+                transform: translateY(0);
+            }
+            to {
+                transform: translateY(-10px);
+            }
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .page-title {
+                font-size: 1.5rem;
+                margin-bottom: 1rem;
+            }
+            
+            .filter-section {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+            
+            .section-title {
+                font-size: 1.1rem;
+                margin-bottom: 1rem;
+            }
+            
+            .search-input {
+                padding: 0.75rem 1rem;
+                font-size: 0.875rem;
+            }
+            
+            .search-suggestions {
+                max-height: 250px;
+            }
+            
+            .suggestion-item {
+                padding: 0.6rem 0.75rem;
+            }
+            
+            .suggestion-item .customer-name {
+                font-size: 0.9rem;
+                margin-bottom: 0.2rem;
+            }
+            
+            .suggestion-item .customer-info {
+                font-size: 0.75rem;
+            }
+            
+            .suggestion-item .customer-info span {
+                margin-right: 0.5rem;
+            }
+            
+            .filter-buttons {
+                gap: 0.5rem;
+            }
+
+            .table-container {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+            
+            .table-stats {
+                flex-direction: column;
+                gap: 0.5rem;
+                align-items: flex-start;
+            }
+            
+            .table-title {
+                font-size: 1rem;
+                margin-bottom: 0.75rem;
+            }
+            
+            .table-responsive {
+                max-height: 300px;
+            }
+            
+            .query-tips {
+                font-size: 0.8rem;
+                padding: 0.5rem 0.75rem;
+            }
+            
+            .query-prompt {
+                padding: 2rem 1rem;
+            }
+            
+            .query-prompt i {
+                font-size: 3rem;
+            }
+            
+            .query-prompt p {
+                font-size: 1rem;
+            }
+            
+            .query-prompt small {
+                font-size: 0.8rem;
+            }
+            
+            .search-btn {
+                padding: 0.75rem 1rem;
+                font-size: 0.875rem;
+            }
+            
+            .table th,
+            .table td {
+                padding: 0.5rem;
+                font-size: 0.75rem;
+            }
+            
+            .empty-state {
+                padding: 2rem 1rem;
+            }
+            
+            .empty-state i {
+                font-size: 2.5rem;
+            }
+            
+            .empty-state p {
+                font-size: 0.875rem;
+            }
+        }
+
+        /* 滚动条样式 */
+        .table-responsive::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .table-responsive::-webkit-scrollbar-track {
+            background: var(--background-color);
+        }
+
+        .table-responsive::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+
+        .table-responsive::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* 搜索按钮样式 */
+        .search-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            transition: var(--transition);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .search-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+        }
+
+        .search-btn:active {
+            transform: translateY(0);
+        }
+
+        /* 表格标题 */
+        .table-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .table-title i {
+            color: var(--primary-color);
+        }
+        
+        /* 复制提示样式 */
+        .copy-tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 1000;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .copy-tooltip.show {
+            opacity: 1;
+        }
+        
+        /* 可复制单元格样式 */
+        .copyable-cell {
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .copyable-cell:hover {
+            background-color: rgba(67, 97, 238, 0.1) !important;
+        }
+    </style>
+</head>
+<body>
+    {% include 'sidebar.html' %}
+    
+    <div class="main-content">
+        <div class="container-fluid p-4" style="overflow-y: auto; height: 100vh;">
+            <!-- 筛选区域 -->
+            <div class="filter-section">
+                <div class="section-title">
+                    <i class="bi bi-funnel"></i>
+                    查询条件
+                </div>
+                <div class="row g-3">
+                        <div class="col-md-10">
+                            <div class="search-input-wrapper">
+                                <input type="text" class="search-input" id="customerNameInput" placeholder="请输入客户名称，例如：上海童涵春堂药业股份有限公司" autocomplete="off">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <button class="search-btn w-100" id="searchButton">
+                                <i class="bi bi-search"></i>
+                                查询
+                            </button>
+                        </div>
+                    </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="query-tips">
+                            <i class="bi bi-lightbulb"></i>
+                            <span>查询提示：</span>
+                            <span>支持模糊查询，输入客户名称的部分关键词即可</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 统一提示信息 -->
+            <div class="query-prompt" id="queryPrompt">
+                <i class="bi bi-search"></i>
+                <p>请输入客户名称进行查询</p>
+                <small class="text-muted">支持模糊查询，输入客户名称的部分关键词即可</small>
+            </div>
+
+            <!-- 客户信息表格 -->
+            <div class="table-container" id="customerTableContainer" style="display: none;">
+                <h4 class="table-title">
+                    <i class="bi bi-person"></i>
+                    客户信息 (cljc_customer)
+                </h4>
+                <div class="table-stats">
+                    <div class="table-stats-info">
+                        <i class="bi bi-database"></i>
+                        <span>数据来源：cljc_customer</span>
+                    </div>
+                    <div class="table-stats-info">
+                        <span>共找到</span>
+                        <span class="table-stats-count" id="customerCount">0</span>
+                        <span>条记录</span>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover" id="customerTable">
+                        <thead>
+                            <tr>
+                                <th>客户ID</th>
+                                <th>源代码</th>
+                                <th>组织代码</th>
+                                <th>客户代码</th>
+                                <th>客户名称</th>
+                                <th>状态</th>
+                                <th>创建日期</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customerTableBody">
+                            <tr>
+                                <td colspan="7" class="text-center">
+                                    <div class="empty-state">
+                                        <i class="bi bi-inbox"></i>
+                                        <p>暂无数据，请输入查询条件进行搜索</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+<!-- 授权信息表格 -->
+            <div class="table-container" id="licenseTableContainer" style="display: none;">
+                <h4 class="table-title">
+                    <i class="bi bi-key"></i>
+                    授权信息 (cljc_license)
+                </h4>
+                <div class="table-stats">
+                    <div class="table-stats-info">
+                        <i class="bi bi-database"></i>
+                        <span>数据来源：cljc_license</span>
+                    </div>
+                    <div class="table-stats-info">
+                        <span>共找到</span>
+                        <span class="table-stats-count" id="licenseCount">0</span>
+                        <span>条记录</span>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover" id="licenseTable">
+                        <thead>
+                            <tr>
+                                <th>授权ID</th>
+                                <th>许可证ID</th>
+                                <th>账户</th>
+                                <th>许可证信息</th>
+                                <th>密码</th>
+                                <th>客户ID</th>
+                                <th>客户名称</th>
+                                <th>序列号</th>
+                                <th>订单ID</th>
+                                <th>产品类型ID</th>
+                                <th>类型</th>
+                                <th>类型信息</th>
+                                <th>激活</th>
+                                <th>开始日期</th>
+                                <th>结束日期</th>
+                                <th>停用日期</th>
+                                <th>激活码</th>
+                            </tr>
+                        </thead>
+                        <tbody id="licenseTableBody">
+                            <tr>
+                                <td colspan="32" class="text-center">
+                                    <div class="empty-state">
+                                        <i class="bi bi-inbox"></i>
+                                        <p>暂无数据，请输入查询条件进行搜索</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+<!-- 授权详情表格 -->
+            <div class="table-container" id="licenseDetailTableContainer" style="display: none;">
+                <h4 class="table-title">
+                    <i class="bi bi-list-ul"></i>
+                    授权详情 (cljc_licensedetail)
+                </h4>
+                <div class="table-stats">
+                    <div class="table-stats-info">
+                        <i class="bi bi-database"></i>
+                        <span>数据来源：cljc_licensedetail</span>
+                    </div>
+                    <div class="table-stats-info">
+                        <span>共找到</span>
+                        <span class="table-stats-count" id="licenseDetailCount">0</span>
+                        <span>条记录</span>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover" id="licenseDetailTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>主ID</th>
+                                <th>客户名称</th>
+                                <th>客户ID</th>
+                                <th>产品ID</th>
+                                <th>产品名称</th>
+                                <th>模块ID</th>
+                                <th>模块名称</th>
+                                <th>数量</th>
+                                <th>类型</th>
+                                <th>类型信息</th>
+                                <th>开始日期</th>
+                                <th>结束日期</th>
+                                <th>创建日期</th>
+                                <th>修改日期</th>
+                                <th>状态</th>
+                            </tr>
+                        </thead>
+                        <tbody id="licenseDetailTableBody">
+                            <tr>
+                                <td colspan="16" class="text-center">
+                                    <div class="empty-state">
+                                        <i class="bi bi-inbox"></i>
+                                        <p>暂无数据，请输入查询条件进行搜索</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 通用模态框组件 -->
+    <div class="modal fade" id="statusModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 15px; border: none; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);">
+                <div class="modal-body text-center" style="padding: 2rem;">
+                    <!-- 成功状态 -->
+                    <div id="successState" style="display: none;">
+                        <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #4ade80 0%, #16a34a 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+                            <i class="bi bi-check-lg" style="font-size: 2.5rem; color: white;"></i>
+                        </div>
+                        <h5 style="color: #1e293b; font-weight: 700; margin-bottom: 1rem;">操作成功</h5>
+                        <p id="successMessage" style="color: #64748b; font-size: 1rem; margin-bottom: 0;">操作已成功完成</p>
+                    </div>
+                    
+                    <!-- 错误状态 -->
+                    <div id="errorState" style="display: none;">
+                        <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #f87171 0%, #dc2626 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+                            <i class="bi bi-x-lg" style="font-size: 2.5rem; color: white;"></i>
+                        </div>
+                        <h5 style="color: #1e293b; font-weight: 700; margin-bottom: 1rem;">操作失败</h5>
+                        <p id="errorMessage" style="color: #64748b; font-size: 1rem; margin-bottom: 0;">操作未能完成，请重试</p>
+                    </div>
+                    
+                    <!-- 加载状态 -->
+                    <div id="loadingState" style="display: none;">
+                        <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+                            <div class="spinner-border text-white" role="status" style="width: 2.5rem; height: 2.5rem;">
+                                <span class="visually-hidden">加载中...</span>
+                            </div>
+                        </div>
+                        <h5 style="color: #1e293b; font-weight: 700; margin-bottom: 1rem;">处理中</h5>
+                        <p style="color: #64748b; font-size: 1rem; margin-bottom: 0;">正在处理您的请求，请稍候...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 显示错误模态框
+        function showErrorModal(message, autoClose = false) {
+            // 隐藏其他状态
+            document.getElementById('successState').style.display = 'none';
+            document.getElementById('loadingState').style.display = 'none';
+            
+            // 显示错误状态
+            document.getElementById('errorState').style.display = 'block';
+            
+            // 设置消息
+            if (message) {
+                document.getElementById('errorMessage').textContent = message;
+            }
+            
+            // 显示模态框
+            const modalElement = document.getElementById('statusModal');
+            let modal = bootstrap.Modal.getInstance(modalElement);
+            if (!modal) {
+                modal = new bootstrap.Modal(modalElement, {
+                    backdrop: true,
+                    keyboard: true
+                });
+            }
+            modal.show();
+            
+            // 自动关闭
+            if (autoClose) {
+                setTimeout(() => {
+                    modal.hide();
+                }, 3000);
+            }
+        }
+        // 从下往上弹出动画
+        function animateElementsFromBottom() {
+            // 为筛选区域添加动画
+            const filterSection = document.querySelector('.filter-section');
+            if (filterSection) {
+                filterSection.style.opacity = '0';
+                filterSection.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    filterSection.style.transition = 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    filterSection.style.opacity = '1';
+                    filterSection.style.transform = 'translateY(0)';
+                }, 200);
+            }
+
+            // 为表格容器添加动画
+            const tableContainers = document.querySelectorAll('.table-container');
+            tableContainers.forEach((container, index) => {
+                setTimeout(() => {
+                    container.classList.add('animate');
+                }, 400 + (index * 200));
+            });
+        }
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            animateElementsFromBottom();
+            
+            // 绑定搜索事件
+            document.getElementById('searchButton').addEventListener('click', searchAuthData);
+            document.getElementById('customerNameInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    hideSuggestions();
+                    searchAuthData();
+                }
+            });
+            
+            // 绑定输入事件，实现搜索建议
+            document.getElementById('customerNameInput').addEventListener('input', function(e) {
+                const keyword = e.target.value.trim();
+                
+                // 清除之前的定时器
+                if (searchTimeout) {
+                    clearTimeout(searchTimeout);
+                }
+                
+                // 如果输入为空，隐藏建议
+                if (keyword.length === 0) {
+                    hideSuggestions();
+                    return;
+                }
+                
+                // 如果输入长度小于2，隐藏加载状态并返回
+                if (keyword.length < 2) {
+                    hideSuggestions();
+                    return;
+                }
+                
+                // 显示加载状态
+                showSuggestionsLoading();
+                
+                // 设置延迟，避免频繁请求
+                searchTimeout = setTimeout(() => {
+                    fetchSuggestions(keyword);
+                }, 300);
+            });
+            
+            // 点击页面其他地方时隐藏搜索建议
+            document.addEventListener('click', function(e) {
+                const searchWrapper = document.querySelector('.search-input-wrapper');
+                if (searchWrapper && !searchWrapper.contains(e.target)) {
+                    hideSuggestions();
+                }
+            });
+            
+            // 初始化复制功能
+            initCopyFunctionality();
+            
+            // 页面加载完成后确保侧边栏正确展开和定位
+            ensureSidebarExpanded();
+        });
+
+        // 确保侧边栏正确展开和定位
+        function ensureSidebarExpanded() {
+            try {
+                // 确保BSECP子菜单展开
+                const bsecpSubmenu = document.getElementById('bsecpSubmenu');
+                const bsecpToggle = document.querySelector('[href="#bsecpSubmenu"]');
+                if (bsecpSubmenu && bsecpToggle) {
+                    bsecpSubmenu.classList.add('show');
+                    bsecpToggle.classList.remove('collapsed');
+                    bsecpToggle.setAttribute('aria-expanded', 'true');
+                    
+                    // 确保对应的子项被激活
+                    const authQueryModifyLink = document.querySelector('[data-page="bsecp_auth_query_modify"]');
+                    if (authQueryModifyLink) {
+                        // 移除其他激活状态
+                        document.querySelectorAll('.nav-link').forEach(link => {
+                            link.classList.remove('active');
+                        });
+                        authQueryModifyLink.classList.add('active');
+                    }
+                }
+            } catch (error) {
+                console.error('侧边栏展开错误:', error);
+            }
+        }
+
+        // 搜索建议相关变量
+        let searchTimeout = null;
+        let isSuggestionsVisible = false;
+
+        // 显示搜索建议
+        function showSuggestions(suggestions) {
+            const searchInput = document.getElementById('customerNameInput');
+            const suggestionsContainer = document.getElementById('searchSuggestions');
+            const suggestionsList = document.getElementById('suggestionsList');
+            const mainContent = document.querySelector('.main-content');
+            
+            // 动态定位搜索建议
+            const inputRect = searchInput.getBoundingClientRect();
+            const mainContentRect = mainContent.getBoundingClientRect();
+            
+            // 确保搜索建议只显示在主内容区域，不与左侧边栏重叠
+            // 计算搜索建议的位置，确保它在主内容区域内
+            const left = Math.max(inputRect.left, mainContentRect.left);
+            const width = Math.min(inputRect.width, mainContentRect.width - (left - mainContentRect.left));
+            
+            suggestionsContainer.style.left = `${left}px`;
+            suggestionsContainer.style.top = `${inputRect.bottom + window.scrollY}px`;
+            suggestionsContainer.style.width = `${width}px`;
+            suggestionsContainer.style.zIndex = '1000'; // 降低z-index，避免覆盖侧边栏
+            suggestionsContainer.style.position = 'fixed'; // 使用fixed定位，避免与其他元素重叠
+            suggestionsContainer.style.maxWidth = 'calc(100vw - 20px)'; // 限制最大宽度，避免溢出
+            
+            if (!suggestions || !Array.isArray(suggestions) || suggestions.length === 0) {
+                suggestionsList.innerHTML = `
+                    <div class="suggestions-empty">
+                        <i class="bi bi-inbox"></i>
+                        <p>未找到匹配的客户</p>
+                    </div>
+                `;
+            } else {
+                suggestionsList.innerHTML = suggestions.map(customer => {
+                    if (!customer) return '';
+                    return `
+                        <div class="suggestion-item" data-customer-name="${customer.CU_NAME || ''}">
+                            <div class="customer-name">${customer.CU_NAME || ''}</div>
+                            <div class="customer-info">
+                                <span><i class="bi bi-hash"></i> ${customer.CU_CODE || '-'}</span>
+                                <span><i class="bi bi-building"></i> ${customer.CU_ORGCODE || '-'}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                // 绑定点击事件
+                suggestionsList.querySelectorAll('.suggestion-item').forEach(item => {
+                    item.addEventListener('click', function() {
+                        const customerName = this.getAttribute('data-customer-name');
+                        document.getElementById('customerNameInput').value = customerName;
+                        hideSuggestions();
+                        searchAuthData();
+                    });
+                });
+            }
+            
+            suggestionsContainer.style.display = 'block';
+            isSuggestionsVisible = true;
+        }
+
+        // 隐藏搜索建议
+        function hideSuggestions() {
+            const suggestionsContainer = document.getElementById('searchSuggestions');
+            suggestionsContainer.style.display = 'none';
+            isSuggestionsVisible = false;
+        }
+
+        // 显示加载状态
+        function showSuggestionsLoading() {
+            const searchInput = document.getElementById('customerNameInput');
+            const suggestionsList = document.getElementById('suggestionsList');
+            const suggestionsContainer = document.getElementById('searchSuggestions');
+            const mainContent = document.querySelector('.main-content');
+            
+            // 动态定位搜索建议
+            const inputRect = searchInput.getBoundingClientRect();
+            const mainContentRect = mainContent.getBoundingClientRect();
+            
+            // 确保搜索建议只显示在主内容区域，不与左侧边栏重叠
+            // 计算搜索建议的位置，确保它在主内容区域内
+            const left = Math.max(inputRect.left, mainContentRect.left);
+            const width = Math.min(inputRect.width, mainContentRect.width - (left - mainContentRect.left));
+            
+            suggestionsContainer.style.left = `${left}px`;
+            suggestionsContainer.style.top = `${inputRect.bottom + window.scrollY}px`;
+            suggestionsContainer.style.width = `${width}px`;
+            suggestionsContainer.style.zIndex = '1000'; // 降低z-index，避免覆盖侧边栏
+            suggestionsContainer.style.position = 'fixed'; // 使用fixed定位，避免与其他元素重叠
+            suggestionsContainer.style.maxWidth = 'calc(100vw - 20px)'; // 限制最大宽度，避免溢出
+            
+            suggestionsList.innerHTML = `
+                <div class="suggestions-loading">
+                    <i class="bi bi-arrow-repeat"></i>
+                    <p>搜索中...</p>
+                </div>
+            `;
+            suggestionsContainer.style.display = 'block';
+            isSuggestionsVisible = true;
+        }
+
+        // 获取搜索建议
+        async function fetchSuggestions(keyword) {
+            try {
+                console.log('开始获取搜索建议:', keyword);
+                const response = await fetch(`/api/bsecp/auth-query/customer-suggestions?keyword=${encodeURIComponent(keyword)}&limit=10`);
+                console.log('搜索建议请求响应:', response);
+                const data = await response.json();
+                console.log('搜索建议数据:', data);
+                
+                if (data.success) {
+                    showSuggestions(data.suggestions);
+                } else {
+                    showSuggestions([]);
+                }
+            } catch (error) {
+                console.error('获取搜索建议失败:', error);
+                showSuggestions([]);
+            }
+        }
+
+        // 搜索授权数据
+        async function searchAuthData() {
+            const customerName = document.getElementById('customerNameInput').value.trim();
+            
+            if (!customerName) {
+                showErrorModal('请输入客户名称后点击查询', true);
+                return;
+            }
+            
+            // 隐藏搜索建议
+            hideSuggestions();
+            
+            // 隐藏统一提示
+            const queryPrompt = document.getElementById('queryPrompt');
+            if (queryPrompt) {
+                queryPrompt.style.display = 'none';
+            }
+            
+            // 显示加载状态
+            showLoadingState();
+            
+            try {
+                // 查询客户信息
+                const customerResponse = await fetch(`/api/bsecp/auth-query/customer?name=${encodeURIComponent(customerName)}`);
+                const customerData = await customerResponse.json();
+                
+                // 查询授权信息
+                const licenseResponse = await fetch(`/api/bsecp/auth-query/license?name=${encodeURIComponent(customerName)}`);
+                const licenseData = await licenseResponse.json();
+                
+                // 查询授权详情信息
+                const licenseDetailResponse = await fetch(`/api/bsecp/auth-query/license-detail?name=${encodeURIComponent(customerName)}`);
+                const licenseDetailData = await licenseDetailResponse.json();
+                
+                // 渲染表格
+                renderCustomerTable(customerData.customers || []);
+                renderLicenseTable(licenseData.licenses || []);
+                renderLicenseDetailTable(licenseDetailData.licenseDetails || []);
+                
+            } catch (error) {
+                console.error('查询数据失败:', error);
+                showError('查询数据失败，请稍后重试');
+            }
+        }
+
+// 显示加载状态
+        function showLoadingState() {
+            // 显示客户信息加载状态
+            document.getElementById('customerTableBody').innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center">
+                        <div class="loading-spinner"></div>
+                        正在加载客户信息...
+                    </td>
+                </tr>
+            `;
+            document.getElementById('customerTableContainer').style.display = 'block';
+            
+            // 显示授权信息加载状态
+            document.getElementById('licenseTableBody').innerHTML = `
+                <tr>
+                    <td colspan="17" class="text-center">
+                        <div class="loading-spinner"></div>
+                        正在加载授权信息...
+                    </td>
+                </tr>
+            `;
+            document.getElementById('licenseTableContainer').style.display = 'block';
+            
+            // 显示授权详情加载状态
+            document.getElementById('licenseDetailTableBody').innerHTML = `
+                <tr>
+                    <td colspan="16" class="text-center">
+                        <div class="loading-spinner"></div>
+                        正在加载授权详情...
+                    </td>
+                </tr>
+            `;
+            document.getElementById('licenseDetailTableContainer').style.display = 'block';
+        }
+
+// 渲染客户信息表格
+        function renderCustomerTable(customers) {
+            const tbody = document.getElementById('customerTableBody');
+            const container = document.getElementById('customerTableContainer');
+            const countElement = document.getElementById('customerCount');
+            
+            // 更新记录数量
+            countElement.textContent = customers.length;
+            
+            if (customers.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center">
+                            <div class="empty-state">
+                                <i class="bi bi-inbox"></i>
+                                <p>暂无客户信息</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                container.style.display = 'none';
+                return;
+            }
+            
+            tbody.innerHTML = customers.map(customer => `
+                <tr>
+                    <td>${customer.CU_ID || '-'}</td>
+                    <td>${customer.CU_SRCCODE || '-'}</td>
+                    <td>${customer.CU_ORGCODE || '-'}</td>
+                    <td>${customer.CU_CODE || '-'}</td>
+                    <td>${customer.CU_NAME || '-'}</td>
+                    <td>${customer.CU_STATE || '-'}</td>
+                    <td>${formatDate(customer.CU_CREATE_DATE) || '-'}</td>
+                </tr>
+            `).join('');
+            
+            container.style.display = 'block';
+            container.classList.add('animate');
+        }
+
+// 渲染授权信息表格
+        function renderLicenseTable(licenses) {
+            const tbody = document.getElementById('licenseTableBody');
+            const container = document.getElementById('licenseTableContainer');
+            const countElement = document.getElementById('licenseCount');
+            
+            // 更新记录数量
+            countElement.textContent = licenses.length;
+            
+            if (licenses.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="17" class="text-center">
+                            <div class="empty-state">
+                                <i class="bi bi-inbox"></i>
+                                <p>暂无授权信息</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                container.style.display = 'none';
+                return;
+            }
+            
+            tbody.innerHTML = licenses.map(license => `
+                <tr>
+                    <td>${license.LIC_ID || '-'}</td>
+                    <td>${license.LIC_LICENSEID || '-'}</td>
+                    <td>${license.LIC_ACCOUNT || '-'}</td>
+                    <td>${license.LIC_LICENSEINFO || '-'}</td>
+                    <td>${license.LIC_PASSWORD || '-'}</td>
+                    <td>${license.LIC_CUID || '-'}</td>
+                    <td>${license.LIC_CUNAME || '-'}</td>
+                    <td>${license.LIC_SERIAL || '-'}</td>
+                    <td>${license.LIC_ORDERID || '-'}</td>
+                    <td>${license.LIC_PTID || '-'}</td>
+                    <td>${license.LIC_TYPE || '-'}</td>
+                    <td>${license.LIC_TYPEINFO || '-'}</td>
+                    <td>${license.LIC_ACTIVE || '-'}</td>
+                    <td>${formatDate(license.LIC_START) || '-'}</td>
+                    <td>${formatDate(license.LIC_END) || '-'}</td>
+                    <td>${formatDate(license.LIC_FORBIT_DATE) || '-'}</td>
+                    <td>${license.LIC_ACTIVATION_CODE || '-'}</td>
+                </tr>
+            `).join('');
+            
+            container.style.display = 'block';
+            container.classList.add('animate');
+        }
+
+// 渲染授权详情表格
+        function renderLicenseDetailTable(licenseDetails) {
+            const tbody = document.getElementById('licenseDetailTableBody');
+            const container = document.getElementById('licenseDetailTableContainer');
+            const countElement = document.getElementById('licenseDetailCount');
+            
+            // 更新记录数量
+            countElement.textContent = licenseDetails.length;
+            
+            if (licenseDetails.length === 0) {
+            tbody.innerHTML = `
+                    <tr>
+                        <td colspan="16" class="text-center">
+                            <div class="empty-state">
+                                <i class="bi bi-inbox"></i>
+                                <p>暂无授权详情</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                container.style.display = 'none';
+                return;
+            }
+            
+            tbody.innerHTML = licenseDetails.map(detail => `
+                <tr>
+                    <td>${detail.LICD_ID || '-'}</td>
+                    <td>${detail.LICD_MAINID || '-'}</td>
+                    <td>${detail.LICD_SRCCUNAME || '-'}</td>
+                    <td>${detail.LICD_INCUID || '-'}</td>
+                    <td>${detail.LICD_PTID || '-'}</td>
+                    <td>${detail.LICD_PTNAME || '-'}</td>
+                    <td>${detail.LICD_MDID || '-'}</td>
+                    <td>${detail.LICD_MDNAME || '-'}</td>
+                    <td>${detail.LICD_COUNT || '-'}</td>
+                    <td>${detail.LICD_TYPE || '-'}</td>
+                    <td>${detail.LICD_TYPEINFO || '-'}</td>
+                    <td>${formatDate(detail.LICD_START) || '-'}</td>
+                    <td>${formatDate(detail.LICD_END) || '-'}</td>
+                    <td>${formatDate(detail.LICD_CREATE_DATE) || '-'}</td>
+                    <td>${formatDate(detail.LICD_MODIFY_DATE) || '-'}</td>
+                    <td>${detail.LICD_STATE || '-'}</td>
+                </tr>
+            `).join('');
+            
+            container.style.display = 'block';
+            container.classList.add('animate');
+        }
+
+        // 格式化日期
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('zh-CN', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                });
+            } catch (error) {
+                return dateString;
+            }
+        }
+
+        // 显示错误信息
+        function showError(message) {
+            document.getElementById('customerTableBody').innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center">
+                        <div class="empty-state">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <p>${message}</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            
+            document.getElementById('licenseTableBody').innerHTML = `
+                <tr>
+                    <td colspan="17" class="text-center">
+                        <div class="empty-state">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <p>${message}</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            
+            document.getElementById('licenseDetailTableBody').innerHTML = `
+                <tr>
+                    <td colspan="16" class="text-center">
+                        <div class="empty-state">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <p>${message}</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+        
+        // 初始化复制功能
+        function initCopyFunctionality() {
+            // 创建复制提示元素
+            const tooltip = document.createElement('div');
+            tooltip.className = 'copy-tooltip';
+            tooltip.id = 'copyTooltip';
+            tooltip.textContent = '点击复制';
+            document.body.appendChild(tooltip);
+            
+            // 监听鼠标悬停事件
+            document.addEventListener('mouseover', function(e) {
+                // 检查是否悬停在表格单元格上
+                if (e.target.tagName === 'TD' && e.target.closest('.table')) {
+                    const cell = e.target;
+                    
+                    // 显示提示在鼠标位置
+                    tooltip.style.left = (e.pageX + 10) + 'px';
+                    tooltip.style.top = (e.pageY - 30) + 'px';
+                    tooltip.classList.add('show');
+                }
+            });
+            
+            // 监听鼠标移动事件，使提示跟随鼠标
+            document.addEventListener('mousemove', function(e) {
+                const tooltip = document.getElementById('copyTooltip');
+                if (tooltip && tooltip.classList.contains('show')) {
+                    tooltip.style.left = (e.pageX + 10) + 'px';
+                    tooltip.style.top = (e.pageY - 30) + 'px';
+                }
+            });
+            
+            // 监听鼠标离开事件
+            document.addEventListener('mouseout', function(e) {
+                if (e.target.tagName === 'TD' && e.target.closest('.table')) {
+                    const tooltip = document.getElementById('copyTooltip');
+                    if (tooltip) {
+                        tooltip.classList.remove('show');
+                    }
+                }
+            });
+            
+            // 监听点击事件
+            document.addEventListener('click', function(e) {
+                if (e.target.tagName === 'TD' && e.target.closest('.table')) {
+                    const cell = e.target;
+                    const textToCopy = cell.textContent.trim();
+                    
+                    // 复制到剪贴板
+                    copyToClipboard(textToCopy);
+                }
+            });
+        }
+        
+        // 复制到剪贴板功能
+        function copyToClipboard(text) {
+            // 创建临时文本区域
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                // 执行复制
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    // 显示成功提示
+                    showCopySuccess();
+                }
+            } catch (err) {
+                console.error('复制失败:', err);
+            }
+            
+            // 移除临时元素
+            document.body.removeChild(textArea);
+        }
+        
+        // 显示复制成功提示
+        function showCopySuccess() {
+            // 更新提示文本
+            const tooltip = document.getElementById('copyTooltip');
+            if (tooltip) {
+                const originalText = tooltip.textContent;
+                tooltip.textContent = '复制成功!';
+                tooltip.style.backgroundColor = 'rgba(20, 184, 166, 0.9)'; // 绿色背景
+                
+                // 1秒后恢复原始文本
+                setTimeout(() => {
+                    tooltip.textContent = originalText;
+                    tooltip.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+                }, 1000);
+            }
+        }
+        
+        // 页面可见性变化时的处理
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                // 页面变为可见时，重新检查侧边栏状态
+                ensureSidebarExpanded();
+            }
+        });
+        
+        // 监听侧边栏状态变化，控制查询提示的显示
+        function setupSidebarQueryPromptControl() {
+            const sidebar = document.getElementById('sidebar');
+            const queryPrompt = document.getElementById('queryPrompt');
+            
+            if (!sidebar || !queryPrompt) return;
+            
+            // 初始状态检查
+            updateQueryPromptVisibility();
+            
+            // 监听侧边栏的class变化
+            const observer = new MutationObserver(updateQueryPromptVisibility);
+            observer.observe(sidebar, { attributes: true, attributeFilter: ['class'] });
+            
+            // 监听body的class变化（当侧边栏打开时，body会添加sidebar-open类）
+            observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+            
+            function updateQueryPromptVisibility() {
+                // 检查是否是移动端视图
+                const isMobile = window.innerWidth <= 992;
+                // 检查侧边栏是否打开
+                const isSidebarOpen = sidebar.classList.contains('active') || document.body.classList.contains('sidebar-open');
+                
+                // 在移动端且侧边栏打开时，隐藏查询提示
+                if (isMobile && isSidebarOpen) {
+                    queryPrompt.style.display = 'none';
+                } else {
+                    // 只有在没有查询结果时才显示提示
+                    const isAnyTableVisible = Array.from(document.querySelectorAll('.table-container')).some(container => {
+                        return container.style.display !== 'none';
+                    });
+                    if (!isAnyTableVisible) {
+                        queryPrompt.style.display = 'block';
+                    }
+                }
+            }
+        }
+        
+        // 页面刷新前保存状态
+        window.addEventListener('beforeunload', function() {
+            // 保存当前页面状态到 sessionStorage
+            sessionStorage.setItem('currentPage', 'bsecp_auth_query_modify');
+        });
+        
+        // 页面加载完成后设置侧边栏查询提示控制
+        document.addEventListener('DOMContentLoaded', function() {
+            setupSidebarQueryPromptControl();
+        });
+        </script>
+        
+        <!-- 搜索建议，放在body末尾 -->
+        <div class="search-suggestions" id="searchSuggestions" style="display: none; position: absolute; z-index: 9999;">
+            <div class="suggestions-list" id="suggestionsList"></div>
+        </div>
+    </body>
+</html>

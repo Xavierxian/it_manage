@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BSECP授权查询 - IT运维管理平台</title>
+    <link rel="icon" type="image/png" href="/static/images/title.png">
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            /* 主色调 */
+            --primary-color: #4361ee;
+            --primary-light: #93c5fd;
+            --primary-dark: #3a0ca3;
+            --success-color: #4ade80;
+            --warning-color: #facc15;
+            --danger-color: #f87171;
+            --info-color: #60a5fa;
+            
+            /* 中性色 */
+            --dark-color: #0f172a;
+            --light-color: #f8fafc;
+            --surface-1: #1e293b;
+            --surface-2: #334155;
+            --surface-3: #475569;
+            
+            /* 文字颜色 */
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            
+            /* 边框和背景 */
+            --border-color: #e2e8f0;
+            --background-color: #f1f5f9;
+            --card-bg: rgba(255, 255, 255, 0.9);
+            
+            /* 阴影 */
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --neumorphism-shadow: 8px 8px 16px #e2e8f0, -8px -8px 16px #ffffff;
+            --neumorphism-shadow-inset: inset 4px 4px 8px #e2e8f0, inset -4px -4px 8px #ffffff;
+            
+            /* 圆角 */
+            --border-radius: 16px;
+            --border-radius-sm: 8px;
+            --border-radius-lg: 24px;
+            
+            /* 过渡动画 */
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            
+            /* 渐变 */
+            --gradient-primary: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+            --gradient-success: linear-gradient(135deg, #4ade80 0%, #16a34a 100%);
+            --gradient-warning: linear-gradient(135deg, #facc15 0%, #ea580c 100%);
+            --gradient-danger: linear-gradient(135deg, #f87171 0%, #dc2626 100%);
+            --gradient-info: linear-gradient(135deg, #60a5fa 0%, #1d4ed8 100%);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f1f5f9;
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            margin-left: 280px;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* 页面标题 */
+        .page-title {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .page-title i {
+            color: var(--primary-color);
+            background: rgba(99, 102, 241, 0.1);
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 筛选区域 */
+        .filter-section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-title i {
+            color: var(--primary-color);
+        }
+
+        .search-input {
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            transition: var(--transition);
+            font-size: 0.875rem;
+            background: white;
+            color: var(--text-primary);
+            width: 100%;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* 筛选下拉框样式 */
+        .filter-select {
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 0.25rem 1.7rem;
+            font-size: 0.8125rem;
+            background-color: white;
+            color: var(--text-primary);
+            transition: all 0.2s ease-in-out;
+            width: 120px; /* 约三厘米宽 */
+            height: 35px;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M7 10l3 3 3-3'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.5rem center;
+            background-size: 16px 16px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1), 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .filter-select:hover {
+            border-color: #94a3b8;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .filter-select {
+                font-size: 0.875rem;
+                padding: 0.5rem 2rem 0.5rem 0.75rem;
+                height: 38px;
+                background-size: 14px 14px;
+                background-position: right 0.75rem center;
+            }
+        }
+
+
+        /* 从下往上弹出动画 */
+        @keyframes slideUpFromBottom {
+            0% {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+                filter: blur(2px);
+            }
+            50% {
+                opacity: 0.7;
+                transform: translateY(-5px) scale(1.02);
+                filter: blur(0.5px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+                filter: blur(0);
+            }
+        }
+
+        .animate-stagger > * {
+            opacity: 0;
+            animation: slideUpFromBottom 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+        .animate-stagger > *:nth-child(1) { animation-delay: 0.1s; }
+        .animate-stagger > *:nth-child(2) { animation-delay: 0.2s; }
+        .animate-stagger > *:nth-child(3) { animation-delay: 0.3s; }
+        .animate-stagger > *:nth-child(4) { animation-delay: 0.4s; }
+        .animate-stagger > *:nth-child(5) { animation-delay: 0.5s; }
+        .animate-stagger > *:nth-child(6) { animation-delay: 0.6s; }
+
+        /* 表格样式 */
+        .table-container {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .table-container.animate {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table th {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            color: var(--text-primary);
+            font-weight: 600;
+            border: none;
+            padding: 1rem 0.75rem;
+            white-space: nowrap;
+        }
+
+        .table td {
+            padding: 0.875rem 0.75rem;
+            vertical-align: middle;
+            border-color: var(--border-color);
+            color: var(--text-secondary);
+            font-size: 0.75rem; /* 减小字体大小 */
+            font-family: 'Microsoft YaHei', 'SimHei', Arial, sans-serif; /* 更换字体 */
+        }
+
+        .table tbody tr {
+            transition: var(--transition);
+        }
+
+        .table tbody tr:hover {
+            background-color: rgba(99, 102, 241, 0.05);
+            transform: translateY(-1px);
+            box-shadow: var(--card-shadow-hover);
+        }
+
+        /* 状态标签 */
+        .status-badge {
+            padding: 0.375rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+        }
+
+        .status-pending {
+            background: linear-gradient(135deg, #facc15 0%, #ea580c 100%);
+            color: white;
+        }
+
+        .status-processing {
+            background: linear-gradient(135deg, #60a5fa 0%, #1d4ed8 100%);
+            color: white;
+        }
+
+        .status-completed {
+            background: linear-gradient(135deg, #4ade80 0%, #16a34a 100%);
+            color: white;
+        }
+
+        .status-failed {
+            background: linear-gradient(135deg, #f87171 0%, #dc2626 100%);
+            color: white;
+        }
+
+        /* 加载动画 */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(99, 102, 241, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* 移动端卡片样式 */
+        .card-container {
+            display: none; /* 默认隐藏卡片视图 */
+        }
+
+        .auth-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+
+        .auth-card:hover {
+            box-shadow: var(--card-shadow-hover);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .card-status {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .card-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+
+        .card-field {
+            margin-bottom: 0.5rem;
+        }
+
+        .field-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.125rem;
+        }
+
+        .field-value {
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+                padding: 0.5rem;
+            }
+            
+            .page-title {
+                font-size: 1.25rem;
+                margin-bottom: 0.75rem;
+                padding: 0 0.5rem;
+            }
+            
+            .filter-section {
+                padding: 0.75rem;
+                margin-bottom: 0.75rem;
+                border-radius: 12px;
+            }
+            
+            .search-input {
+                padding: 0.625rem 0.75rem;
+                font-size: 0.875rem;
+                border-radius: 8px;
+            }
+            
+            .filter-select {
+                width: 100%;
+                margin-bottom: 0.5rem;
+                font-size: 0.875rem;
+                padding: 0.5rem 0.75rem;
+                border-radius: 8px;
+            }
+            
+            .section-title {
+                font-size: 1.125rem;
+                margin-bottom: 0.75rem;
+            }
+
+            /* 在移动端隐藏表格，显示卡片 */
+            .table-container {
+                display: none;
+            }
+            
+            .card-container {
+                display: block;
+            }
+
+            .card-body {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+
+            .container-fluid {
+                padding: 0.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main-content {
+                padding: 0.25rem;
+            }
+            
+            .page-title {
+                font-size: 1.5rem;
+                gap: 0.5rem;
+            }
+            
+            .filter-section .row > div {
+                margin-bottom: 0.5rem;
+            }
+            
+            .table-container {
+                margin: 0 -0.25rem;
+                padding: 0.5rem;
+            }
+            
+            .table {
+                min-width: 500px;
+            }
+            
+            .table th,
+            .table td {
+                padding: 0.375rem 0.25rem;
+                font-size: 0.6875rem;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    {% include 'sidebar.html' %}
+    
+    <div class="main-content">
+        <div class="container-fluid p-4">
+
+
+            <!-- 筛选区域 -->
+            <div class="filter-section">
+                <div class="row g-2 g-md-3">
+                    <div class="col-12 col-md-4">
+                        <input type="text" class="search-input" id="searchInput" placeholder="搜索订单号、合同号或BMPID...">
+                    </div>
+                    <div class="col-12 col-md-8">
+                        <div class="row g-2">
+                            <div class="col-6 col-sm-auto">
+                                <select class="filter-select w-100" id="timeFilter">
+                                    <option value="all">全部时间</option>
+                                    <option value="week">近一周</option>
+                                    <option value="month">近一月</option>
+                                </select>
+                            </div>
+                            <div class="col-6 col-sm-auto">
+                                <select class="filter-select w-100" id="statusFilter">
+                                    <option value="all">全部状态</option>
+                                    <option value="success">成功</option>
+                                    <option value="failed">失败</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 数据表格 -->
+            <div class="table-container">
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-3 gap-2">
+                    <h3 class="section-title mb-0">
+                        授权记录列表
+                    </h3>
+                    <span class="text-muted fs-6" id="recordCount">加载中...</span>
+                </div>
+                
+                <div>
+                    <table class="table table-hover table-sm" id="authTable">
+                        <thead>
+                            <tr>
+                                <th class="text-nowrap">订单号</th>
+                                <th class="text-nowrap">合同号</th>
+                                <th class="text-nowrap">BMPID</th>
+                                <th class="text-nowrap">授权状态</th>
+                                <th>处理结果</th>
+                                <th class="text-nowrap">创建时间</th>
+                                <th class="text-nowrap">处理时间</th>
+                            </tr>
+                        </thead>
+                        <tbody id="authTableBody">
+                            <tr>
+                                <td colspan="7" class="text-center">
+                                    <div class="loading-spinner"></div>
+                                    正在加载数据...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- 移动端卡片视图 -->
+            <div class="card-container">
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-3 gap-2">
+                    <h3 class="section-title mb-0">
+                        授权记录列表
+                    </h3>
+                    <span class="text-muted fs-6" id="recordCountCard">加载中...</span>
+                </div>
+                
+                <div id="authCardContainer">
+                    <div class="loading-spinner mx-auto my-4"></div>
+                    <p class="text-center text-muted">正在加载数据...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let allRecords = [];
+        let filteredRecords = [];
+
+        // 从下往上弹出动画
+        function animateElementsFromBottom() {
+            // 为筛选区域添加动画
+            const filterSection = document.querySelector('.filter-section');
+            if (filterSection) {
+                filterSection.style.opacity = '0';
+                filterSection.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    filterSection.style.transition = 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    filterSection.style.opacity = '1';
+                    filterSection.style.transform = 'translateY(0)';
+                }, 200);
+            }
+
+            // 为表格容器添加动画
+            const tableContainer = document.querySelector('.table-container');
+            if (tableContainer) {
+                setTimeout(() => {
+                    tableContainer.classList.add('animate');
+                }, 400);
+            }
+        }
+
+        // 为表格行添加动画
+        function animateTableRows() {
+            const rows = document.querySelectorAll('#authTableBody tr');
+            rows.forEach((row, index) => {
+                row.style.opacity = '0';
+                row.style.transform = 'translateY(20px)';
+                row.style.transition = 'all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                
+                setTimeout(() => {
+                    row.style.opacity = '1';
+                    row.style.transform = 'translateY(0)';
+                }, 600 + (index * 50));
+            });
+        }
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAuthorizationRecords();
+            animateElementsFromBottom();
+            
+            // 绑定搜索事件
+            document.getElementById('searchInput').addEventListener('input', debounce(applyCombinedFilters, 300));
+            
+            // 绑定下拉框筛选事件
+            document.getElementById('timeFilter').addEventListener('change', applyCombinedFilters);
+            document.getElementById('statusFilter').addEventListener('change', applyCombinedFilters);
+        });
+
+        // 防抖函数
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // 加载授权记录数据
+        async function loadAuthorizationRecords() {
+            try {
+                console.log('开始加载授权记录数据...');
+                const response = await fetch('/api/bsecp/authorization-records');
+                console.log('响应状态:', response.status);
+                
+                if (!response.ok) {
+                    console.error('响应失败:', response.status, response.statusText);
+                    showError(`请求失败: ${response.status} ${response.statusText}`);
+                    return;
+                }
+                
+                const data = await response.json();
+                console.log('响应数据:', data);
+                
+                if (data.success) {
+                    allRecords = data.records;
+                    filteredRecords = [...allRecords];
+                    console.log('加载成功，记录数:', allRecords.length);
+                    renderTable();
+                } else {
+                    console.error('加载失败:', data.message);
+                    showError(data.message || '加载数据失败');
+                }
+            } catch (error) {
+                console.error('加载数据失败:', error);
+                showError('加载数据失败，请稍后重试');
+            }
+        }
+
+
+        // 渲染表格
+        function renderTable() {
+            const tbody = document.getElementById('authTableBody');
+            const recordCount = document.getElementById('recordCount');
+            
+            recordCount.textContent = `共 ${filteredRecords.length} 条记录`;
+            
+            if (filteredRecords.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center">
+                            <div class="empty-state">
+                                <i class="bi bi-inbox"></i>
+                                <p>暂无数据</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = filteredRecords.map(record => `
+                <tr style="opacity: 0; transform: translateY(20px);">
+                    <td>${record.OD_SERIAL_NUMBER || '-'}</td>
+                    <td>${record.OD_CONTRACT_NUMBER || '-'}</td>
+                    <td>${record.OD_BMPID || '-'}</td>
+                    <td>
+                        <span class="status-badge ${getStatusClass(record.AutoAuthHandleResult)}">
+                            ${record.AutoAuthHandleResult || '-'}
+                        </span>
+                    </td>
+                    <td>${record.AutoAuthHandleResultDesc || '-'}</td>
+                    <td>${record.CreateTime || '-'}</td>
+                    <td>${record.AutoAuthHandleTime || '-'}</td>
+                </tr>
+            `).join('');
+            
+            // 添加表格行动画
+            setTimeout(() => {
+                const rows = document.querySelectorAll('#authTableBody tr');
+                rows.forEach((row, index) => {
+                    row.style.transition = 'all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    setTimeout(() => {
+                        row.style.opacity = '1';
+                        row.style.transform = 'translateY(0)';
+                    }, index * 50);
+                });
+            }, 100);
+            
+            // 同时渲染卡片视图
+            renderCards();
+        }
+
+        // 渲染卡片
+        function renderCards() {
+            const container = document.getElementById('authCardContainer');
+            const recordCountCard = document.getElementById('recordCountCard');
+            
+            recordCountCard.textContent = `共 ${filteredRecords.length} 条记录`;
+            
+            if (filteredRecords.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="bi bi-inbox"></i>
+                        <p>暂无数据</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = filteredRecords.map(record => `
+                <div class="auth-card">
+                    <div class="card-header">
+                        <div class="card-title">订单号: ${record.OD_SERIAL_NUMBER || '-'}</div>
+                        <div class="card-status">
+                            <span class="status-badge ${getStatusClass(record.AutoAuthHandleResult)}">
+                                ${record.AutoAuthHandleResult || '-'}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="card-field">
+                            <div class="field-label">合同号</div>
+                            <div class="field-value">${record.OD_CONTRACT_NUMBER || '-'}</div>
+                        </div>
+                        <div class="card-field">
+                            <div class="field-label">BMPID</div>
+                            <div class="field-value">${record.OD_BMPID || '-'}</div>
+                        </div>
+                        <div class="card-field">
+                            <div class="field-label">处理结果</div>
+                            <div class="field-value">${record.AutoAuthHandleResultDesc || '-'}</div>
+                        </div>
+                        <div class="card-field">
+                            <div class="field-label">创建时间</div>
+                            <div class="field-value">${record.CreateTime || '-'}</div>
+                        </div>
+                        <div class="card-field">
+                            <div class="field-label">处理时间</div>
+                            <div class="field-value">${record.AutoAuthHandleTime || '-'}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 获取状态样式类
+        function getStatusClass(result) {
+            if (!result) return 'status-pending';
+            
+            if (result.includes('成功') || result.includes('完成')) {
+                return 'status-completed';
+            } else if (result.includes('失败') || result.includes('错误')) {
+                return 'status-failed';
+            } else if (result.includes('处理中') || result.includes('进行中')) {
+                return 'status-processing';
+            } else {
+                return 'status-pending';
+            }
+        }
+
+        // 显示错误信息
+        function showError(message) {
+            document.getElementById('authTableBody').innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center">
+                        <div class="empty-state">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <p>${message}</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            
+            // 同时在卡片视图中显示错误信息
+            document.getElementById('authCardContainer').innerHTML = `
+                <div class="empty-state">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <p>${message}</p>
+                </div>
+            `;
+        }
+
+        // 刷新数据
+        function refreshData() {
+            loadAuthorizationRecords();
+        }
+
+        // 每30秒自动刷新一次数据
+        setInterval(refreshData, 30000);
+
+        // 应用组合筛选条件
+        function applyCombinedFilters() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            // 获取当前选择的时间范围筛选
+            const timeRange = document.getElementById('timeFilter').value;
+            
+            // 获取当前选择的状态筛选
+            const resultFilter = document.getElementById('statusFilter').value;
+            
+            // 计算时间范围
+            let startDate = null;
+            const now = new Date();
+            if (timeRange === 'week') {
+                startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            } else if (timeRange === 'month') {
+                startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            }
+            
+            // 筛选记录
+            filteredRecords = allRecords.filter(record => {
+                // 搜索条件
+                const matchesSearch = !searchTerm || 
+                    record.OD_SERIAL_NUMBER?.toLowerCase().includes(searchTerm) ||
+                    record.OD_CONTRACT_NUMBER?.toLowerCase().includes(searchTerm) ||
+                    record.OD_BMPID?.toLowerCase().includes(searchTerm);
+                
+                // 时间范围条件
+                let matchesTimeRange = true;
+                // 如果选择了时间范围（近一周或近一月），则应用时间筛选
+                if (timeRange && timeRange !== 'all') {
+                    const handleTime = record.AutoAuthHandleTime;
+                    if (!handleTime) {
+                        matchesTimeRange = false;
+                    } else {
+                        const recordDate = parseDateString(handleTime);
+                        if (!recordDate) {
+                            matchesTimeRange = false;
+                        } else {
+                            matchesTimeRange = recordDate >= startDate && recordDate <= now;
+                        }
+                    }
+                }
+                
+                // 状态条件
+                let matchesResult = true;
+                const result = record.AutoAuthHandleResult || '';
+                // 只有在选择了状态（成功/失败）时才应用状态筛选
+                if (resultFilter === 'success') {
+                    matchesResult = result.includes('成功') || result.includes('完成');
+                } else if (resultFilter === 'failed') {
+                    matchesResult = result.includes('失败') || result.includes('错误');
+                }
+                
+                return matchesSearch && matchesTimeRange && matchesResult;
+            });
+            
+            renderTable();
+        }
+
+        // 解析日期字符串为日期对象
+        function parseDateString(dateString) {
+            if (!dateString) return null;
+            
+            // 处理不同格式的日期字符串
+            // 假设日期格式为 "YYYY-MM-DD HH:MM:SS" 或类似格式
+            const date = new Date(dateString);
+            if (!isNaN(date.getTime())) {
+                return date;
+            }
+            
+            // 如果标准解析失败，尝试手动解析
+            // 例如："2023-10-15 14:30:25"
+            const match = dateString.match(/^(\d{4})-(\d{2})-(\d{2})(?:\s+(\d{2}):(\d{2}):(\d{2}))?/);
+            if (match) {
+                const [, year, month, day, hour = 0, minute = 0, second = 0] = match;
+                return new Date(year, month - 1, day, hour, minute, second);
+            }
+            
+            return null;
+        }
+    </script>
+</body>
+</html>

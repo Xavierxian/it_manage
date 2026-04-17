@@ -1,0 +1,310 @@
+from flask import Blueprint, render_template, request, jsonify
+from functools import wraps
+from flask_login import login_required, current_user
+from modules.database import get_k8s_db_connection, get_db_connection
+import os
+import json
+from dotenv import load_dotenv
+from modules.security_logger import log_permission_denied
+
+load_dotenv()
+
+k8s_monitoring_bp = Blueprint('k8s_monitoring', __name__)
+
+# 数据库配置
+DB_CONFIG = {
+    'host': os.getenv('MYSQL_HOST', 'localhost'),
+    'port': int(os.getenv('MYSQL_PORT', 3306)),
+    'user': os.getenv('MYSQL_USER', 'root'),
+    'password': os.getenv('MYSQL_PASSWORD', ''),
+    'database': os.getenv('MYSQL_DATABASE', 'it_asset_management'),
+    'charset': 'utf8mb4'
+}
+
+# 权限验证装饰器
+def permission_required(permission_name):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            user_id = current_user.id
+            
+            try:
+                connection = get_db_connection()
+                with connection.cursor() as cursor:
+                    cursor.execute("SELECT role, permissions, is_active FROM users WHERE id = %s", (user_id,))
+                    user = cursor.fetchone()
+                    
+                    if not user:
+                        connection.close()
+                        return jsonify({'success': False, 'message': '用户不存在'}), 404
+                    
+                    if not user['is_active']:
+                        connection.close()
+                        return jsonify({'success': False, 'message': '账户已被禁用'}), 403
+                    
+                    if user['role'] == 'admin':
+                        connection.close()
+                        return f(*args, **kwargs)
+                    
+                    try:
+                        user_permissions = json.loads(user['permissions'])
+                        if not isinstance(user_permissions, list):
+                            user_permissions = []
+                    except (json.JSONDecodeError, TypeError):
+                        user_permissions = []
+                    
+                    if permission_name in user_permissions:
+                        connection.close()
+                        return f(*args, **kwargs)
+                    else:
+                        connection.close()
+                        log_permission_denied(permission_name, user_id)
+                        return render_template('403.html'), 403
+                        
+            except Exception as e:
+                print(f"权限验证时出错: {e}")
+                import traceback
+                traceback.print_exc()
+                return jsonify({
+                    'success': False, 
+                    'message': '权限验证失败'
+                }), 500
+                
+        return decorated_function
+    return decorator
+
+@k8s_monitoring_bp.route('/k8smonitoring')
+@login_required
+@permission_required('k8s_monitoring')
+def k8s_monitoring():
+    return render_template('k8s_jiankong.html')
+
+@k8s_monitoring_bp.route('/api/k8s-namespace-data')
+@login_required
+@permission_required('k8s_monitoring')
+def get_k8s_namespace_data():
+    """获取K8s命名空间数据（每个命名空间的最新数据）"""
+    conn = get_k8s_db_connection()
+    if not conn:
+        return jsonify({'error': '数据库连接失败'}), 500
+    
+    try:
+        with conn.cursor() as cursor:
+            query = """
+            SELECT 
+                k1.namespace,
+                k1.k8s_namespace_cpu_num,
+                k1.k8s_namespace_cpu_per,
+                k1.k8s_namespace_mem_num,
+                k1.k8s_namespace_mem_per,
+                k1.namespace_pod,
+                k1.create_time,
+                k1.node_number,
+                k1.namespace_number,
+                k1.pod_number
+            FROM k8s_namespace_used k1
+            INNER JOIN (
+                SELECT namespace, MAX(create_time) as latest_time
+                FROM k8s_namespace_used
+                WHERE create_time >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+                GROUP BY namespace
+            ) k2 ON k1.namespace = k2.namespace AND k1.create_time = k2.latest_time
+            ORDER BY k1.namespace
+            """
+            cursor.execute(query)
+            columns = [desc[0] for desc in cursor.description]
+            data = cursor.fetchall()
+            
+            result = []
+            for row in data:
+                result.append(dict(zip(columns, row)))
+            
+            return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': f'查询失败: {str(e)}'}), 500
+    finally:
+        conn.close()
+
+@k8s_monitoring_bp.route('/api/k8s-summary')
+@login_required
+@permission_required('k8s_monitoring')
+def get_k8s_summary():
+    """获取K8s集群汇总信息"""
+    conn = get_k8s_db_connection()
+    if not conn:
+        return jsonify({'error': '数据库连接失败'}), 500
+    
+    try:
+        with conn.cursor() as cursor:
+            query = """
+            SELECT 
+                k8s_total_cpu,
+                k8s_total_mem,
+                node_number,
+                namespace_number,
+                pod_number,
+                create_time
+            FROM k8s_namespace_used
+            ORDER BY create_time DESC
+            LIMIT 1
+            """
+            cursor.execute(query)
+            columns = [desc[0] for desc in cursor.description]
+            data = cursor.fetchone()
+            
+            if data:
+                summary = dict(zip(columns, data))
+                
+                summary['total_pod'] = summary.get('pod_number', 0)
+                
+                namespace_query = """
+                SELECT 
+                    namespace,
+                    AVG(k8s_namespace_cpu_per) as avg_cpu_per,
+                    AVG(k8s_namespace_mem_per) as avg_mem_per,
+                    MAX(k8s_namespace_cpu_num) as max_cpu_num,
+                    MAX(k8s_namespace_mem_num) as max_mem_num
+                FROM k8s_namespace_used
+                WHERE create_time >= DATE_SUB(NOW(), INTERVAL 1 HOUR)
+                GROUP BY namespace
+                ORDER BY avg_cpu_per DESC
+                """
+                cursor.execute(namespace_query)
+                namespace_data = cursor.fetchall()
+                namespace_columns = [desc[0] for desc in cursor.description]
+                
+                namespaces = []
+                for row in namespace_data:
+                    namespaces.append(dict(zip(namespace_columns, row)))
+                
+                summary['namespaces'] = namespaces
+                
+                return jsonify(summary)
+            else:
+                return jsonify({'error': '没有找到数据'}), 404
+    except Exception as e:
+        return jsonify({'error': f'查询失败: {str(e)}'}), 500
+    finally:
+        conn.close()
+
+@k8s_monitoring_bp.route('/api/k8s-namespace-detail')
+@login_required
+@permission_required('k8s_monitoring')
+def get_namespace_detail():
+    """获取所有命名空间的详细数据"""
+    from datetime import datetime
+    
+    conn = get_k8s_db_connection()
+    if not conn:
+        return jsonify({'error': '数据库连接失败'}), 500
+    
+    try:
+        with conn.cursor() as cursor:
+            current_hour = datetime.now().hour
+            start_time = f'{current_hour:02d}:00:00'
+            end_time = f'{current_hour + 1:02d}:00:00'
+            
+            query = """
+            SELECT 
+                namespace,
+                DATE_FORMAT(create_time, '%%Y-%%m-%%d') as date,
+                k8s_namespace_cpu_num as cpu_num,
+                k8s_namespace_mem_num as mem_num
+            FROM k8s_namespace_used
+            WHERE create_time >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+                AND TIME(create_time) >= %s 
+                AND TIME(create_time) < %s
+            ORDER BY namespace, create_time
+            """
+            cursor.execute(query, (start_time, end_time))
+            columns = [desc[0] for desc in cursor.description]
+            data = cursor.fetchall()
+            
+            result = []
+            for row in data:
+                result.append(dict(zip(columns, row)))
+            
+            return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': f'查询失败: {str(e)}'}), 500
+    finally:
+        conn.close()
+
+@k8s_monitoring_bp.route('/api/k8s-namespace-trend/<namespace>')
+@login_required
+@permission_required('k8s_monitoring')
+def get_namespace_trend(namespace):
+    """获取指定命名空间的趋势数据"""
+    conn = get_k8s_db_connection()
+    if not conn:
+        return jsonify({'error': '数据库连接失败'}), 500
+    
+    try:
+        with conn.cursor() as cursor:
+            query = """
+            SELECT 
+                create_time,k8s_namespace_mem_num 
+            FROM 
+                k8s_namespace_used 
+            WHERE 
+                TIME(create_time) >= '17:00:00' 
+                AND TIME(create_time) < '18:00:00' 
+                AND namespace = %s
+            """
+            cursor.execute(query, (namespace,))
+            columns = [desc[0] for desc in cursor.description]
+            data = cursor.fetchall()
+            
+            result = []
+            for row in data:
+                result.append(dict(zip(columns, row)))
+            
+            return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': f'查询失败: {str(e)}'}), 500
+    finally:
+        conn.close()
+
+@k8s_monitoring_bp.route('/api/k8s-nodes')
+@login_required
+@permission_required('k8s_monitoring')
+def get_k8s_nodes():
+    """获取K8s节点数据（每个节点的最新数据）"""
+    conn = get_k8s_db_connection()
+    if not conn:
+        return jsonify({'error': '数据库连接失败'}), 500
+    
+    try:
+        with conn.cursor() as cursor:
+            query = """
+            SELECT 
+                k1.node_ip,
+                k1.k8s_total_nodecpu,
+                k1.k8s_total_nodemem,
+                k1.node_used_cpu_num,
+                k1.node_used_cpu_per,
+                k1.node_used_mem_num,
+                k1.node_used_mem_per,
+                k1.create_time
+            FROM k8s_node_used k1
+            INNER JOIN (
+                SELECT node_ip, MAX(create_time) as latest_time
+                FROM k8s_node_used
+                WHERE create_time >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+                GROUP BY node_ip
+            ) k2 ON k1.node_ip = k2.node_ip AND k1.create_time = k2.latest_time
+            ORDER BY k1.node_ip
+            """
+            cursor.execute(query)
+            columns = [desc[0] for desc in cursor.description]
+            data = cursor.fetchall()
+            
+            result = []
+            for row in data:
+                result.append(dict(zip(columns, row)))
+            
+            return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': f'查询失败: {str(e)}'}), 500
+    finally:
+        conn.close()

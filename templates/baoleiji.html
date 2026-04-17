@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>行云管家堡垒机 - IT运维管理平台</title>
+    <link rel="icon" type="image/png" href="/static/images/title.png">
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/font-awesome/all.min.css">
+    <style>
+        /* 修复Font Awesome字体路径 */
+        @font-face {
+            font-family: "Font Awesome 6 Free";
+            font-style: normal;
+            font-weight: 900;
+            font-display: block;
+            src: url("/static/webfonts/fa-solid-900.woff2") format("woff2"),
+                 url("/static/webfonts/fa-solid-900.ttf") format("truetype");
+        }
+        @font-face {
+            font-family: "Font Awesome 6 Free";
+            font-style: normal;
+            font-weight: 400;
+            font-display: block;
+            src: url("/static/webfonts/fa-regular-400.woff2") format("woff2"),
+                 url("/static/webfonts/fa-regular-400.ttf") format("truetype");
+        }
+        @font-face {
+            font-family: "Font Awesome 6 Brands";
+            font-style: normal;
+            font-weight: 400;
+            font-display: block;
+            src: url("/static/webfonts/fa-brands-400.woff2") format("woff2"),
+                 url("/static/webfonts/fa-brands-400.ttf") format("truetype");
+        }
+    </style>
+    <style>
+        :root {
+            /* 与系统一致的浅色主题配色 */
+            --bg-primary: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f1f5f9;
+            --accent-cyan: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-yellow: #eab308;
+            --text-primary: #111827;
+            --text-secondary: #4b5563;
+            --text-muted: #9ca3af;
+            --border-color: #d1d5db;
+            --shadow-primary: 0 8px 32px rgba(59, 130, 246, 0.1);
+            --shadow-hover: 0 12px 48px rgba(59, 130, 246, 0.15);
+            --gradient-primary: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            --gradient-secondary: linear-gradient(135deg, #f59e0b, #eab308);
+            --gradient-success: linear-gradient(135deg, #10b981, #3b82f6);
+            --gradient-danger: linear-gradient(135deg, #ef4444, #f59e0b);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            font-size: 0.875rem;
+            font-weight: 400;
+            letter-spacing: -0.025em;
+        }
+
+        .main-content {
+            margin-left: 280px;
+            padding: 1.2rem;
+            min-height: 100vh;
+            background: var(--bg-primary);
+        }
+
+        .header-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-primary);
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            line-height: 1.2;
+        }
+
+        .status-indicators {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 50px;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: var(--card-bg, var(--bg-secondary));
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+
+        .metric-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border-color: var(--accent-cyan);
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--gradient-primary);
+        }
+
+        .metric-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            background: var(--gradient-primary);
+        }
+
+        .metric-value {
+            font-size: 2.25rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+
+        .control-panel {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-primary);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .panel-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .control-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .control-card {
+            background: var(--bg-tertiary);
+            border-radius: 15px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .control-card:hover {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.1);
+        }
+
+        .control-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            align-items: center;
+        }
+
+        .modern-input {
+            flex: 1;
+            padding: 0.5rem 0.75rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            line-height: 1.25;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .modern-input:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            background: var(--bg-secondary);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            color: white;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+            font-size: 0.875rem;
+            line-height: 1.25;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px -3px rgba(59, 130, 246, 0.4);
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        }
+
+        .btn-success {
+            background: var(--gradient-success);
+            box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+        }
+
+        .btn-warning {
+            background: var(--gradient-secondary);
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+        }
+
+        .btn-danger {
+            background: var(--gradient-danger);
+            box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d, #495057);
+            box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+        }
+
+        .data-table {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-primary);
+        }
+
+        .table-header {
+            background: var(--bg-tertiary);
+            padding: 2rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-container {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+            max-height: 600px;
+            overflow-y: auto;
+            margin-top: 1.5rem;
+        }
+
+        .modern-table {
+            width: 100%;
+            border-collapse: collapse;
+            color: var(--text-primary);
+            margin-bottom: 0;
+        }
+
+        .modern-table th {
+            background: var(--bg-tertiary);
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            font-size: 0.75rem;
+            letter-spacing: 0.025em;
+        }
+
+        .modern-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .description-cell {
+            max-width: 250px;
+            word-wrap: break-word;
+            white-space: normal;
+            line-height: 1.4;
+            vertical-align: top;
+        }
+
+        .modern-table tbody tr:hover {
+            background: rgba(59, 130, 246, 0.1);
+            transition: background 0.3s ease;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-online {
+            background: rgba(0, 255, 136, 0.1);
+            color: var(--accent-green);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+        }
+
+        .status-offline {
+            background: rgba(255, 71, 87, 0.1);
+            color: var(--accent-red);
+            border: 1px solid rgba(255, 71, 87, 0.2);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            z-index: 1001;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            box-shadow: var(--shadow-hover);
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            border-top-color: var(--accent-cyan);
+            animation: spin 1s linear infinite;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .glow-effect {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glow-effect::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(0, 212, 255, 0.1), transparent);
+            transform: rotate(45deg);
+            transition: all 0.5s;
+            opacity: 0;
+        }
+
+        .glow-effect:hover::after {
+            opacity: 1;
+            animation: shimmer 0.5s ease-in-out;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                margin-left: 0;
+                padding: 1rem;
+            }
+            
+            .page-title {
+                font-size: 2rem;
+            }
+            
+            .control-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .neon-border {
+            border: 1px solid var(--accent-cyan);
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+        }
+
+        .glass-effect {
+            background: rgba(26, 26, 46, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+        }
+
+        /* 图标增强样式 */
+        .icon-enhanced {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-origin: center;
+        }
+
+        .icon-enhanced:hover {
+            transform: scale(1.1);
+            filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.6));
+        }
+
+        .metric-icon .icon-enhanced {
+            color: white;
+            font-size: 1.8rem;
+        }
+
+        .page-title .shield-icon {
+            display: inline-block;
+            font-size: 2rem;
+            margin-right: 0.75rem;
+            color: var(--accent-cyan);
+            animation: shield-pulse 3s ease-in-out infinite;
+            filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.6));
+        }
+        
+        .page-title .icon-enhanced {
+            animation: shield-pulse 3s ease-in-out infinite;
+            display: inline-block;
+            font-size: 2rem;
+            margin-right: 0.5rem;
+            color: var(--accent-cyan);
+            /* 强制字体族确保图标显示 */
+            font-family: "Font Awesome 6 Free" !important;
+            font-weight: 900 !important;
+            /* 调试样式：如果图标不显示，显示背景色 */
+            background: rgba(59, 130, 246, 0.1);
+            padding: 0.2rem;
+            border-radius: 0.3rem;
+        }
+
+        @keyframes shield-pulse {
+            0%, 100% { 
+                transform: scale(1);
+                filter: drop-shadow(0 0 5px rgba(59, 130, 246, 0.3));
+            }
+            50% { 
+                transform: scale(1.05);
+                filter: drop-shadow(0 0 15px rgba(59, 130, 246, 0.6));
+            }
+        }
+
+        .control-title .icon-enhanced {
+            margin-right: 0.5rem;
+            color: var(--accent-cyan);
+        }
+
+        .btn .icon-enhanced {
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover .icon-enhanced {
+            transform: scale(1.1);
+        }
+
+        .table th .icon-enhanced {
+            color: var(--accent-cyan);
+            margin-right: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    {% include 'sidebar.html' %}
+    
+    <div class="main-content">
+        <!-- 页面头部 -->
+        <div class="header-section">
+            <h1 class="page-title">
+                <i class="fas fa-shield-halved"></i>
+                堡垒机控制台
+            </h1>
+            <div class="status-indicators">
+                <div class="status-item">
+                    <div class="status-dot"></div>
+                    <span>系统在线</span>
+                </div>
+                <div class="status-item">
+                    <i class="fas fa-user-shield" style="color: var(--accent-cyan);"></i>
+                    <span>{{ online_count }} 在线</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 关键指标 -->
+        <div class="metrics-grid">
+            <div class="metric-card glow-effect">
+                <div class="metric-icon" style="background: var(--gradient-primary);">
+                    <i class="fas fa-network-wired icon-enhanced"></i>
+                </div>
+                <div class="metric-value" id="totalHosts" style="color: var(--accent-cyan);">--</div>
+                <div class="metric-label">总主机数量</div>
+            </div>
+            
+            <div class="metric-card glow-effect">
+                <div class="metric-icon" style="background: var(--gradient-success);">
+                    <i class="fas fa-signal icon-enhanced"></i>
+                </div>
+                <div class="metric-value" id="onlineHosts" style="color: var(--accent-green);">--</div>
+                <div class="metric-label">在线主机</div>
+            </div>
+            
+            <div class="metric-card glow-effect">
+                <div class="metric-icon" style="background: var(--gradient-secondary);">
+                    <i class="fas fa-user-gear icon-enhanced"></i>
+                </div>
+                <div class="metric-value" id="totalUsers" style="color: var(--accent-orange);">--</div>
+                <div class="metric-label">用户总数</div>
+            </div>
+            
+            <div class="metric-card glow-effect">
+                <div class="metric-icon" style="background: var(--gradient-primary);">
+                    <i class="fas fa-lock icon-enhanced"></i>
+                </div>
+                <div class="metric-value" id="totalCredentials" style="color: var(--accent-purple);">--</div>
+                <div class="metric-label">凭证数量</div>
+            </div>
+        </div>
+
+        <!-- 控制面板 -->
+        <div class="control-panel">
+            <div class="panel-header">
+                <h2 class="panel-title">
+                    <i class="fas fa-sliders icon-enhanced"></i>
+                    系统控制面板
+                </h2>
+            </div>
+            
+            <div class="control-grid">
+                <div class="control-card">
+                    <h3 class="control-title">
+                        <i class="fas fa-desktop icon-enhanced"></i>
+                        主机管理
+                    </h3>
+                    <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                        <button class="btn btn-primary" onclick="loadHosts()">
+                            <i class="fas fa-list"></i>
+                            查看主机
+                        </button>
+                        <button class="btn btn-secondary" onclick="exportHosts()">
+                            <i class="fas fa-file-export"></i>
+                            导出数据
+                        </button>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="hostIpInput" class="modern-input" placeholder="输入主机IP地址">
+                        <button class="btn btn-warning" onclick="restartHost()">
+                            <i class="fas fa-power-off"></i>
+                            重启
+                        </button>
+                        <button class="btn btn-danger" onclick="deleteHost()">
+                            <i class="fas fa-trash-can"></i>
+                            删除
+                        </button>
+                    </div>
+                </div>
+
+                <div class="control-card">
+                    <h3 class="control-title">
+                        <i class="fas fa-users-gear icon-enhanced"></i>
+                        用户管理
+                    </h3>
+                    <div class="input-group">
+                        <input type="text" id="userAccountInput" class="modern-input" placeholder="输入用户账号">
+                        <button class="btn btn-primary" onclick="queryUser()">
+                            <i class="fas fa-magnifying-glass"></i>
+                            查询用户
+                        </button>
+                    </div>
+                    <button class="btn btn-success" onclick="openAuthModal()" style="width: 100%; margin-top: 0.5rem;">
+                        <i class="fas fa-user-check"></i>
+                        添加授权
+                    </button>
+                </div>
+
+                <div class="control-card">
+                    <h3 class="control-title">
+                        <i class="fas fa-key icon-enhanced"></i>
+                        凭证管理
+                    </h3>
+                    <div class="input-group">
+                        <input type="text" id="credentialIpInput" class="modern-input" placeholder="输入主机IP">
+                        <button class="btn btn-secondary" onclick="modifyCredential()">
+                            <i class="fas fa-pen-to-square"></i>
+                            修改密码
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主机数据表格 -->
+        <div class="data-table">
+            <div class="table-header">
+                <div class="input-group" style="margin: 0;">
+                    <input type="text" id="searchInput" class="modern-input" placeholder="搜索主机..." style="width: 300px;">
+                    <button class="btn btn-secondary" onclick="refreshTable()">
+                        <i class="fas fa-arrows-rotate"></i>
+                        刷新
+                    </button>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <table class="modern-table" id="hostsTable">
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-globe icon-enhanced"></i> 主机IP</th>
+                            <th><i class="fas fa-computer icon-enhanced"></i> 操作系统</th>
+                            <th><i class="fas fa-fingerprint icon-enhanced"></i> 主机ID</th>
+                            <th><i class="fas fa-id-card icon-enhanced"></i> 凭证ID</th>
+                            <th style="width: 250px;"><i class="fas fa-file-lines icon-enhanced"></i> 描述</th>
+                            <th><i class="fas fa-circle-check icon-enhanced"></i> 状态</th>
+                            <th><i class="fas fa-gear icon-enhanced"></i> 操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="hostsTableBody">
+                        <tr>
+                            <td colspan="7" class="empty-state">
+                                <i class="fas fa-folder-open"></i>
+                                <h3>暂无主机数据</h3>
+                                <p>点击"查看主机"按钮加载数据</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 用户信息区域 -->
+        <div id="userInfoSection" style="display: none; margin-top: 2rem;">
+            <div class="data-table">
+                <div class="table-header">
+                    <h2 class="panel-title">
+                        <i class="fas fa-address-card"></i>
+                        用户信息详情
+                    </h2>
+                    <button class="btn btn-secondary" onclick="closeUserInfo()">
+                        <i class="fas fa-xmark"></i>
+                        关闭
+                    </button>
+                </div>
+                <div style="padding: 2rem;">
+                    <pre id="userInfoDisplay" style="background: var(--bg-primary); padding: 1.5rem; border-radius: 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; line-height: 1.6; color: var(--text-secondary); margin: 0; max-height: 400px; overflow-y: auto; border: 1px solid var(--border-color);"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 授权模态框 -->
+    <div id="authModal" class="modal">
+        <div class="modal-content glass-effect">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h2 class="panel-title">
+                    <i class="fas fa-user-shield"></i>
+                    添加用户授权
+                </h2>
+                <span class="close" onclick="closeAuthModal()" style="font-size: 1.5rem; cursor: pointer; color: var(--text-secondary);">&times;</span>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary);">主机IP地址</label>
+                <input type="text" id="modalHostIp" class="modern-input" placeholder="请输入主机IP">
+                <div id="modalHostId" style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-muted);"></div>
+            </div>
+            
+            <div style="margin-bottom: 2rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary);">用户账户</label>
+                <input type="text" id="modalUserAccount" class="modern-input" placeholder="请输入账户">
+                <div id="modalUserId" style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-muted);"></div>
+            </div>
+            
+            <button class="btn btn-success" onclick="performAuthorization()" style="width: 100%;">
+                <i class="fas fa-shield-check"></i>
+                确认授权
+            </button>
+        </div>
+    </div>
+
+    <!-- 通知 -->
+    <div id="notification" class="notification"></div>
+
+    <script>
+        let hostsData = [];
+        let filteredData = [];
+
+        // 工具函数
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.background = type === 'success' ? 'linear-gradient(135deg, #00ff88, #00d4ff)' : 'linear-gradient(135deg, #ff4757, #ff6b35)';
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        function showLoading(element, text = '处理中...') {
+            const originalHTML = element.innerHTML;
+            element.innerHTML = `<span class="loading"></span> ${text}`;
+            element.disabled = true;
+            return originalHTML;
+        }
+
+        function hideLoading(element, originalHTML) {
+            element.innerHTML = originalHTML;
+            element.disabled = false;
+        }
+
+        // 加载状态数据
+        async function loadStatusData() {
+            try {
+                const response = await fetch('/get_hosts');
+                if (response.ok) {
+                    const hosts = await response.json();
+                    hostsData = hosts;
+                    filteredData = hosts;
+                    
+                    document.getElementById('totalHosts').textContent = hosts.length;
+                    document.getElementById('onlineHosts').textContent = hosts.filter(h => h.status === 'online').length || hosts.length;
+                    document.getElementById('totalUsers').textContent = '156'; // 示例数据
+                    
+                    let totalCredentials = 0;
+                    for (const host of hosts) {
+                        try {
+                            const credResponse = await fetch(`/get_credentials/${host.hostId}`);
+                            if (credResponse.ok) {
+                                const credData = await credResponse.json();
+                                totalCredentials += credData.credentials?.length || 0;
+                            }
+                        } catch (e) {
+                            // 忽略单个主机的错误
+                        }
+                    }
+                    document.getElementById('totalCredentials').textContent = totalCredentials;
+                }
+            } catch (error) {
+                console.error('加载状态数据失败:', error);
+            }
+        }
+
+        // 加载主机列表
+        async function loadHosts() {
+            const btn = document.querySelector('.btn-primary');
+            const originalHTML = showLoading(btn, '加载中...');
+            
+            try {
+                const response = await fetch('/get_hosts');
+                if (response.ok) {
+                    hostsData = await response.json();
+                    filteredData = hostsData;
+                    renderTable();
+                    showNotification('主机列表加载成功');
+                } else {
+                    showNotification('加载失败', 'error');
+                }
+            } catch (error) {
+                showNotification('网络错误', 'error');
+            } finally {
+                hideLoading(btn, '<i class="fas fa-list"></i> 查看主机');
+            }
+        }
+
+        // 渲染表格
+        async function renderTable() {
+            const tbody = document.getElementById('hostsTableBody');
+            
+            if (filteredData.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="empty-state">
+                            <i class="fas fa-folder-open"></i>
+                            <h3>暂无主机数据</h3>
+                            <p>点击"查看主机"按钮加载数据</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            
+            for (const host of filteredData) {
+                try {
+                    const credResponse = await fetch(`/get_credentials/${host.hostId}`);
+                    let credentialId = '无';
+                    let credentialCount = 0;
+                    
+                    if (credResponse.ok) {
+                        const credData = await credResponse.json();
+                        const credentials = credData.credentials || [];
+                        credentialCount = credentials.length;
+                        credentialId = credentialCount > 0 ? credentials[0].id : '无';
+                    }
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><strong style="color: var(--accent-cyan);">${host.hostName}</strong></td>
+                        <td>${host.operatingSystem || '未知'}</td>
+                        <td><code style="background: var(--bg-primary); padding: 0.25rem 0.5rem; border-radius: 5px; color: var(--accent-purple);">${host.hostId}</code></td>
+                        <td>${credentialId}</td>
+                        <td class="description-cell">${host.description || '-'}</td>
+                        <td><span class="status-badge status-online">在线</span></td>
+                        <td>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button class="btn btn-warning" onclick="restartHost('${host.hostName}')" style="padding: 0.5rem; font-size: 0.8rem;">
+                                    <i class="fas fa-power-off"></i>
+                                </button>
+                                <button class="btn btn-danger" onclick="deleteHost('${host.hostName}')" style="padding: 0.5rem; font-size: 0.8rem;">
+                                    <i class="fas fa-trash-can"></i>
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                } catch (error) {
+                    console.error('渲染主机行时出错:', error);
+                }
+            }
+        }
+
+        // 搜索功能
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            filteredData = hostsData.filter(host => 
+                host.hostName.toLowerCase().includes(searchTerm) ||
+                host.operatingSystem?.toLowerCase().includes(searchTerm) ||
+                host.description?.toLowerCase().includes(searchTerm) ||
+                host.hostId.toLowerCase().includes(searchTerm)
+            );
+            renderTable();
+        });
+
+        // 导出功能
+        async function exportHosts() {
+            const btn = document.querySelector('.btn-secondary');
+            const originalHTML = showLoading(btn, '导出中...');
+            
+            try {
+                const response = await fetch('/export_hosts');
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `堡垒机主机清单_${new Date().toISOString().split('T')[0]}.xlsx`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                    showNotification('导出成功');
+                } else {
+                    showNotification('导出失败', 'error');
+                }
+            } catch (error) {
+                showNotification('导出错误', 'error');
+            } finally {
+                hideLoading(btn, '<i class="fas fa-file-export"></i> 导出数据');
+            }
+        }
+
+        // 主机操作
+        async function restartHost(ip = null) {
+            const targetIp = ip || document.getElementById('hostIpInput').value.trim();
+            if (!targetIp) {
+                showNotification('请输入主机IP地址', 'error');
+                return;
+            }
+
+            const host = hostsData.find(h => h.hostName === targetIp || h.ipAddress === targetIp);
+            if (!host) {
+                showNotification('未找到该主机', 'error');
+                return;
+            }
+
+            if (!confirm(`确定要重启主机 ${targetIp} 吗？`)) {
+                return;
+            }
+
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const response = await fetch(`/restart_host/${host.hostId}`, { 
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken
+                    }
+                });
+                if (response.ok) {
+                    showNotification('主机重启指令已发送');
+                } else {
+                    const error = await response.json();
+                    showNotification(error.error || '重启失败', 'error');
+                }
+            } catch (error) {
+                showNotification('网络错误', 'error');
+            }
+        }
+
+        async function deleteHost(ip = null) {
+            const targetIp = ip || document.getElementById('hostIpInput').value.trim();
+            if (!targetIp) {
+                showNotification('请输入主机IP地址', 'error');
+                return;
+            }
+
+            const host = hostsData.find(h => h.hostName === targetIp || h.ipAddress === targetIp);
+            if (!host) {
+                showNotification('未找到该主机', 'error');
+                return;
+            }
+
+            if (!confirm(`确定要删除主机 ${targetIp} 吗？此操作不可恢复！`)) {
+                return;
+            }
+
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const response = await fetch(`/delete_host/${host.hostId}`, { 
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': csrfToken
+                    }
+                });
+                if (response.ok) {
+                    showNotification('主机删除成功');
+                    await loadHosts();
+                } else {
+                    const error = await response.json();
+                    showNotification(error.error || '删除失败', 'error');
+                }
+            } catch (error) {
+                showNotification('网络错误', 'error');
+            }
+        }
+
+        // 用户操作
+        async function queryUser() {
+            const account = document.getElementById('userAccountInput').value.trim();
+            if (!account) {
+                showNotification('请输入用户账号', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/get_user_info/${account}`);
+                if (response.ok) {
+                    const userInfo = await response.json();
+                    document.getElementById('userInfoDisplay').textContent = JSON.stringify(userInfo, null, 2);
+                    document.getElementById('userInfoSection').style.display = 'block';
+                    document.getElementById('userInfoSection').scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    showNotification('用户查询失败', 'error');
+                }
+            } catch (error) {
+                showNotification('网络错误', 'error');
+            }
+        }
+
+        function closeUserInfo() {
+            document.getElementById('userInfoSection').style.display = 'none';
+        }
+
+        // 凭证操作
+        async function modifyCredential() {
+            const ip = document.getElementById('credentialIpInput').value.trim();
+            if (!ip) {
+                showNotification('请输入主机IP地址', 'error');
+                return;
+            }
+
+            const host = hostsData.find(h => h.hostName === ip || h.ipAddress === ip);
+            if (!host) {
+                showNotification('未找到该主机', 'error');
+                return;
+            }
+
+            const newPassword = prompt('请输入新的密码:');
+            if (!newPassword) return;
+
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const credResponse = await fetch(`/get_credentials/${host.hostId}`);
+                const credData = await credResponse.json();
+                const credentials = credData.credentials || [];
+                
+                if (credentials.length === 0) {
+                    showNotification('该主机没有凭证信息', 'error');
+                    return;
+                }
+
+                const credentialId = credentials[0].id;
+                const response = await fetch('/modify_credential_password', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ credentialId, password: newPassword })
+                });
+
+                if (response.ok) {
+                    showNotification('密码修改成功');
+                } else {
+                    showNotification('修改失败', 'error');
+                }
+            } catch (error) {
+                showNotification('网络错误', 'error');
+            }
+        }
+
+        // 授权操作
+        function openAuthModal() {
+            document.getElementById('authModal').style.display = 'flex';
+        }
+
+        function closeAuthModal() {
+            document.getElementById('authModal').style.display = 'none';
+            document.getElementById('modalHostIp').value = '';
+            document.getElementById('modalUserAccount').value = '';
+            document.getElementById('modalHostId').textContent = '';
+            document.getElementById('modalUserId').textContent = '';
+        }
+
+        // 模态框实时查询
+        let hostDebounce, userDebounce;
+
+        document.getElementById('modalHostIp').addEventListener('input', function() {
+            clearTimeout(hostDebounce);
+            hostDebounce = setTimeout(async () => {
+                const ip = this.value.trim();
+                if (!ip) {
+                    document.getElementById('modalHostId').textContent = '';
+                    return;
+                }
+                
+                const host = hostsData.find(h => h.hostName === ip);
+                if (host) {
+                    document.getElementById('modalHostId').textContent = `主机ID: ${host.hostId}`;
+                } else {
+                    document.getElementById('modalHostId').textContent = '未找到主机';
+                }
+            }, 300);
+        });
+
+        document.getElementById('modalUserAccount').addEventListener('input', function() {
+            clearTimeout(userDebounce);
+            userDebounce = setTimeout(async () => {
+                const account = this.value.trim();
+                if (!account) {
+                    document.getElementById('modalUserId').textContent = '';
+                    return;
+                }
+                
+                try {
+                    const response = await fetch(`/get_user_info/${account}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        document.getElementById('modalUserId').textContent = `用户ID: ${data.userId || '未知'}`;
+                    } else {
+                        document.getElementById('modalUserId').textContent = '未找到用户';
+                    }
+                } catch (error) {
+                    document.getElementById('modalUserId').textContent = '查询失败';
+                }
+            }, 300);
+        });
+
+        async function performAuthorization() {
+            const hostIp = document.getElementById('modalHostIp').value.trim();
+            const userAccount = document.getElementById('modalUserAccount').value.trim();
+            
+            if (!hostIp || !userAccount) {
+                showNotification('请填写完整信息', 'error');
+                return;
+            }
+
+            const host = hostsData.find(h => h.hostName === hostIp);
+            if (!host) {
+                showNotification('主机不存在', 'error');
+                return;
+            }
+
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const response = await fetch('/authorize_user', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({
+                        hostIp: hostIp,
+                        userAccount: userAccount
+                    })
+                });
+
+                if (response.ok) {
+                    showNotification('授权成功');
+                    closeAuthModal();
+                } else {
+                    const error = await response.json();
+                    showNotification(error.error || '授权失败', 'error');
+                }
+            } catch (error) {
+                showNotification('网络错误', 'error');
+            }
+        }
+
+        // 表格刷新
+        async function refreshTable() {
+            await loadHosts();
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStatusData();
+            
+            // Font Awesome 检测
+            checkFontAwesome();
+            
+            // 点击模态框外部关闭
+            window.addEventListener('click', function(event) {
+                if (event.target.classList.contains('modal')) {
+                    closeAuthModal();
+                }
+            });
+
+            // 每30秒更新状态
+            setInterval(loadStatusData, 30000);
+        });
+        
+        // 检查 Font Awesome 是否加载成功
+        function checkFontAwesome() {
+            const testElement = document.createElement('i');
+            testElement.className = 'fas fa-shield-halved';
+            testElement.style.position = 'absolute';
+            testElement.style.left = '-9999px';
+            testElement.style.fontSize = '16px';
+            document.body.appendChild(testElement);
+            
+            setTimeout(() => {
+                const computedStyle = window.getComputedStyle(testElement);
+                const fontFamily = computedStyle.fontFamily;
+                
+                console.log('Font Family:', fontFamily);
+                console.log('Font Awesome loaded:', fontFamily.includes('Font Awesome'));
+                
+                if (!fontFamily.includes('Font Awesome')) {
+                    console.error('⚠️ Font Awesome 字体未加载成功！');
+                    // 显示调试信息
+                    const debugInfo = document.createElement('div');
+                    debugInfo.innerHTML = '⚠️ Font Awesome 字体加载失败，请检查CSS文件路径';
+                    debugInfo.style.cssText = 'position: fixed; top: 10px; right: 10px; background: red; color: white; padding: 10px; z-index: 9999; border-radius: 5px; font-size: 12px;';
+                    document.body.appendChild(debugInfo);
+                } else {
+                    console.log('✅ Font Awesome 加载成功！');
+                }
+                
+                document.body.removeChild(testElement);
+            }, 100);
+        }
+    </script>
+</body>
+</html>

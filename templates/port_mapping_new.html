@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>端口映射管理 - IT运维管理平台</title>
+    <link rel="icon" type="image/png" href="/static/images/title.png">
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --success-color: #4ade80;
+            --warning-color: #facc15;
+            --danger-color: #f87171;
+            --info-color: #60a5fa;
+            --dark-color: #0f172a;
+            --light-color: #f8fafc;
+            --surface-1: #1e293b;
+            --surface-2: #334155;
+            --surface-3: #475569;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --gradient-primary: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+            --gradient-success: linear-gradient(135deg, #4ade80 0%, #16a34a 100%);
+            --gradient-warning: linear-gradient(135deg, #facc15 0%, #ea580c 100%);
+            --gradient-danger: linear-gradient(135deg, #f87171 0%, #dc2626 100%);
+            --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+            --border-radius: 12px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            margin-left: 280px;
+            padding: 1rem;
+            min-height: 100vh;
+        }
+        
+        /* 页面标题 */
+        .page-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .page-title i {
+            color: var(--primary-color);
+        }
+
+        /* 统计卡片 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 1.25rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-color);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1), 0 4px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .stat-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .stat-card.primary::before {
+            background: var(--primary-color);
+        }
+
+        .stat-card.success::before {
+            background: var(--gradient-success);
+        }
+
+        .stat-card.warning::before {
+            background: var(--gradient-warning);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            background: linear-gradient(135deg, rgba(67, 97, 238, 0.1), rgba(67, 97, 238, 0.05));
+            color: var(--primary-color);
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .stat-card:hover .stat-icon {
+            transform: scale(1.1);
+        }
+
+        .stat-card.primary .stat-icon {
+            background: linear-gradient(135deg, rgba(67, 97, 238, 0.15), rgba(67, 97, 238, 0.05));
+            color: var(--primary-color);
+        }
+
+        .stat-card.success .stat-icon {
+            background: linear-gradient(135deg, rgba(74, 222, 128, 0.15), rgba(74, 222, 128, 0.05));
+            color: #22c55e;
+        }
+
+        .stat-card.warning .stat-icon {
+            background: linear-gradient(135deg, rgba(250, 204, 21, 0.15), rgba(250, 204, 21, 0.05));
+            color: #eab308;
+        }
+
+        .stat-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-bottom: 0.25rem;
+            background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* 筛选区域 */
+        .filter-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .filter-section:hover {
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-title i {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+        }
+
+        .search-input {
+            border: 2px solid rgba(226, 232, 240, 0.8);
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 0.9rem;
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1);
+            background: rgba(255, 255, 255, 1);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            padding-bottom: 0.25rem;
+        }
+
+        .filter-btn {
+            border: 2px solid rgba(226, 232, 240, 0.8);
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--text-secondary);
+            border-radius: 12px;
+            padding: 0.6rem 1rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            white-space: nowrap;
+        }
+
+        .filter-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .filter-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+        }
+
+        .filter-btn.active:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(67, 97, 238, 0.4);
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+                padding: 0.75rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+                gap: 0.75rem;
+            }
+            
+            .stat-card {
+                padding: 1rem;
+            }
+            
+            .stat-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
+                margin-bottom: 0.75rem;
+            }
+            
+            .stat-value {
+                font-size: 1.75rem;
+            }
+            
+            .stat-label {
+                font-size: 0.75rem;
+            }
+            
+            .page-title {
+                font-size: 1.5rem;
+                margin-bottom: 1rem;
+            }
+            
+            .filter-section {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+            
+            .search-input {
+                padding: 0.75rem 1rem;
+                font-size: 0.9rem;
+            }
+            
+            .filter-buttons {
+                gap: 0.5rem;
+            }
+            
+            .filter-btn {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.8rem;
+            }
+            
+            /* 移动端滚动容器优化 */
+            .scroll-container {
+                max-height: 70vh;
+                overflow-y: auto;
+                padding: 0.75rem;
+                border-radius: 12px;
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(12px);
+                border: 1px solid rgba(226, 232, 240, 0.8);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            }
+            
+            /* 移动端滚动条样式 */
+            .scroll-container::-webkit-scrollbar {
+                width: 4px;
+            }
+            
+            .scroll-container::-webkit-scrollbar-track {
+                background: rgba(241, 245, 249, 0.5);
+                border-radius: 2px;
+            }
+            
+            .scroll-container::-webkit-scrollbar-thumb {
+                background: rgba(148, 163, 184, 0.5);
+                border-radius: 2px;
+            }
+            
+            .scroll-container::-webkit-scrollbar-thumb:hover {
+                background: rgba(100, 116, 139, 0.7);
+            }
+            
+            /* 移动端卡片优化 */
+            .mapping-card {
+                flex-direction: column;
+                padding: 1rem;
+                border-radius: 14px;
+                background: rgba(255, 255, 255, 0.98);
+                backdrop-filter: blur(12px);
+                border: 1px solid rgba(226, 232, 240, 0.8);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+                margin-bottom: 0.75rem;
+            }
+            
+            .mapping-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+            }
+            
+            .mapping-header {
+                width: 100%;
+                min-width: auto;
+                margin-bottom: 0.75rem;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 0.5rem;
+            }
+            
+            .mapping-title {
+                font-size: 0.9rem;
+            }
+            
+            .protocol-badge {
+                font-size: 0.65rem;
+                padding: 0.3rem 0.6rem;
+                border-radius: 8px;
+                font-weight: 700;
+                letter-spacing: 0.4px;
+                min-width: 45px;
+                text-align: center;
+            }
+            
+            .mapping-details {
+                flex-direction: column;
+                width: 100%;
+                gap: 0.5rem;
+            }
+            
+            .detail-item {
+                min-width: 100%;
+                padding: 0.6rem 0.75rem;
+                background: rgba(255, 255, 255, 0.9);
+                border-radius: 10px;
+                border: 1px solid rgba(226, 232, 240, 0.8);
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            }
+            
+            .detail-item:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+            }
+            
+            .detail-label {
+                font-size: 0.65rem;
+                font-weight: 600;
+                margin-bottom: 0.2rem;
+                letter-spacing: 0.3px;
+            }
+            
+            .detail-value {
+                font-size: 0.85rem;
+                font-weight: 700;
+                line-height: 1.3;
+            }
+            
+            .empty-state {
+                padding: 2rem 1rem;
+            }
+            
+            .empty-state i {
+                font-size: 3rem;
+                margin-bottom: 1rem;
+            }
+            
+            .empty-state h5 {
+                font-size: 1.25rem;
+            }
+            
+            .empty-state p {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* 滚动容器 */
+        .scroll-container {
+            width: 100%;
+            height: 70vh;
+            overflow: hidden;
+            position: relative;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .scroll-container:hover {
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+        }
+        
+        .scroll-container.search-mode {
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+
+        /* 自定义滚动条 */
+        .scroll-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .scroll-container::-webkit-scrollbar-track {
+            background: rgba(241, 245, 249, 0.5);
+            border-radius: 4px;
+        }
+
+        .scroll-container::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.5);
+            border-radius: 4px;
+            transition: background 0.3s ease;
+        }
+
+        .scroll-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(100, 116, 139, 0.7);
+        }
+        
+        /* 手机端不滚动 */
+        @media (max-width: 768px) {
+            .scroll-container {
+                height: auto;
+                max-height: 70vh;
+                overflow-y: auto;
+            }
+        }
+
+        .no-exact-match {
+            background: linear-gradient(135deg, rgba(67, 97, 238, 0.05), rgba(67, 97, 238, 0.02));
+            border: 2px solid rgba(67, 97, 238, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .mapping-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+            gap: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-bottom: 0.6rem;
+        }
+
+        .mapping-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+            border-color: rgba(67, 97, 238, 0.3);
+        }
+
+        .mapping-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-width: 200px;
+            gap: 0.75rem;
+        }
+
+        .mapping-title {
+            font-weight: 700;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            margin: 0;
+            line-height: 1.3;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .protocol-badge {
+            padding: 0.35rem 0.75rem;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            min-width: 55px;
+            text-align: center;
+            border: 2px solid;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .protocol-badge.tcp {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            border-color: #1d4ed8;
+        }
+
+        .protocol-badge.udp {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border-color: #059669;
+        }
+
+        .mapping-details {
+            display: flex;
+            flex-direction: row;
+            gap: 0.75rem;
+            flex-grow: 1;
+            overflow-x: auto;
+        }
+
+        .detail-item {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+            min-width: 110px;
+            flex: 1;
+            transition: all 0.3s ease;
+        }
+
+        .detail-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+            border-color: rgba(67, 97, 238, 0.3);
+        }
+
+        .detail-label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .detail-value {
+            font-weight: 700;
+            color: var(--text-primary);
+            font-size: 0.8rem;
+            word-break: break-all;
+            line-height: 1.3;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            margin: 1.5rem 0;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            opacity: 0.3;
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .empty-state h5 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .empty-state p {
+            font-size: 1rem;
+            max-width: 500px;
+            margin: 0 auto 2rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 3rem 2rem;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            margin: 1.5rem 0;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .mapping-details {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            /* 移动端卡片样式优化 */
+            .mapping-card {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 0.8rem;
+                border-radius: 14px;
+                background: rgba(255, 255, 255, 0.98);
+                backdrop-filter: blur(12px);
+                border: 1px solid rgba(200, 200, 200, 0.2);
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+                margin-bottom: 0.6rem;
+                transition: all 0.2s ease;
+            }
+            
+            .mapping-card:hover,
+            .mapping-card:active {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+            }
+            
+            /* 移动端触摸反馈 */
+            .mapping-card:active {
+                transform: translateY(1px) scale(0.99);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+                background: rgba(255, 255, 255, 0.96);
+                transition: all 0.1s ease;
+            }
+            
+            .mapping-header {
+                width: 100%;
+                min-width: auto;
+                margin-bottom: 0.6rem;
+                display: flex;
+                justify-content: flex-end;
+                align-items: center;
+                gap: 0.4rem;
+            }
+            
+            .protocol-badge {
+                font-size: 0.7rem;
+                padding: 0.3rem 0.6rem;
+                border-radius: 16px;
+                font-weight: 600;
+                letter-spacing: 0.5px;
+                min-width: 45px;
+                text-align: center;
+            }
+            
+            .mapping-details {
+                width: 100%;
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.5rem;
+            }
+            
+            .detail-item {
+                min-width: auto;
+                width: 100%;
+                padding: 0.6rem;
+                background: rgba(255, 255, 255, 0.9);
+                border-radius: 10px;
+                border: 1px solid rgba(226, 232, 240, 0.9);
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+                transition: all 0.2s ease;
+            }
+            
+            .detail-item:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+                background: rgba(255, 255, 255, 0.95);
+            }
+            
+            .detail-label {
+                font-size: 0.65rem;
+                color: var(--text-secondary);
+                font-weight: 600;
+                margin-bottom: 0.25rem;
+                text-transform: uppercase;
+                letter-spacing: 0.4px;
+            }
+            
+            .detail-value {
+                font-size: 0.8rem;
+                font-weight: 700;
+                color: var(--text-primary);
+                line-height: 1.2;
+                word-break: break-all;
+            }
+            
+            /* 特殊样式处理 */
+            .detail-item:nth-child(1) { 
+                grid-column: 1 / -1;
+                background: linear-gradient(135deg, rgba(67, 97, 238, 0.1), rgba(67, 97, 238, 0.05));
+                border-color: rgba(67, 97, 238, 0.2);
+            }
+            
+            .detail-item:nth-child(2) { grid-column: 1 / 2; }
+            .detail-item:nth-child(3) { grid-column: 2 / 3; }
+            .detail-item:nth-child(4) { grid-column: 1 / 2; }
+            .detail-item:nth-child(5) { grid-column: 2 / 3; }
+            .detail-item:nth-child(6) { grid-column: 1 / 2; }
+            
+            .empty-state {
+                padding: 2rem 1rem;
+            }
+            
+            .empty-state i {
+                font-size: 3rem;
+                margin-bottom: 1rem;
+            }
+            
+            .empty-state h5 {
+                font-size: 1.25rem;
+                margin-bottom: 0.75rem;
+            }
+            
+            .empty-state p {
+                font-size: 0.9rem;
+                margin: 0 auto 1rem;
+            }
+            
+            .loading-spinner {
+                padding: 2rem;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            
+            .loading-spinner .spinner-border {
+                width: 2.5rem;
+                height: 2.5rem;
+                color: var(--primary-color);
+            }
+            
+            /* 移动端骨架屏加载效果 */
+            .skeleton {
+                background: linear-gradient(90deg, 
+                    rgba(200, 200, 200, 0.15) 0%, 
+                    rgba(200, 200, 200, 0.25) 50%, 
+                    rgba(200, 200, 200, 0.15) 100%);
+                background-size: 200% 100%;
+                animation: loading 1.2s ease-in-out infinite;
+                border-radius: 10px;
+                min-height: 1rem;
+            }
+            
+            @keyframes loading {
+                0% { background-position: 200% 0; }
+                100% { background-position: -200% 0; }
+            }
+            
+            /* 移动端刷新指示器 */
+            .refresh-indicator {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+                z-index: 1000;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+                border-radius: 1px;
+            }
+            
+            .refresh-indicator.active {
+                opacity: 1;
+                animation: refresh-slide 0.8s ease-in-out infinite;
+            }
+            
+            .main-content {
+                margin-left: 0;
+                padding: 0.5rem;
+            }
+            
+            .mapping-details {
+                grid-template-columns: 1fr;
+            }
+            
+            .filter-section {
+                padding: 1rem;
+            }
+            
+            /* 移动端统计卡片布局 */
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 0.5rem;
+            }
+            
+            .stat-card {
+                padding: 0.6rem;
+                font-size: 0.8rem;
+            }
+            
+            .scroll-container {
+                height: 60vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 引入统一侧边栏 -->
+    {% include 'sidebar.html' %}
+
+    <main class="main-content">
+        <!-- 统计卡片 -->
+        <div class="stats-grid">
+            <div class="stat-card primary">
+                <div class="stat-icon">
+                    <i class="bi bi-diagram-3"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" id="totalCount">0</div>
+                    <div class="stat-label">端口映射总数</div>
+                </div>
+            </div>
+            <div class="stat-card success">
+                <div class="stat-icon">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" id="tcpCount">0</div>
+                    <div class="stat-label">TCP映射</div>
+                </div>
+            </div>
+            <div class="stat-card warning">
+                <div class="stat-icon">
+                    <i class="bi bi-exclamation-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" id="udpCount">0</div>
+                    <div class="stat-label">UDP映射</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 筛选区域 -->
+        <div class="filter-section">
+            <div class="row align-items-center">
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <input type="text" class="search-input form-control" id="searchInput" 
+                           placeholder="搜索接口、IP地址或端口号...">
+                </div>
+                <div class="col-md-8">
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" data-filter="all">
+                            <i class="bi bi-list"></i>
+                            全部
+                        </button>
+                        <button class="filter-btn" data-filter="tcp">
+                            <i class="bi bi-check-circle"></i>
+                            TCP
+                        </button>
+                        <button class="filter-btn" data-filter="udp">
+                            <i class="bi bi-exclamation-circle"></i>
+                            UDP
+                        </button>
+                        <button class="filter-btn" data-filter="common">
+                            <i class="bi bi-star"></i>
+                            常用端口
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 滚动内容区域 -->
+        <div class="loading-spinner" id="loadingSpinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">加载中...</span>
+            </div>
+        </div>
+
+        <div class="scroll-container" id="scrollContainer" style="display: none;">
+            <div class="scroll-content" id="scrollContent"></div>
+        </div>
+
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <i class="bi bi-inbox"></i>
+            <h5>暂无映射记录</h5>
+            <p>当前没有任何端口映射配置，请添加第一个端口映射。</p>
+        </div>
+    </main>
+
+    <script src="/static/js/jquery-3.7.1.min.js"></script>
+    <script>
+        let allMappings = [];
+        let filteredMappings = [];
+        
+        // 防抖函数
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+        
+        // 分页渲染相关变量
+        const ITEMS_PER_PAGE = 50;
+        let currentPage = 1;
+
+        // 从下往上弹出动画
+        function animateElementsFromBottom() {
+            // 为统计卡片添加动画
+            const statsGrid = document.querySelector('.stats-grid');
+            if (statsGrid) {
+                statsGrid.classList.add('animate-stagger');
+            }
+            
+            // 为筛选区域添加动画
+            const filterSection = document.querySelector('.filter-section');
+            if (filterSection) {
+                filterSection.style.opacity = '0';
+                filterSection.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    filterSection.style.transition = 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    filterSection.style.opacity = '1';
+                    filterSection.style.transform = 'translateY(0)';
+                }, 300);
+            }
+        }
+
+        // Intersection Observer 配置
+        function setupIntersectionObserver() {
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.animationPlayState = 'running';
+                    }
+                });
+            }, observerOptions);
+
+            // 观察统计卡片
+            const statCards = document.querySelectorAll('.stat-card');
+            statCards.forEach(card => {
+                card.style.animation = 'slideUpFromBottom 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards';
+                card.style.animationDelay = '0.1s';
+                observer.observe(card);
+            });
+
+            // 观察映射卡片
+            const mappingCards = document.querySelectorAll('.mapping-card');
+            mappingCards.forEach((card, index) => {
+                card.style.animation = 'slideUpFromBottom 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards';
+                card.style.animationDelay = `${index * 0.1}s`;
+                observer.observe(card);
+            });
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadMappings();
+            animateElementsFromBottom();
+            setTimeout(setupIntersectionObserver, 500);
+            
+            // 搜索功能 - 使用防抖优化
+            const debouncedFilterMappings = debounce(filterMappings, 300);
+            document.getElementById('searchInput').addEventListener('input', debouncedFilterMappings);
+            
+            // 筛选按钮
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    filterMappings();
+                });
+            });
+        });
+
+        // 加载映射数据
+        async function loadMappings() {
+            try {
+                const response = await fetch('/api/port-mappings');
+                const data = await response.json();
+                allMappings = data.mappings || [];
+                updateStats();
+                filterMappings();
+                
+                document.getElementById('loadingSpinner').style.display = 'none';
+                document.getElementById('scrollContainer').style.display = 'block';
+                
+                if (allMappings.length === 0) {
+                    document.getElementById('emptyState').style.display = 'block';
+                    document.getElementById('scrollContainer').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('加载数据失败:', error);
+            }
+        }
+
+        // 更新统计信息
+        function updateStats() {
+            document.getElementById('totalCount').textContent = allMappings.length;
+            document.getElementById('tcpCount').textContent = allMappings.filter(m => 
+                m.protocol && m.protocol.toLowerCase().includes('tcp')).length;
+            document.getElementById('udpCount').textContent = allMappings.filter(m => 
+                m.protocol && m.protocol.toLowerCase().includes('udp')).length;
+        }
+
+        // 优化的筛选映射函数
+        function filterMappings() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+            const activeFilter = document.querySelector('.filter-btn.active').dataset.filter;
+            
+            // 优化的搜索算法 - 一次遍历完成精确和模糊匹配
+            if (searchTerm) {
+                filteredMappings = [];
+                const exactMatches = [];
+                const fuzzyMatches = [];
+                
+                // 一次遍历完成所有匹配
+                for (const mapping of allMappings) {
+                    let isExactMatch = false;
+                    let isFuzzyMatch = false;
+                    
+                    // 检查精确匹配
+                    if (mapping.public_ip.toLowerCase() === searchTerm ||
+                        mapping.private_ip.toLowerCase() === searchTerm ||
+                        mapping.public_port.toString() === searchTerm ||
+                        mapping.private_port.toString() === searchTerm) {
+                        isExactMatch = true;
+                    }
+                    
+                    // 检查模糊匹配
+                    if (!isExactMatch && (
+                        mapping.interface.toLowerCase().includes(searchTerm) ||
+                        mapping.public_ip.toLowerCase().includes(searchTerm) ||
+                        mapping.private_ip.toLowerCase().includes(searchTerm) ||
+                        mapping.public_port.toString().includes(searchTerm) ||
+                        mapping.private_port.toString().includes(searchTerm))) {
+                        isFuzzyMatch = true;
+                    }
+                    
+                    if (isExactMatch) {
+                        exactMatches.push(mapping);
+                    } else if (isFuzzyMatch) {
+                        fuzzyMatches.push(mapping);
+                    }
+                }
+                
+                // 优先显示精确匹配结果，如果没有则显示模糊匹配结果
+                filteredMappings = exactMatches.length > 0 ? exactMatches : fuzzyMatches;
+            } else {
+                // 没有搜索词时显示所有映射
+                filteredMappings = [...allMappings];
+            }
+            
+            // 协议筛选
+            filteredMappings = filteredMappings.filter(mapping => {
+                if (activeFilter === 'tcp' && !mapping.protocol.toLowerCase().includes('tcp')) {
+                    return false;
+                }
+                if (activeFilter === 'udp' && !mapping.protocol.toLowerCase().includes('udp')) {
+                    return false;
+                }
+                if (activeFilter === 'common' && ![80, 443, 22, 21, 25, 53, 110, 143, 993, 995].includes(parseInt(mapping.public_port))) {
+                    return false;
+                }
+                
+                return true;
+            });
+            
+            // 重置分页
+            currentPage = 1;
+            renderMappings(searchTerm, searchTerm && filteredMappings.some(m => 
+                m.public_ip.toLowerCase() === searchTerm ||
+                m.private_ip.toLowerCase() === searchTerm ||
+                m.public_port.toString() === searchTerm ||
+                m.private_port.toString() === searchTerm
+            ));
+        }
+
+        // 优化的渲染映射卡片函数
+        function renderMappings(searchTerm, hasExactMatch) {
+            const scrollContent = document.getElementById('scrollContent');
+            const scrollContainer = document.getElementById('scrollContainer');
+            
+            // 根据是否有搜索词来切换模式
+            if (searchTerm) {
+                // 搜索模式：手动滚动
+                scrollContainer.classList.add('search-mode');
+            } else {
+                // 默认模式：自动滚动
+                scrollContainer.classList.remove('search-mode');
+            }
+            
+            if (filteredMappings.length === 0) {
+                // 如果有搜索词但没有结果，显示特定的空状态提示
+                if (searchTerm) {
+                    document.getElementById('emptyState').innerHTML = `
+                        <i class="bi bi-search"></i>
+                        <h5>未找到匹配的映射记录</h5>
+                        <p>没有找到与"${searchTerm}"匹配的端口映射配置。</p>
+                    `;
+                } else {
+                    document.getElementById('emptyState').innerHTML = `
+                        <i class="bi bi-inbox"></i>
+                        <h5>暂无映射记录</h5>
+                        <p>当前没有任何端口映射配置，请添加第一个端口映射。</p>
+                    `;
+                }
+                document.getElementById('emptyState').style.display = 'block';
+                scrollContainer.style.display = 'none';
+                return;
+            }
+            
+            document.getElementById('emptyState').style.display = 'none';
+            scrollContainer.style.display = 'block';
+            
+            // 分页渲染优化
+            const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+            const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, filteredMappings.length);
+            const pageItems = filteredMappings.slice(startIndex, endIndex);
+            
+            // 使用文档片段减少DOM操作
+            const fragment = document.createDocumentFragment();
+            
+            // 如果有搜索词且没有精确匹配，添加提示信息
+            if (searchTerm && !hasExactMatch) {
+                // 判断搜索词是IP地址还是端口号
+                const isIP = searchTerm.includes('.');
+                const promptText = isIP ? 
+                    `未搜索到IP地址${searchTerm}的映射，以下为${searchTerm}的模糊搜索结果` : 
+                    `未搜索到端口${searchTerm}的映射，以下为${searchTerm}的模糊搜索结果`;
+                
+                const promptDiv = document.createElement('div');
+                promptDiv.className = 'no-exact-match';
+                promptDiv.textContent = promptText;
+                fragment.appendChild(promptDiv);
+            }
+            
+            // 生成卡片内容
+            for (const mapping of pageItems) {
+                // 处理协议显示：将"6(tcp)"显示为"TCP"，"17(udp)"显示为"UDP"
+                const displayProtocol = mapping.protocol === '6(tcp)' ? 'TCP' : 
+                                      (mapping.protocol === '17(udp)' ? 'UDP' : 
+                                      mapping.protocol);
+                const isTCP = displayProtocol.toLowerCase().includes('tcp');
+                
+                const cardDiv = document.createElement('div');
+                cardDiv.className = `mapping-card ${isTCP ? 'tcp' : 'udp'}`;
+                
+                cardDiv.innerHTML = `
+                    <div class="mapping-details">
+                        <div class="detail-item">
+                            <div class="detail-label">接口名称</div>
+                            <div class="detail-value">${mapping.interface || '未命名接口'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">协议</div>
+                            <div class="detail-value">${displayProtocol}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">公网IP</div>
+                            <div class="detail-value">${mapping.public_ip || '-'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">公网端口</div>
+                            <div class="detail-value">${mapping.public_port || '-'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">内网IP</div>
+                            <div class="detail-value">${mapping.private_ip || '-'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">内网端口</div>
+                            <div class="detail-value">${mapping.private_port || '-'}</div>
+                        </div>
+                    </div>
+                `;
+                
+                fragment.appendChild(cardDiv);
+            }
+            
+            // 清空容器并添加新内容
+            scrollContent.innerHTML = '';
+            scrollContent.appendChild(fragment);
+            
+            // 如果是搜索模式且还有更多数据，添加滚动加载
+            if (searchTerm && filteredMappings.length > ITEMS_PER_PAGE) {
+                // 添加滚动事件监听器实现无限滚动
+                scrollContainer.addEventListener('scroll', handleScroll);
+            } else {
+                scrollContainer.removeEventListener('scroll', handleScroll);
+            }
+            
+            // 默认模式的自动滚动保持不变
+            if (!searchTerm && window.innerWidth > 768) {
+                // 为默认模式复制内容实现无缝滚动
+                const cards = Array.from(scrollContent.children);
+                cards.forEach(card => {
+                    const clone = card.cloneNode(true);
+                    scrollContent.appendChild(clone);
+                });
+                
+                // 添加自动滚动动画（仅在电脑端）
+                scrollContent.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    animation: scrollVertical 500s linear infinite;
+                    padding: 1rem;
+                `;
+                
+                // 添加悬停暂停效果（仅在桌面端）
+                scrollContent.addEventListener('mouseover', function() {
+                    this.style.animationPlayState = 'paused';
+                });
+                
+                scrollContent.addEventListener('mouseout', function() {
+                    this.style.animationPlayState = 'running';
+                });
+                
+                // 添加动画样式
+                if (!document.getElementById('scrollAnimationStyle')) {
+                    const style = document.createElement('style');
+                    style.id = 'scrollAnimationStyle';
+                    style.textContent = `
+                        @keyframes scrollVertical {
+                            0% {
+                                transform: translateY(0);
+                            }
+                            100% {
+                                transform: translateY(-50%);
+                            }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+            } else if (!searchTerm) {
+                // 手机端移除动画相关代码
+                const existingStyle = document.getElementById('scrollAnimationStyle');
+                if (existingStyle) {
+                    existingStyle.remove();
+                }
+            }
+        }
+        
+        // 滚动加载处理函数
+        function handleScroll() {
+            const scrollContainer = document.getElementById('scrollContainer');
+            const scrollContent = document.getElementById('scrollContent');
+            
+            // 检查是否滚动到底部
+            if (scrollContainer.scrollTop + scrollContainer.clientHeight >= scrollContainer.scrollHeight - 100) {
+                loadMoreItems();
+            }
+        }
+        
+        // 加载更多项目
+        function loadMoreItems() {
+            const totalPages = Math.ceil(filteredMappings.length / ITEMS_PER_PAGE);
+            
+            if (currentPage < totalPages) {
+                currentPage++;
+                
+                // 计算下一页的数据范围
+                const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+                const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, filteredMappings.length);
+                const pageItems = filteredMappings.slice(startIndex, endIndex);
+                
+                // 使用文档片段减少DOM操作
+                const fragment = document.createDocumentFragment();
+                
+                // 生成卡片内容
+                for (const mapping of pageItems) {
+                    // 处理协议显示：将"6(tcp)"显示为"TCP"，"17(udp)"显示为"UDP"
+                    const displayProtocol = mapping.protocol === '6(tcp)' ? 'TCP' : 
+                                          (mapping.protocol === '17(udp)' ? 'UDP' : 
+                                          mapping.protocol);
+                    const isTCP = displayProtocol.toLowerCase().includes('tcp');
+                    
+                    const cardDiv = document.createElement('div');
+                    cardDiv.className = `mapping-card ${isTCP ? 'tcp' : 'udp'}`;
+                    
+                    cardDiv.innerHTML = `
+                        <div class="mapping-details">
+                            <div class="detail-item">
+                                <div class="detail-label">接口名称</div>
+                                <div class="detail-value">${mapping.interface || '未命名接口'}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">协议</div>
+                                <div class="detail-value">${displayProtocol}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">公网IP</div>
+                                <div class="detail-value">${mapping.public_ip || '-'}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">公网端口</div>
+                                <div class="detail-value">${mapping.public_port || '-'}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">内网IP</div>
+                                <div class="detail-value">${mapping.private_ip || '-'}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">内网端口</div>
+                                <div class="detail-value">${mapping.private_port || '-'}</div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    fragment.appendChild(cardDiv);
+                }
+                
+                // 添加新内容
+                document.getElementById('scrollContent').appendChild(fragment);
+            }
+        }
+
+        // 定期刷新数据（优化移动端性能，减少刷新频率）
+        if (window.innerWidth > 768) {
+            // 桌面端每30秒刷新一次
+            setInterval(loadMappings, 30000);
+        } else {
+            // 移动端每60秒刷新一次，减少性能消耗
+            setInterval(loadMappings, 60000);
+            
+            // 移动端下拉刷新功能
+            let startY = 0;
+            let currentY = 0;
+            const scrollContainer = document.getElementById('scrollContainer');
+            
+            scrollContainer.addEventListener('touchstart', function(e) {
+                if (this.scrollTop === 0) {
+                    startY = e.touches[0].clientY;
+                }
+            });
+            
+            scrollContainer.addEventListener('touchmove', function(e) {
+                if (this.scrollTop === 0) {
+                    currentY = e.touches[0].clientY;
+                    const pullDistance = currentY - startY;
+                    
+                    if (pullDistance > 0) {
+                        this.style.transform = `translateY(${pullDistance}px)`;
+                        
+                        if (pullDistance > 80) {
+                            // 触发刷新
+                            loadMappings();
+                            this.style.transform = 'translateY(0)';
+                        }
+                    }
+                }
+            });
+            
+            scrollContainer.addEventListener('touchend', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,3330 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IT运维管理平台 - 主机资源监控</title>
+    <link rel="icon" type="image/png" href="/static/images/title.png">
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        :root {
+            /* 现代配色方案 */
+            --primary-50: #eff6ff;
+            --primary-100: #dbeafe;
+            --primary-300: #93c5fd;
+            --primary-500: #3b82f6;
+            --primary-600: #2563eb;
+            --primary-700: #1d4ed8;
+            
+            --success-500: #22c55e;
+            --success-600: #16a34a;
+            
+            --warning-500: #f59e0b;
+            --warning-600: #d97706;
+            
+            --danger-500: #ef4444;
+            --danger-600: #dc2626;
+            
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            
+            /* 渐变背景 */
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-success: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            --gradient-warning: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            --gradient-danger: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+            
+            /* 阴影效果 */
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            
+            /* 圆角 */
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+            --radius-2xl: 1.5rem;
+            
+            /* 过渡动画 */
+            --transition-all: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            font-size: 0.875rem;
+            line-height: 1.6;
+            color: var(--gray-900);
+            font-weight: 400;
+            letter-spacing: -0.025em;
+            margin: 0;
+        }
+
+        .main-content {
+            margin-left: 280px;
+            padding: 1rem;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        }
+
+        .page-header {
+            background: white;
+            border-radius: var(--radius-2xl);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--gray-200);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-primary);
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.05em;
+        }
+
+        .page-subtitle {
+            color: var(--gray-600);
+            font-size: 1.125rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .refresh-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            background: var(--gradient-success);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius-md);
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-all);
+        }
+
+        .refresh-badge:hover {
+            transform: scale(1.05);
+            box-shadow: var(--shadow-md);
+        }
+
+        .refresh-badge.refreshing {
+            background: var(--gradient-warning);
+        }
+
+        .refresh-badge.refreshing i {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+
+
+        /* 表格排序样式 */
+        .sortable {
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            transition: var(--transition-all);
+            padding-right: 1.2rem !important; /* 减少右内边距 */
+        }
+
+        .sortable:hover {
+            background: linear-gradient(135deg, var(--primary-50), var(--primary-100)) !important;
+            color: var(--primary-700);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.15);
+        }
+
+        .sort-icon {
+            position: absolute;
+            right: 0.25rem; /* 减少右边距 */
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0.8rem; /* 减小图标宽度 */
+            height: 0.8rem; /* 减小图标高度 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.5;
+            transition: var(--transition-all);
+            font-size: 0.7rem; /* 减小字体大小 */
+        }
+
+        .sortable:hover .sort-icon {
+            opacity: 0.9;
+            color: var(--primary-600);
+        }
+
+        .sortable.sort-asc .sort-icon,
+        .sortable.sort-desc .sort-icon {
+            opacity: 1;
+            color: var(--primary-600);
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: var(--radius-sm);
+        }
+
+        /* 排序图标内容 */
+        .sort-icon::before {
+            content: '↕';
+            font-weight: bold;
+        }
+
+        .sortable.sort-desc .sort-icon::before {
+            content: '↓';
+            color: var(--primary-600);
+        }
+
+        .sortable.sort-asc .sort-icon::before {
+            content: '↑';
+            color: var(--primary-600);
+        }
+
+        /* 通用搜索框样式 */
+        .search-box {
+            position: relative;
+            max-width: 400px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 3rem;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            font-size: 0.9rem;
+            transition: var(--transition-all);
+            background: var(--gray-50);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-500);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray-400);
+            font-size: 1rem;
+        }
+
+        .search-clear {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--gray-400);
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 0.25rem;
+            border-radius: var(--radius-sm);
+            transition: var(--transition-all);
+            display: none;
+        }
+
+        .search-clear:hover {
+            background: var(--gray-100);
+            color: var(--gray-600);
+        }
+
+        /* IP筛选状态指示器样式 */
+        .filter-indicator {
+            background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: var(--radius-full);
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: var(--transition-all);
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+            white-space: nowrap;
+            margin-left: 0.5rem;
+        }
+
+        .filter-indicator:hover {
+            background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+        }
+
+        .filter-indicator .filter-text {
+            font-size: 0.8rem;
+        }
+
+        .filter-indicator i {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        .filter-indicator:hover i {
+            opacity: 1;
+        }
+
+        .search-results {
+            margin-top: 1rem;
+            font-size: 0.875rem;
+            color: var(--gray-600);
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 2rem;
+            color: var(--gray-500);
+        }
+
+        .no-results i {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--gray-400);
+        }
+
+        /* IP地址筛选样式 */
+        .filterable {
+            cursor: pointer;
+            user-select: none;
+            position: relative; /* 保持相对定位以支持下拉框 */
+            transition: var(--transition-all);
+            padding-right: 1.2rem !important; /* 与排序列保持一致 */
+        }
+
+        .filterable:hover {
+            background: linear-gradient(135deg, var(--success-50), var(--success-100)) !important;
+            color: var(--success-700);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(34, 197, 94, 0.15);
+        }
+
+        .filter-icon {
+            position: absolute;
+            right: 0.25rem; /* 与排序图标保持一致 */
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0.8rem; /* 与排序图标保持一致 */
+            height: 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.5;
+            transition: var(--transition-all);
+            font-size: 0.7rem; /* 与排序图标保持一致 */
+        }
+
+        .filterable:hover .filter-icon {
+            opacity: 1;
+            color: var(--success-600);
+        }
+
+        .filter-icon::before {
+            content: '✇';
+            font-weight: bold;
+        }
+
+        /* IP筛选模态框样式 */
+        .ip-filter-modal {
+            position: fixed; /* 改为fixed定位，通过JavaScript动态设置位置 */
+            min-width: 300px;
+            max-width: 400px;
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-xl);
+            border: 1px solid var(--gray-200);
+            z-index: 1000;
+            display: none;
+        }
+
+        .ip-filter-modal.show {
+            display: block;
+            animation: dropdownSlideIn 0.2s ease-out;
+        }
+
+        @keyframes dropdownSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .ip-filter-content {
+            padding: 1.5rem;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .ip-filter-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .ip-filter-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .ip-filter-close {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: var(--gray-400);
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: var(--radius-sm);
+            transition: var(--transition-all);
+        }
+
+        .ip-filter-close:hover {
+            background: var(--gray-100);
+            color: var(--gray-600);
+        }
+
+        .ip-filter-search {
+            margin-bottom: 1rem;
+        }
+
+        .ip-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            padding: 0.5rem;
+        }
+
+        .ip-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            border-radius: var(--radius-md);
+            transition: var(--transition-all);
+            cursor: pointer;
+        }
+
+        .ip-item:hover {
+            background: var(--gray-50);
+        }
+
+        .ip-item input[type="checkbox"] {
+            margin: 0;
+        }
+
+        .ip-item label {
+            font-family: 'JetBrains Mono', 'Fira Code', 'Monaco', monospace;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--gray-700);
+            cursor: pointer;
+            margin: 0;
+        }
+
+        .ip-filter-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .ip-filter-btn {
+            flex: 1;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-md);
+            font-weight: 500;
+            font-size: 0.85rem;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition-all);
+        }
+
+        .ip-filter-btn.primary {
+            background: var(--gradient-primary);
+            color: white;
+        }
+
+        .ip-filter-btn.primary:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .ip-filter-btn.secondary {
+            background: var(--gray-100);
+            color: var(--gray-700);
+        }
+
+        .ip-filter-btn.secondary:hover {
+            background: var(--gray-200);
+        }
+
+        .monitoring-container {
+            background: white;
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--gray-200);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .monitoring-container.fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1000;
+            margin: 0;
+            border-radius: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: white;
+        }
+
+        .monitoring-header {
+            background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%); /* 与侧边栏背景色一致 */
+            color: var(--gray-700); /* 调整文字颜色以匹配新背景 */
+            padding: 0.8rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+        }
+
+        .monitoring-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .header-controls .search-box {
+            max-width: 300px;
+        }
+
+        .header-controls .search-input {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid var(--gray-300); /* 调整边框颜色以匹配新背景 */
+            color: var(--gray-800);
+        }
+
+        .header-controls .search-input:focus {
+            background: white;
+            border-color: var(--primary-500); /* 使用主色调作为焦点边框 */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+
+        .header-controls .search-input::placeholder {
+            color: var(--gray-500);
+        }
+
+
+
+        .table-container {
+            overflow-x: auto; /* 允许横向滚动，但优先自适应 */
+            overflow-y: visible;
+            padding: 1rem;
+            max-width: 100%;
+        }
+
+        .monitoring-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            font-size: 0.85rem;
+            table-layout: auto; /* 改为自适应布局 */
+            line-height: 1.5;
+            min-width: 100%; /* 确保表格至少占满容器宽度 */
+        }
+
+        .monitoring-table th {
+            background: var(--gray-50);
+            color: var(--gray-700);
+            font-weight: 600;
+            text-align: left;
+            padding: 0.7rem 0.4rem; /* 减小内边距 */
+            font-size: 0.8rem; /* 减小字体 */
+            text-transform: uppercase;
+            letter-spacing: 0.01em; /* 减小字母间距 */
+            border-bottom: 2px solid var(--gray-200);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.2; /* 减小行高 */
+        }
+
+        .monitoring-table th.sortable {
+            background: linear-gradient(to bottom, var(--gray-50), var(--gray-100));
+            border: 1px solid var(--gray-300);
+        }
+
+        .monitoring-table th.sortable:hover {
+            background: linear-gradient(to bottom, var(--primary-50), var(--primary-100));
+            color: var(--primary-700);
+            border-color: var(--primary-300);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* 列宽优化 - 改为自适应 */
+        .monitoring-table th:first-child {
+            min-width: 120px; /* IP地址列最小宽度 */
+            width: auto;
+        }
+        
+        .monitoring-table th:nth-child(2) {
+            min-width: 80px; /* 使用人列最小宽度 */
+            width: auto;
+        }
+        
+        .monitoring-table th:nth-child(n+3) {
+            min-width: 60px; /* 其他列最小宽度 */
+            width: auto;
+        }
+
+        .monitoring-table td {
+            padding: 0.6rem 0.4rem; /* 减小内边距 */
+            border-bottom: 1px solid var(--gray-200);
+            vertical-align: middle;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 0.75rem; /* 减小字体 */
+            line-height: 1.3;
+        }
+
+        .monitoring-table tbody tr:hover {
+            background: var(--gray-50);
+        }
+
+        .monitoring-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .ip-address {
+            font-family: 'JetBrains Mono', 'Fira Code', 'Monaco', monospace;
+            font-weight: 600;
+            color: var(--primary-600);
+            font-size: 0.75rem;
+        }
+
+        .host-user-info {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            max-width: 90px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            border-radius: var(--radius-sm);
+        }
+
+        /* 不同使用人的彩色配置 */
+        .host-user-info[data-user="李希哲"] {
+            color: #2563eb; /* 蓝色 */
+            background: rgba(37, 99, 235, 0.1);
+            border: 1px solid rgba(37, 99, 235, 0.2);
+        }
+
+        .host-user-info[data-user="鲜鑫"] {
+            color: #dc2626; /* 红色 */
+            background: rgba(220, 38, 38, 0.1);
+            border: 1px solid rgba(220, 38, 38, 0.2);
+        }
+
+        .host-user-info[data-user="未知"] {
+            color: var(--gray-600); /* 灰色 */
+            background: rgba(107, 114, 128, 0.1);
+            border: 1px solid rgba(107, 114, 128, 0.2);
+        }
+
+        /* 其他使用人（默认绿色） */
+        .host-user-info:not([data-user="李希哲"]):not([data-user="鲜鑫"]):not([data-user="未知"]) {
+            color: #16a34a; /* 绿色 */
+            background: rgba(22, 163, 74, 0.1);
+            border: 1px solid rgba(22, 163, 74, 0.2);
+        }
+
+        /* 系统类型显示样式 - 统一Bootstrap图标 */
+        .os-type-info {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2rem;
+            height: 2rem;
+            border-radius: var(--radius-sm);
+            font-size: 1rem;
+            transition: var(--transition-all);
+            cursor: default;
+            position: relative;
+        }
+
+        /* Windows系统样式 - 蓝色 */
+        .os-type-info[data-os="Windows"] {
+            color: #1e40af; /* 深蓝色 */
+            background: rgba(30, 64, 175, 0.1);
+            border: 1px solid rgba(30, 64, 175, 0.25);
+        }
+
+        .os-type-info[data-os="Windows"]:hover {
+            background: rgba(30, 64, 175, 0.2);
+            transform: scale(1.1);
+        }
+
+        /* Linux系统样式 - 绿色 */
+        .os-type-info[data-os="Linux"] {
+            color: #059669; /* 深绿色 */
+            background: rgba(5, 150, 105, 0.1);
+            border: 1px solid rgba(5, 150, 105, 0.25);
+        }
+
+        .os-type-info[data-os="Linux"]:hover {
+            background: rgba(5, 150, 105, 0.2);
+            transform: scale(1.1);
+        }
+
+        /* 未知系统样式 - 灰色 */
+        .os-type-info[data-os="未知"] {
+            color: var(--gray-600);
+            background: rgba(107, 114, 128, 0.1);
+            border: 1px solid rgba(107, 114, 128, 0.2);
+        }
+
+        .os-type-info[data-os="未知"]:hover {
+            background: rgba(107, 114, 128, 0.2);
+            transform: scale(1.1);
+        }
+
+        /* 移动端系统类型信息适配 */
+        @media (max-width: 768px) {
+            .os-type-info {
+                width: 1.5rem;
+                height: 1.5rem;
+                font-size: 0.85rem;
+            }
+        }
+        
+        /* 移动端使用人信息适配 */
+        @media (max-width: 768px) {
+            .host-user-info {
+                font-size: 0.75rem; /* 移动端也相应增大 */
+                padding: 0.2rem 0.4rem;
+                max-width: 70px; /* 移动端也相应增加宽度 */
+            }
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.3rem 0.6rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+            line-height: 1.2;
+        }
+
+        .status-ok {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--success-600);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .status-warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning-600);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .status-error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-600);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .status-unknown {
+            background: rgba(107, 114, 128, 0.1);
+            color: var(--gray-600);
+            border: 1px solid rgba(107, 114, 128, 0.2);
+        }
+
+        .metric-value {
+            font-family: 'JetBrains Mono', 'Fira Code', 'Monaco', monospace;
+            font-weight: 500;
+            color: var(--gray-700);
+            font-size: 0.9rem;
+        }
+
+        /* 统计卡片样式 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 1rem;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--gray-200);
+            transition: var(--transition-all);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .stat-card.total::before {
+            background: var(--gradient-primary);
+        }
+
+        .stat-card.cpu-warning::before {
+            background: var(--gradient-warning);
+        }
+
+        .stat-card.mem-warning::before {
+            background: var(--gradient-danger);
+        }
+
+        .stat-card.disk-warning::before {
+            background: linear-gradient(135deg, #f59e0b 0%, #dc2626 100%);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .stat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .stat-icon {
+            width: 3rem;
+            height: 3rem;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .stat-card.total .stat-icon {
+            background: var(--gradient-primary);
+        }
+
+        .stat-card.cpu-warning .stat-icon {
+            background: var(--gradient-warning);
+        }
+
+        .stat-card.mem-warning .stat-icon {
+            background: var(--gradient-danger);
+        }
+
+        .stat-card.disk-warning .stat-icon {
+            background: linear-gradient(135deg, #f59e0b 0%, #dc2626 100%);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card.total .stat-value {
+            color: var(--primary-600);
+        }
+
+        .stat-card.cpu-warning .stat-value {
+            color: var(--warning-600);
+        }
+
+        .stat-card.mem-warning .stat-value {
+            color: var(--danger-600);
+        }
+
+        .stat-card.disk-warning .stat-value {
+            color: var(--danger-600);
+        }
+
+        .stat-label {
+            color: var(--gray-600);
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-loading {
+            color: var(--gray-400);
+            font-size: 1.8rem;
+        }
+        
+        /* 系统类型统计显示样式 - 右侧竖列布局 */
+        .stat-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            gap: 1rem;
+        }
+        
+        .stat-main {
+            flex: 1;
+            text-align: center;
+        }
+        
+        .stat-detail {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            min-width: 80px;
+        }
+        
+        .os-count {
+            font-size: 0.7rem;
+            font-weight: 500;
+            padding: 0.2rem 0.4rem;
+            border-radius: var(--radius-sm);
+            text-align: center;
+            white-space: nowrap;
+        }
+        
+        .os-count.windows {
+            color: #1e40af;
+            background: rgba(30, 64, 175, 0.1);
+            border: 1px solid rgba(30, 64, 175, 0.2);
+        }
+        
+        .os-count.linux {
+            color: #059669;
+            background: rgba(5, 150, 105, 0.1);
+            border: 1px solid rgba(5, 150, 105, 0.2);
+        }
+        
+        .os-count.unknown {
+            color: var(--gray-600);
+            background: rgba(107, 114, 128, 0.1);
+            border: 1px solid rgba(107, 114, 128, 0.2);
+        }
+        
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            .stat-content {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .stat-detail {
+                flex-direction: row;
+                justify-content: center;
+                min-width: auto;
+                gap: 0.5rem;
+            }
+            
+            .os-count {
+                font-size: 0.65rem;
+                padding: 0.15rem 0.3rem;
+            }
+        }
+        .loading-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--gray-500);
+        }
+
+        .loading-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--primary-500);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { 
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% { 
+                opacity: 0.5;
+                transform: scale(1.1);
+            }
+        }
+
+        .loading-state h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--gray-600);
+        }
+
+        .loading-state p {
+            color: var(--gray-500);
+            margin: 0;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--gray-400);
+        }
+
+        .empty-state h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--gray-600);
+        }
+
+        .empty-state p {
+            color: var(--gray-500);
+            margin: 0;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 992px) {
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+            
+            .page-title {
+                font-size: 2rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+            
+            .stat-card {
+                padding: 1rem;
+            }
+            
+            .stat-value {
+                font-size: 2rem;
+            }
+            
+            .stat-icon {
+                width: 2.5rem;
+                height: 2.5rem;
+                font-size: 1.2rem;
+            }
+            
+            .monitoring-table {
+                font-size: 0.75rem;
+            }
+            
+            .monitoring-table th,
+            .monitoring-table td {
+                padding: 0.5rem 0.3rem; /* 减小内边距 */
+            }
+            
+            .monitoring-table th {
+                font-size: 0.65rem;
+            }
+            
+            /* 移动端自适应列宽 */
+            .monitoring-table th:first-child {
+                min-width: 100px;
+            }
+            
+            .monitoring-table th:nth-child(2) {
+                min-width: 70px;
+            }
+            
+            .monitoring-table th:nth-child(n+3) {
+                min-width: 50px;
+            }
+            
+            .table-container {
+                padding: 0.75rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .page-header {
+                padding: 1rem;
+            }
+            
+            .page-title {
+                font-size: 1.75rem;
+            }
+            
+            .page-subtitle {
+                font-size: 1rem;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .stat-card {
+                padding: 1rem;
+            }
+            
+            .stat-value {
+                font-size: 1.8rem;
+            }
+            
+            .table-container {
+                padding: 0.5rem;
+            }
+            
+            .monitoring-table {
+                font-size: 0.7rem; /* 进一步减小移动端字体 */
+            }
+            
+            .monitoring-table th,
+            .monitoring-table td {
+                padding: 0.4rem 0.2rem; /* 减小移动端内边距 */
+            }
+            
+            /* 小屏幕下的最小列宽 */
+            .monitoring-table th:first-child {
+                min-width: 90px;
+            }
+            
+            .monitoring-table th:nth-child(2) {
+                min-width: 60px;
+            }
+            
+            .monitoring-table th:nth-child(n+3) {
+                min-width: 45px;
+            }
+            
+            .sortable {
+                padding-right: 1rem !important; /* 移动端进一步减小间距 */
+            }
+            
+            .sort-icon,
+            .filter-icon {
+                right: 0.2rem; /* 移动端进一步减小间距 */
+                width: 0.7rem;
+                height: 0.7rem;
+                font-size: 0.65rem;
+            }
+            
+            .monitoring-container {
+                margin: 0;
+            }
+        }
+        
+        /* 系统指标模态框样式 */
+        #hostMetricsModal .modal-dialog {
+            max-width: 1200px;
+            width: 95%;
+            margin: 1.75rem auto;
+        }
+
+        #hostMetricsModal .modal-content {
+            background: white;
+            border-radius: var(--radius-2xl);
+            padding: 2rem;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-xl);
+            animation: modalSlideIn 0.3s ease;
+            /* 隐藏滚动条但保留滚动功能 */
+            scrollbar-width: none;
+        }
+
+        /* WebKit浏览器滚动条样式 - 隐藏 */
+        #hostMetricsModal .modal-content::-webkit-scrollbar {
+            display: none;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #hostMetricsModal .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        #hostMetricsModal .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin: 0;
+        }
+
+        #hostMetricsModal .modal-title i {
+            color: var(--primary-500);
+            margin-right: 0.5rem;
+        }
+
+        #hostMetricsModal .btn-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--gray-400);
+            cursor: pointer;
+            transition: var(--transition-all);
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-full);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #hostMetricsModal .btn-close:hover {
+            background: var(--gray-100);
+            color: var(--gray-600);
+        }
+
+        #hostMetricsModal .modal-body {
+            padding: 0;
+            margin-bottom: 1.5rem;
+        }
+
+        #hostMetricsModal .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            padding-top: 1rem;
+            border-top: 2px solid var(--gray-200);
+        }
+
+        #hostMetricsModal .modal-footer .btn {
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            border-radius: var(--radius-lg);
+            transition: var(--transition-all);
+        }
+
+        #hostMetricsModal .modal-footer .btn-secondary {
+            background: var(--gray-100);
+            color: var(--gray-700);
+            border: none;
+        }
+
+        #hostMetricsModal .modal-footer .btn-secondary:hover {
+            background: var(--gray-200);
+        }
+
+        #hostMetricsModal .modal-footer .btn-primary {
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+        }
+
+        #hostMetricsModal .modal-footer .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        #hostMetricsModal .chart-container {
+            background: white;
+            border-radius: var(--radius-2xl);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--gray-200);
+        }
+
+        #hostMetricsModal .chart-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        #hostMetricsModal .chart-title i {
+            color: var(--primary-500);
+        }
+
+        /* 图表区域样式 */
+        .chart-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--primary-500);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-title i {
+            color: var(--primary-500);
+            font-size: 1.25rem;
+        }
+
+        /* 图表容器样式 */
+        .chart-container {
+            height: 320px;
+            position: relative;
+            width: 100%;
+        }
+
+        #hostMetricsModal .card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--gray-200);
+            transition: var(--transition-all);
+        }
+
+        #hostMetricsModal .card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+
+        #hostMetricsModal .card-header {
+            background: transparent;
+            border: none;
+            padding: 0;
+            margin-bottom: 1rem;
+        }
+
+        #hostMetricsModal .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        #hostMetricsModal .card-title i {
+            color: var(--primary-500);
+        }
+
+        #hostMetricsModal .card-body {
+            padding: 0;
+        }
+
+        #hostMetricsModal .alert {
+            background: var(--primary-50);
+            border: 1px solid var(--primary-200);
+            border-radius: var(--radius-lg);
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        #hostMetricsModal .alert-info {
+            color: var(--primary-700);
+        }
+
+        #hostMetricsModal .alert small {
+            display: block;
+            margin-top: 0.5rem;
+            color: var(--primary-600);
+            font-size: 0.875rem;
+        }
+
+        #hostMetricsModal .time-range-selector {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            justify-content: center;
+        }
+
+        #hostMetricsModal .time-range-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--gray-300);
+            background: white;
+            color: var(--gray-700);
+            border-radius: var(--radius-md);
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition-all);
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        #hostMetricsModal .time-range-btn:hover {
+            background: var(--gray-50);
+            border-color: var(--gray-400);
+        }
+
+        #hostMetricsModal .time-range-btn.active {
+            background: var(--gradient-primary);
+            color: white;
+            border-color: var(--primary-600);
+        }
+
+        #hostMetricsModal .time-range-btn i {
+            font-size: 0.875rem;
+        }
+
+        #hostMetricsModal .spinner-border {
+            width: 3rem;
+            height: 3rem;
+            border-width: 0.25em;
+        }
+
+        #hostMetricsModal .text-center {
+            padding: 3rem 1rem;
+        }
+        
+        /* 系统指标模态框移动端优化 */
+        @media (max-width: 768px) {
+            /* 模态框尺寸调整 - 使用全屏高度，保持居中 */
+            #hostMetricsModal .modal-dialog {
+                max-width: 100%;
+                margin: 0 auto;
+                height: 100vh;
+                padding: 0;
+                display: flex;
+                align-items: center;
+            }
+            
+            #hostMetricsModal .modal-content {
+                border-radius: 0;
+                padding: 0;
+                max-height: 100vh;
+                height: 100vh;
+                margin: 0;
+                overflow-y: auto;
+                box-shadow: none;
+                width: 100%;
+            }
+            
+            /* 模态框标题区域 - 移除左右边距 */
+            #hostMetricsModal .modal-header {
+                padding: 0.75rem 0;
+                margin-bottom: 1rem;
+                padding-bottom: 0.75rem;
+                border-bottom: 1px solid var(--gray-200);
+                flex-shrink: 0;
+            }
+            
+            #hostMetricsModal .modal-title {
+                font-size: 1.1rem;
+                line-height: 1.3;
+                font-weight: 700;
+            }
+            
+            #hostMetricsModal .modal-title i {
+                font-size: 1rem;
+            }
+            
+            #hostMetricsModal .btn-close {
+                width: 36px;
+                height: 36px;
+                font-size: 1.25rem;
+            }
+            
+            /* 模态框内容区域 - 移除所有边距并隐藏滚动条 */
+            #hostMetricsModal .modal-body {
+                padding: 0;
+                margin: 0;
+                flex: 1;
+                overflow-y: auto;
+                /* 隐藏移动端垂直滚动条 */
+                -ms-overflow-style: none;  /* IE and Edge */
+                scrollbar-width: none;  /* Firefox */
+            }
+
+            /* 隐藏WebKit浏览器的滚动条 */
+            #hostMetricsModal .modal-body::-webkit-scrollbar {
+                display: none;
+            }
+            
+            /* 模态框底部 - 固定在底部，移除左右边距 */
+            #hostMetricsModal .modal-footer {
+                padding: 0.75rem 0;
+                gap: 0.5rem;
+                padding-top: 0.75rem;
+                border-top: 1px solid var(--gray-200);
+                flex-shrink: 0;
+                position: sticky;
+                bottom: 0;
+                background: white;
+                z-index: 10;
+            }
+            
+            #hostMetricsModal .modal-footer .btn {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.875rem;
+                border-radius: 6px;
+                flex: 1;
+            }
+            
+            /* 信息提示区域移动端优化 - 移除左右边距 */
+            #hostMetricsModal .alert {
+                padding: 0.75rem 0;
+                font-size: 0.8rem;
+                border-radius: 0;
+                margin-bottom: 1rem;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            #hostMetricsModal .alert small {
+                font-size: 0.75rem;
+                line-height: 1.4;
+                margin-top: 0.25rem;
+            }
+            
+            /* 时间范围选择器移动端优化 - 换行显示，移除左右边距 */
+            #hostMetricsModal .time-range-selector {
+                margin-top: 0.5rem;
+                margin-bottom: 1rem;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 0.375rem;
+                padding: 0 0.5rem;
+            }
+            
+            #hostMetricsModal .time-range-btn {
+                padding: 0.4rem 0.6rem;
+                font-size: 0.75rem;
+                border-radius: 4px;
+                white-space: nowrap;
+                flex: 0 0 auto;
+            }
+            
+            #hostMetricsModal .time-range-btn i {
+                font-size: 0.7rem;
+                margin-right: 0.2rem;
+            }
+            
+            /* 图表区域移动端优化 */
+            #hostMetricsModal .chart-section {
+                margin-bottom: 1.5rem;
+            }
+
+            #hostMetricsModal .chart-title {
+                font-size: 1.1rem;
+                font-weight: 700;
+                margin-bottom: 0.5rem;
+                color: #3b82f6;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            #hostMetricsModal .chart-title i {
+                font-size: 1.1rem;
+                color: #3b82f6;
+            }
+
+            /* 图表容器移动端优化 - 移除边框和边距，最大化宽度和高度 */
+            #hostMetricsModal .chart-container {
+                height: 320px !important;
+                position: relative;
+                width: 100%;
+                padding: 0;
+                border-radius: 0;
+                background: transparent;
+                box-shadow: none;
+                border: none;
+            }
+            
+            /* 加载状态移动端优化 */
+            #hostMetricsModal .text-center {
+                padding: 2rem 1rem;
+            }
+            
+            #hostMetricsModal .spinner-border {
+                width: 2.5rem;
+                height: 2.5rem;
+            }
+            
+            /* 网格布局移动端调整 */
+            #hostMetricsModal .container-fluid {
+                padding: 0;
+            }
+            
+            #hostMetricsModal .row {
+                margin: 0;
+            }
+            
+            #hostMetricsModal .col-lg-10,
+            #hostMetricsModal .col-md-11,
+            #hostMetricsModal .col-12 {
+                padding: 0;
+            }
+            
+            /* 确保模态框在移动端全屏显示并居中 */
+            #hostMetricsModal.modal {
+                padding: 0 !important;
+            }
+            
+            #hostMetricsModal.modal .modal-dialog {
+                margin: 0 auto;
+                max-width: 100%;
+                height: 100vh;
+            }
+            
+            #hostMetricsModal.modal .modal-content {
+                height: 100vh;
+                border-radius: 0;
+                border: none;
+            }
+        }
+        
+        /* 超小屏幕优化 (小于576px) */
+        @media (max-width: 576px) {
+            #hostMetricsModal .modal-dialog {
+                max-width: 100%;
+                margin: 0;
+                height: 100vh;
+                padding: 0;
+            }
+            
+            #hostMetricsModal .modal-content {
+                padding: 0.75rem;
+                height: 100vh;
+                border-radius: 0;
+            }
+            
+            #hostMetricsModal .modal-header,
+            #hostMetricsModal .modal-footer {
+                padding: 0.5rem 0.5rem;
+            }
+            
+            #hostMetricsModal .modal-body {
+                padding: 0;
+                margin-bottom: 0.25rem;
+            }
+            
+            #hostMetricsModal .modal-title {
+                font-size: 1rem;
+            }
+            
+            #hostMetricsModal .btn-close {
+                width: 32px;
+                height: 32px;
+                font-size: 1.1rem;
+            }
+            
+            #hostMetricsModal .alert {
+                padding: 0.5rem;
+                font-size: 0.75rem;
+                margin-bottom: 0.75rem;
+            }
+            
+            #hostMetricsModal .alert small {
+                font-size: 0.7rem;
+            }
+            
+            #hostMetricsModal .time-range-btn {
+                padding: 0.3rem 0.5rem;
+                font-size: 0.7rem;
+                gap: 0.25rem;
+            }
+            
+            #hostMetricsModal .time-range-btn i {
+                font-size: 0.65rem;
+            }
+            
+            /* 超小屏幕图表优化 */
+            #hostMetricsModal .card {
+                margin-bottom: 0.75rem;
+            }
+            
+            #hostMetricsModal .card-header {
+                padding: 0.6rem;
+            }
+            
+            #hostMetricsModal .card-title {
+                font-size: 0.95rem;
+            }
+            
+            #hostMetricsModal .card-body {
+                padding: 0.5rem;
+            }
+            
+            #hostMetricsModal .card-body > div {
+                height: 250px !important;
+                padding: 0;
+                background: white;
+                border-radius: 6px;
+                box-shadow: var(--shadow-sm);
+            }
+            
+            #hostMetricsModal .modal-footer .btn {
+                padding: 0.4rem 0.6rem;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 包含侧边栏 -->
+    {% include 'sidebar.html' %}
+
+    <main class="main-content">
+        <!-- 统计卡片 -->
+        <div class="stats-grid">
+            <div class="stat-card total">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="bi bi-server"></i>
+                    </div>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-main">
+                        <div class="stat-value" id="totalHosts">
+                            <span class="stat-loading">--</span>
+                        </div>
+                        <div class="stat-label">主机总数</div>
+                    </div>
+                    <div class="stat-detail" id="osBreakdown">
+                        <div class="os-count windows" id="windowsCount">Windows: --</div>
+                        <div class="os-count linux" id="linuxCount">Linux: --</div>
+                        <div class="os-count unknown" id="unknownCount">未知: --</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card cpu-warning">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="bi bi-cpu"></i>
+                    </div>
+                </div>
+                <div class="stat-value" id="cpuWarningHosts">
+                    <span class="stat-loading">--</span>
+                </div>
+                <div class="stat-label">CPU > 80%</div>
+            </div>
+
+            <div class="stat-card mem-warning">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="bi bi-memory"></i>
+                    </div>
+                </div>
+                <div class="stat-value" id="memWarningHosts">
+                    <span class="stat-loading">--</span>
+                </div>
+                <div class="stat-label">内存 > 80%</div>
+            </div>
+
+            <div class="stat-card disk-warning">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="bi bi-hdd"></i>
+                    </div>
+                </div>
+                <div class="stat-value" id="diskWarningHosts">
+                    <span class="stat-loading">--</span>
+                </div>
+                <div class="stat-label">Root磁盘 > 80%</div>
+            </div>
+        </div>
+
+        <!-- 监控表格 -->
+        <div class="monitoring-container" id="monitoringContainer">
+            <div class="monitoring-header">
+                <div class="monitoring-title">
+                    <i class="bi bi-activity"></i>
+                    系统指标
+                </div>
+                <div class="header-controls">
+                    <span class="refresh-badge" id="refreshBadge" onclick="refreshData()">
+                        <i class="bi bi-arrow-clockwise" id="refreshIcon"></i>
+                        <span id="refreshText">每60秒自动刷新</span>
+                    </span>
+                    <!-- 搜索框 -->
+                    <div class="search-box">
+                        <i class="bi bi-search search-icon"></i>
+                        <input type="text" class="search-input" id="searchInput" placeholder="搜索IP地址...">
+                        <button class="search-clear" id="searchClear" onclick="clearSearch()">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                    </div>
+                    <!-- IP筛选状态指示器 -->
+                    <div class="filter-indicator" id="filterIndicator" style="display: none;" onclick="clearIPFilter()" title="点击清除IP筛选">
+                        <span class="filter-text">已筛选</span>
+                        <i class="bi bi-x-circle"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="table-container" id="tableContainer">
+                <div class="loading-state">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    <h3>加载中...</h3>
+                    <p>正在获取监控数据</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- IP筛选模态框 -->
+    <div class="ip-filter-modal" id="ipFilterModal">
+        <div class="ip-filter-content">
+            <div class="ip-filter-header">
+                <div class="ip-filter-title">
+                    <i class="bi bi-funnel"></i>
+                    IP地址筛选
+                </div>
+                <button class="ip-filter-close" onclick="closeIPFilter()">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+            
+            <div class="ip-filter-search">
+                <div class="search-box">
+                    <i class="bi bi-search search-icon"></i>
+                    <input type="text" class="search-input" id="ipFilterSearch" placeholder="搜索IP地址...">
+                </div>
+            </div>
+            
+            <div class="ip-list" id="ipList">
+                <!-- IP列表将通过JavaScript生成 -->
+            </div>
+            
+            <div class="ip-filter-actions">
+                <button class="ip-filter-btn secondary" onclick="selectAllIPs()">全选</button>
+                <button class="ip-filter-btn secondary" onclick="clearAllIPs()">清空</button>
+                <button class="ip-filter-btn primary" onclick="applyIPFilter()">筛选</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 系统指标模态框 -->
+    <div class="modal fade" id="hostMetricsModal" tabindex="-1" aria-labelledby="hostMetricsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="hostMetricsModalLabel">
+                        <i class="bi bi-cpu"></i>
+                        <span id="modalHostTitle">系统指标</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="hostMetricsContent">
+                        <div class="text-center p-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">加载中...</span>
+                            </div>
+                            <p class="mt-2">正在加载监控数据...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" onclick="refreshHostMetrics()">刷新数据</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/chart.min.js"></script>
+    <script>
+        let refreshInterval;
+        let isRefreshing = false;
+        let allData = { results: {}, metrics: [] }; // 初始化全局数据
+        let filteredData = { results: {}, metrics: [] }; // 初始化过滤数据
+        let sortConfig = { column: null, direction: 'asc' }; // 排序配置
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            initSearch();
+            // 立即获取一次数据，然后开启自动刷新
+            refreshData();
+            startAutoRefresh();
+        });
+
+        // 开始自动刷新
+        function startAutoRefresh() {
+            refreshInterval = setInterval(refreshData, 60000); // 每60秒刷新一次
+        }
+
+        // 停止自动刷新
+        function stopAutoRefresh() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+                refreshInterval = null;
+            }
+        }
+
+        // 手动刷新数据
+        function refreshData() {
+            if (isRefreshing) return; // 防止重复请求
+            
+            isRefreshing = true;
+            const refreshBadge = document.getElementById('refreshBadge');
+            const refreshIcon = document.getElementById('refreshIcon');
+            const refreshText = document.getElementById('refreshText');
+            
+            // 更新UI状态
+            refreshBadge.classList.add('refreshing');
+            refreshText.textContent = '刷新中...';
+            
+            // 发送AJAX请求获取新数据
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 60000); // 60秒超时
+            
+            fetch('/api/host-monitoring-data', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                signal: controller.signal
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('接收到监控数据:', data);
+                    
+                    if (data.success) {
+                        updateTable(data.results, data.metrics);
+                        console.log('表格数据已更新');
+                        
+                        // 更新成功提示
+                        refreshText.textContent = '数据已更新';
+                        setTimeout(() => {
+                            refreshText.textContent = '每60秒自动刷新';
+                        }, 2000);
+                    } else {
+                        console.error('获取监控数据失败:', data.message);
+                        showError('获取监控数据失败: ' + (data.message || '未知错误'));
+                        refreshText.textContent = '刷新失败';
+                    }
+                })
+                .catch(error => {
+                    clearTimeout(timeoutId); // 清理超时定时器
+                    console.error('刷新数据时出错:', error);
+                    
+                    let errorMessage = '数据刷新失败';
+                    let displayMessage = '刷新失败';
+                    
+                    if (error.name === 'AbortError') {
+                        errorMessage = '请求超时，服务器响应过慢，请稍后再试';
+                        displayMessage = '请求超时';
+                    } else if (error.name === 'TypeError' || error.message.includes('Failed to fetch')) {
+                        errorMessage = '网络连接中断，请检查网络连接后重试';
+                        displayMessage = '网络错误';
+                    }
+                    
+                    showError(errorMessage);
+                    refreshText.textContent = displayMessage;
+                })
+                .finally(() => {
+                    clearTimeout(timeoutId); // 确保清理超时定时器
+                    // 恢复UI状态
+                    isRefreshing = false;
+                    refreshBadge.classList.remove('refreshing');
+                    
+                    // 如果不是成功状态，3秒后恢复默认文本
+                    if (!refreshText.textContent.includes('数据已更新')) {
+                        setTimeout(() => {
+                            refreshText.textContent = '每60秒自动刷新';
+                        }, 3000);
+                    }
+                });
+        }
+
+        // 更新表格数据
+        function updateTable(results, metrics) {
+            // 存储所有数据
+            allData = { results: results || {}, metrics: metrics || [] };
+            
+            // 更新统计数据（始终使用全部数据）
+            updateStats(results);
+            
+            // 检查是否有IP筛选激活
+            if (ipFilterActive && selectedIPs.size > 0) {
+                // 重新应用IP筛选
+                const filteredResults = {};
+                selectedIPs.forEach(ip => {
+                    if (results[ip]) {
+                        filteredResults[ip] = results[ip];
+                    }
+                });
+                
+                filteredData = {
+                    results: filteredResults,
+                    metrics: metrics
+                };
+                
+                updateTableDisplay(filteredResults, metrics);
+                // 确保筛选指示器显示
+                const filterIndicator = document.getElementById('filterIndicator');
+                filterIndicator.style.display = 'flex';
+                const filterText = filterIndicator.querySelector('.filter-text');
+                filterText.textContent = `已筛选${selectedIPs.size}个`;
+                return;
+            }
+            
+            // 检查是否有搜索条件
+            const searchInput = document.getElementById('searchInput');
+            const searchTerm = searchInput ? searchInput.value.trim() : '';
+            
+            if (searchTerm) {
+                // 如果有搜索条件，重新过滤数据但不更新统计
+                filterData(searchTerm);
+            } else {
+                // 没有搜索条件，显示所有数据
+                filteredData = { ...allData };
+                updateTableDisplay(results, metrics);
+            }
+        }
+        
+        // 更新统计数据
+        function updateStats(results) {
+            if (!results || Object.keys(results).length === 0) {
+                // 无数据时显示加载状态
+                document.getElementById('totalHosts').innerHTML = '<span class="stat-loading">--</span>';
+                document.getElementById('cpuWarningHosts').innerHTML = '<span class="stat-loading">--</span>';
+                document.getElementById('memWarningHosts').innerHTML = '<span class="stat-loading">--</span>';
+                document.getElementById('diskWarningHosts').innerHTML = '<span class="stat-loading">--</span>';
+                document.getElementById('windowsCount').textContent = 'Windows: --';
+                document.getElementById('linuxCount').textContent = 'Linux: --';
+                document.getElementById('unknownCount').textContent = '未知: --';
+                return;
+            }
+            
+            let totalHosts = 0;
+            let cpuWarningHosts = 0;
+            let memWarningHosts = 0;
+            let diskWarningHosts = 0;
+            let windowsHosts = 0;
+            let linuxHosts = 0;
+            let unknownHosts = 0;
+            
+            Object.entries(results).forEach(([instance, values]) => {
+                totalHosts++;
+                
+                // CPU警告统计
+                const cpuUsage = values['CPU%'];
+                if (cpuUsage && parseFloat(cpuUsage) > 80) {
+                    cpuWarningHosts++;
+                }
+                
+                // 内存警告统计
+                const memUsage = values['MEM%'];
+                if (memUsage && parseFloat(memUsage) > 80) {
+                    memWarningHosts++;
+                }
+                
+                // Root磁盘警告统计
+                const diskUsage = values['ROOT%'];
+                if (diskUsage && parseFloat(diskUsage) > 80) {
+                    diskWarningHosts++;
+                }
+                
+                // 统计操作系统类型
+                const osType = values['系统类型'];
+                if (osType === 'Windows') {
+                    windowsHosts++;
+                } else if (osType === 'Linux') {
+                    linuxHosts++;
+                } else {
+                    unknownHosts++; // 未知或其他系统
+                }
+            });
+            
+            // 更新显示
+            document.getElementById('totalHosts').textContent = totalHosts;
+            document.getElementById('cpuWarningHosts').textContent = cpuWarningHosts;
+            document.getElementById('memWarningHosts').textContent = memWarningHosts;
+            document.getElementById('diskWarningHosts').textContent = diskWarningHosts;
+            
+            // 更新系统类型分布显示
+            document.getElementById('windowsCount').textContent = `Windows: ${windowsHosts}`;
+            document.getElementById('linuxCount').textContent = `Linux: ${linuxHosts}`;
+            document.getElementById('unknownCount').textContent = `未知: ${unknownHosts}`;
+            
+            // 控制台输出统计信息，用于调试
+            console.log(`系统类型统计: 总数=${totalHosts}, Windows=${windowsHosts}, Linux=${linuxHosts}, 未知=${unknownHosts}`);
+            console.log(`检查总数: ${windowsHosts + linuxHosts + unknownHosts} === ${totalHosts} ? ${windowsHosts + linuxHosts + unknownHosts === totalHosts}`);
+        }
+
+        // 格式化指标值显示
+        function formatMetricValue(metric, value) {
+            if (value === undefined || value === null || value === 'N/A') {
+                return '<span class="status-indicator status-unknown">N/A</span>';
+            }
+            
+            if (metric === 'FW') {
+                if (value == 1) {
+                    return '<span class="status-indicator status-ok"></i> ON</span>';
+                } else {
+                    return '<span class="status-indicator status-error"></i> OFF</span>';
+                }
+            }
+            
+            if (['CPU%', 'MEM%', 'ROOT%', 'DATA%', 'HOME%', 'XS%', 'IO%'].includes(metric)) {
+                const numValue = parseFloat(value);
+                if (isNaN(numValue)) {
+                    return '<span class="status-indicator status-unknown">N/A</span>';
+                }
+                
+                let statusClass = 'status-ok';
+                if (numValue >= 90) statusClass = 'status-error';
+                else if (numValue >= 80) statusClass = 'status-warning';
+                
+                return `<span class="status-indicator ${statusClass}">${numValue.toFixed(2)}%</span>`;
+            }
+            
+            if (metric === 'UPTIME') {
+                const numValue = parseFloat(value);
+                if (isNaN(numValue)) {
+                    return '<span class="status-indicator status-unknown">N/A</span>';
+                }
+                return `<span class="metric-value">${numValue.toFixed(1)}</span>`;
+            }
+            
+            if (metric === '流量') {
+                const numValue = parseFloat(value);
+                if (isNaN(numValue)) {
+                    return '<span class="status-indicator status-unknown">N/A</span>';
+                }
+                return `<span class="metric-value">${numValue.toFixed(2)} MB</span>`;
+            }
+            
+            if (['TCP', 'CPU'].includes(metric)) {
+                const numValue = parseFloat(value);
+                if (isNaN(numValue)) {
+                    return '<span class="status-indicator status-unknown">N/A</span>';
+                }
+                return `<span class="metric-value">${Math.round(numValue)}</span>`;
+            }
+            
+            if (['MEM', 'DISK'].includes(metric)) {
+                const numValue = parseFloat(value);
+                if (isNaN(numValue)) {
+                    return '<span class="status-indicator status-unknown">N/A</span>';
+                }
+                return `<span class="metric-value">${numValue.toFixed(1)}</span>`;
+            }
+            
+            return `<span class="metric-value">${value}</span>`;
+        }
+
+        // 显示错误信息
+        function showError(message) {
+            const tableContainer = document.getElementById('tableContainer');
+            
+            if (!tableContainer) {
+                console.error('tableContainer 元素未找到!');
+                return;
+            }
+            
+            tableContainer.innerHTML = `
+                <div class="empty-state">
+                    <i class="bi bi-exclamation-triangle text-warning"></i>
+                    <h3>数据加载失败</h3>
+                    <p>${message}</p>
+                </div>
+            `;
+            // 更新搜索结果显示
+            updateSearchResults(0, 0);
+        }
+
+        // 搜索功能
+        
+        // 初始化搜索功能
+        function initSearch() {
+            const searchInput = document.getElementById('searchInput');
+            const searchClear = document.getElementById('searchClear');
+            
+            searchInput.addEventListener('input', function(e) {
+                const searchTerm = e.target.value.trim();
+                
+                if (searchTerm) {
+                    searchClear.style.display = 'block';
+                    filterData(searchTerm);
+                } else {
+                    searchClear.style.display = 'none';
+                    showAllData();
+                }
+            });
+        }
+        
+        // 过滤数据
+        function filterData(searchTerm) {
+            const filtered = {};
+            const searchLower = searchTerm.toLowerCase();
+            
+            Object.keys(allData.results).forEach(ip => {
+                if (ip.toLowerCase().includes(searchLower)) {
+                    filtered[ip] = allData.results[ip];
+                }
+            });
+            
+            filteredData = {
+                results: filtered,
+                metrics: allData.metrics
+            };
+            
+            // 更新表格显示
+            updateTableDisplay(filteredData.results, filteredData.metrics);
+            // 统计卡片始终显示全部数据，不受搜索影响
+        }
+        
+        // 显示所有数据
+        function showAllData() {
+            filteredData = { ...allData };
+            updateTableDisplay(allData.results, allData.metrics);
+            // 统计数据由updateTable函数统一管理，这里不重复更新
+        }
+        
+        // 清除搜索
+        function clearSearch() {
+            const searchInput = document.getElementById('searchInput');
+            const searchClear = document.getElementById('searchClear');
+            
+            searchInput.value = '';
+            searchClear.style.display = 'none';
+            
+            // 如果有IP筛选激活，保持筛选状态
+            if (ipFilterActive && selectedIPs.size > 0) {
+                const filteredResults = {};
+                selectedIPs.forEach(ip => {
+                    if (allData.results[ip]) {
+                        filteredResults[ip] = allData.results[ip];
+                    }
+                });
+                filteredData = {
+                    results: filteredResults,
+                    metrics: allData.metrics
+                };
+                updateTableDisplay(filteredResults, allData.metrics);
+            } else {
+                // 没有IP筛选，显示所有数据
+                showAllData();
+            }
+        }
+        
+        // 更新表格显示（分离显示逻辑）
+        function updateTableDisplay(results, metrics) {
+            const tableContainer = document.getElementById('tableContainer');
+            
+            if (!results || Object.keys(results).length === 0) {
+                // 显示无结果状态
+                tableContainer.innerHTML = `
+                    <div class="no-results">
+                        <i class="bi bi-search"></i>
+                        <h3>未找到匹配的主机</h3>
+                        <p>请尝试其他搜索关键词</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // 排序数据
+            const sortedEntries = sortTableData(Object.entries(results), metrics);
+
+            // 构建新的表格HTML
+            let tableHTML = `
+                <table class="monitoring-table" id="monitoringTable">
+                    <thead>
+                        <tr>
+                            <th class="filterable" onclick="openIPFilter()">
+                                <i class="bi bi-hdd-network"></i> IP地址
+                                <i class="filter-icon"></i>
+                            </th>
+                            <th class="" style="cursor: default;">
+                                <i class="bi bi-person-circle"></i> 使用人
+                            </th>
+                            <th class="" style="cursor: default;">
+                                <i class="bi bi-pc-display"></i> 系统
+                            </th>`;
+            
+            // 添加指标列头（带排序功能）
+            metrics.forEach(metric => {
+                // 跳过使用人和系统类型列，因为已经单独添加了
+                if (metric === '使用人' || metric === '系统类型') return;
+                
+                const sortClass = getSortClass(metric);
+                tableHTML += `<th class="sortable ${sortClass}" data-column="${metric}" onclick="sortTable('${metric}')">
+                    ${metric}
+                    <i class="bi sort-icon"></i>
+                </th>`;
+            });
+            
+            tableHTML += `</tr></thead><tbody>`;
+            
+            // 添加排序后的数据行
+            sortedEntries.forEach(([instance, values]) => {
+                tableHTML += `<tr class="host-row" onclick="showHostMetrics('${instance}')" style="cursor: pointer;"><td class="ip-address">${instance}</td>`;
+                
+                // 添加使用人信息
+                const user = values['使用人'] || '未知';
+                tableHTML += `<td><span class="host-user-info" data-user="${user}">${user}</span></td>`;
+                
+                // 添加系统类型信息（优化图标方案）
+                const osType = values['系统类型'] || '未知';
+                let osIcon = '';
+                if (osType === 'Windows') {
+                    osIcon = '<i class="bi bi-windows"></i>'; // Windows使用Bootstrap图标
+                } else if (osType === 'Linux') {
+                    osIcon = '🐧'; // Linux使用小企鹅图标
+                } else {
+                    osIcon = '<i class="bi bi-question-circle"></i>'; // 未知使用Bootstrap图标
+                }
+                tableHTML += `<td><span class="os-type-info" data-os="${osType}" title="${osType}">${osIcon}</span></td>`;
+                
+                // 添加其他指标
+                metrics.forEach(metric => {
+                    // 跳过使用人和系统类型列，因为已经单独处理了
+                    if (metric === '使用人' || metric === '系统类型') return;
+                    
+                    const value = values[metric];
+                    tableHTML += `<td>${formatMetricValue(metric, value)}</td>`;
+                });
+                
+                tableHTML += `</tr>`;
+            });
+            
+            tableHTML += `</tbody></table>`;
+            tableContainer.innerHTML = tableHTML;
+        }
+        
+        // 排序功能
+        function sortTable(column) {
+            // 切换排序方向
+            if (sortConfig.column === column) {
+                sortConfig.direction = sortConfig.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortConfig.column = column;
+                sortConfig.direction = 'asc';
+            }
+            
+            // 重新显示表格
+            updateTableDisplay(filteredData.results, filteredData.metrics);
+        }
+        
+        // 排序表格数据
+        function sortTableData(entries, metrics) {
+            if (!sortConfig.column) return entries;
+            
+            return entries.sort((a, b) => {
+                let valueA, valueB;
+                
+                // 指标值排序
+                valueA = a[1][sortConfig.column];
+                valueB = b[1][sortConfig.column];
+                
+                // 处理缺失值
+                if (valueA === undefined || valueA === null || valueA === 'N/A') valueA = -1;
+                if (valueB === undefined || valueB === null || valueB === 'N/A') valueB = -1;
+                
+                // 数值排序
+                const numA = parseFloat(valueA);
+                const numB = parseFloat(valueB);
+                
+                if (isNaN(numA) && isNaN(numB)) {
+                    // 字符串排序
+                    return sortConfig.direction === 'asc' ? 
+                        String(valueA).localeCompare(String(valueB)) : 
+                        String(valueB).localeCompare(String(valueA));
+                } else if (isNaN(numA)) {
+                    return sortConfig.direction === 'asc' ? 1 : -1;
+                } else if (isNaN(numB)) {
+                    return sortConfig.direction === 'asc' ? -1 : 1;
+                } else {
+                    // 数值排序
+                    return sortConfig.direction === 'asc' ? numA - numB : numB - numA;
+                }
+            });
+        }
+        
+        // 获取排序样式类
+        function getSortClass(column) {
+            if (sortConfig.column === column) {
+                return `sort-${sortConfig.direction}`;
+            }
+            return '';
+        }
+        
+        // IP筛选功能
+        let selectedIPs = new Set(); // 存储选中的IP地址
+        let ipFilterActive = false; // 筛选是否激活
+        
+        function openIPFilter() {
+            console.log('openIPFilter 被调用');
+            const modal = document.getElementById('ipFilterModal');
+            const ipList = document.getElementById('ipList');
+            const searchInput = document.getElementById('ipFilterSearch');
+            
+            if (!modal) {
+                console.error('模态框元素未找到');
+                return;
+            }
+            
+            // 获取IP地址列的位置
+            const ipColumn = document.querySelector('.filterable');
+            if (ipColumn) {
+                const rect = ipColumn.getBoundingClientRect();
+                // 设置模态框位置在IP列下方
+                modal.style.position = 'fixed';
+                modal.style.top = (rect.bottom + 5) + 'px';
+                modal.style.left = rect.left + 'px';
+                modal.style.minWidth = '300px';
+                modal.style.maxWidth = '400px';
+            }
+            
+            // 获取所有IP地址
+            const allIPs = Object.keys(allData.results || {}).sort();
+            
+            if (allIPs.length === 0) {
+                console.warn('没有可用的IP地址数据');
+                return;
+            }
+            
+            // 生成IP列表
+            renderIPList(allIPs);
+            
+            // 初始化搜索功能
+            searchInput.value = '';
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const filteredIPs = allIPs.filter(ip => ip.toLowerCase().includes(searchTerm));
+                renderIPList(filteredIPs);
+            });
+            
+            // 显示模态框
+            modal.classList.add('show');
+            console.log('模态框已显示');
+        }
+        
+        function closeIPFilter() {
+            const modal = document.getElementById('ipFilterModal');
+            modal.classList.remove('show');
+        }
+        
+        function renderIPList(ips) {
+            const ipList = document.getElementById('ipList');
+            let html = '';
+            
+            ips.forEach(ip => {
+                const isChecked = selectedIPs.has(ip) ? 'checked' : '';
+                html += `
+                    <div class="ip-item">
+                        <input type="checkbox" id="ip_${ip.replace(/\./g, '_')}" ${isChecked} onchange="toggleIP('${ip}')">
+                        <label for="ip_${ip.replace(/\./g, '_')}">${ip}</label>
+                    </div>
+                `;
+            });
+            
+            ipList.innerHTML = html;
+        }
+        
+        function toggleIP(ip) {
+            if (selectedIPs.has(ip)) {
+                selectedIPs.delete(ip);
+            } else {
+                selectedIPs.add(ip);
+            }
+        }
+        
+        function selectAllIPs() {
+            const checkboxes = document.querySelectorAll('#ipList input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = true;
+                const ip = checkbox.id.replace('ip_', '').replace(/_/g, '.');
+                selectedIPs.add(ip);
+            });
+        }
+        
+        function clearAllIPs() {
+            const checkboxes = document.querySelectorAll('#ipList input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            selectedIPs.clear();
+        }
+        
+        function applyIPFilter() {
+            const filterIndicator = document.getElementById('filterIndicator');
+            
+            if (selectedIPs.size === 0) {
+                // 没有选中任何IP，显示所有数据
+                ipFilterActive = false;
+                filteredData = { ...allData };
+                updateTableDisplay(allData.results, allData.metrics);
+                // 隐藏筛选指示器
+                filterIndicator.style.display = 'none';
+            } else {
+                // 应用IP筛选
+                ipFilterActive = true;
+                const filteredResults = {};
+                
+                selectedIPs.forEach(ip => {
+                    if (allData.results[ip]) {
+                        filteredResults[ip] = allData.results[ip];
+                    }
+                });
+                
+                filteredData = {
+                    results: filteredResults,
+                    metrics: allData.metrics
+                };
+                
+                updateTableDisplay(filteredResults, allData.metrics);
+                // 显示筛选指示器
+                filterIndicator.style.display = 'flex';
+                // 更新指示器文本
+                const filterText = filterIndicator.querySelector('.filter-text');
+                filterText.textContent = `已筛选${selectedIPs.size}个`;
+            }
+            
+            closeIPFilter();
+        }
+        
+        // 清除IP筛选
+        function clearIPFilter() {
+            // 清除选中的IP
+            selectedIPs.clear();
+            // 关闭筛选状态
+            ipFilterActive = false;
+            // 恢复显示所有数据
+            filteredData = { ...allData };
+            updateTableDisplay(allData.results, allData.metrics);
+            // 隐藏筛选指示器
+            const filterIndicator = document.getElementById('filterIndicator');
+            filterIndicator.style.display = 'none';
+            
+            console.log('IP筛选已清除');
+        }
+        
+        // 点击模态框外部关闭
+        document.addEventListener('click', function(event) {
+            const modal = document.getElementById('ipFilterModal');
+            const ipColumn = document.querySelector('.filterable');
+            
+            // 如果点击的不是IP列或模态框内部，则关闭模态框
+            if (modal.classList.contains('show') && 
+                !modal.contains(event.target) && 
+                !ipColumn.contains(event.target)) {
+                closeIPFilter();
+            }
+        });
+        
+        // 窗口大小变化时重新定位模态框
+        window.addEventListener('resize', function() {
+            const modal = document.getElementById('ipFilterModal');
+            if (modal.classList.contains('show')) {
+                const ipColumn = document.querySelector('.filterable');
+                if (ipColumn) {
+                    const rect = ipColumn.getBoundingClientRect();
+                    modal.style.top = (rect.bottom + 5) + 'px';
+                    modal.style.left = rect.left + 'px';
+                }
+            }
+        });
+        
+        // ESC 键关闭模态框
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const modal = document.getElementById('ipFilterModal');
+                if (modal.classList.contains('show')) {
+                    closeIPFilter();
+                }
+            }
+        });
+        
+        // 页面离开时清理定时器
+        window.addEventListener('beforeunload', function() {
+            stopAutoRefresh();
+        });
+        
+        // 系统指标相关函数
+        let currentHostIP = null;
+        let hostMetricsCharts = {};
+        
+        // 显示主机指标
+        function showHostMetrics(ip) {
+            currentHostIP = ip;
+            
+            // 更新模态框标题
+            const modalTitle = document.getElementById('modalHostTitle');
+            modalTitle.textContent = `主机 ${ip} 系统指标`;
+            
+            // 显示加载状态
+            const content = document.getElementById('hostMetricsContent');
+            content.innerHTML = `
+                <div class="text-center p-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                    <p class="mt-2">正在加载主机 ${ip} 的监控数据...</p>
+                </div>
+            `;
+            
+            // 显示模态框
+            const modal = new bootstrap.Modal(document.getElementById('hostMetricsModal'));
+            modal.show();
+            
+            // 获取数据
+            loadHostMetricsWithRange(ip, '1h');
+        }
+        
+        // 加载主机指标数据 - 带时间范围参数
+        function loadHostMetricsWithRange(ip, timeRange = '1h', retryCount = 0, maxRetries = 3) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 60000); // 60秒超时
+            
+            // 显示加载状态
+            const content = document.getElementById('hostMetricsContent');
+            if (retryCount === 0) {
+                content.innerHTML = `
+                    <div class="text-center p-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">加载中...</span>
+                        </div>
+                        <p class="mt-2">正在加载主机 ${ip} 的监控数据...</p>
+                    </div>
+                `;
+            }
+            
+            fetch(`/api/host-metrics/${encodeURIComponent(ip)}?range=${timeRange}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                signal: controller.signal
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('获取到主机指标数据:', data);
+                    if (data.success) {
+                        renderHostMetricsCharts(data, timeRange);
+                    } else {
+                        const errorMsg = data.message || '获取数据失败';
+                        if (retryCount < maxRetries && errorMsg.includes('连接')) {
+                            console.log(`重试第 ${retryCount + 1} 次...`);
+                            setTimeout(() => {
+                                loadHostMetricsWithRange(ip, timeRange, retryCount + 1, maxRetries);
+                            }, (retryCount + 1) * 2000); // 递增延迟
+                        } else {
+                            showMetricsError(errorMsg, ip, retryCount >= maxRetries);
+                        }
+                    }
+                })
+                .catch(error => {
+                    clearTimeout(timeoutId); // 清理超时定时器
+                    console.error('加载主机指标数据失败:', error);
+                    
+                    let errorType = 'network';
+                    if (error.name === 'AbortError') {
+                        errorType = 'timeout';
+                    }
+                    
+                    const isRetryableError = (errorType === 'timeout' || errorType === 'network');
+                    
+                    if (retryCount < maxRetries && isRetryableError) {
+                        let retryReason = errorType === 'timeout' ? '请求超时' : '网络错误';
+                        console.log(`${retryReason}，重试第 ${retryCount + 1} 次...`);
+                        // 显示重试状态
+                        const content = document.getElementById('hostMetricsContent');
+                        content.innerHTML = `
+                            <div class="text-center p-4">
+                                <div class="spinner-border text-warning" role="status">
+                                    <span class="visually-hidden">重试中...</span>
+                                </div>
+                                <p class="mt-2">${retryReason}，正在重试第 ${retryCount + 1} 次...</p>
+                                <p class="text-muted">请稍等片刻</p>
+                            </div>
+                        `;
+                        
+                        setTimeout(() => {
+                            loadHostMetricsWithRange(ip, timeRange, retryCount + 1, maxRetries);
+                        }, (retryCount + 1) * 2000); // 递增延迟
+                    } else {
+                        let errorMessage = '网络连接错误';
+                        if (errorType === 'timeout') {
+                            errorMessage = '请求超时，服务器响应过慢';
+                        }
+                        showMetricsError(errorMessage, ip, retryCount >= maxRetries);
+                    }
+                });
+        }
+        
+        // 渲染主机指标图表
+        function renderHostMetricsCharts(data, timeRange = '1h') {
+            const content = document.getElementById('hostMetricsContent');
+            const { results, timestamps, os_type, title } = data;
+            
+            if (!results || Object.keys(results).length === 0) {
+                showMetricsError('暂无可用的监控数据');
+                return;
+            }
+            
+            // 清理旧图表
+            Object.values(hostMetricsCharts).forEach(chart => {
+                if (chart) chart.destroy();
+            });
+            hostMetricsCharts = {};
+            
+            // 获取时间范围显示名称
+            const timeRangeLabels = {
+                '5m': '最近5分钟',
+                '1h': '过去1小时',
+                '3h': '过去3小时',
+                '6h': '过去6小时'
+            };
+            const currentRangeLabel = timeRangeLabels[timeRange] || '过去1小时';
+            
+            // 生成HTML结构 - 改为竖列大卡片展示，增加宽度
+            let chartsHTML = `
+                <div class="container-fluid">
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="alert alert-info d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    <div>
+                                        <strong>${title}</strong><br>
+                                        <small>操作系统: ${os_type.toUpperCase()} | <span data-info="datapoints">数据点: ${timestamps.length} 个</span> | 时间范围: <span id="currentTimeRange">${currentRangeLabel}</span></small>
+                                    </div>
+                                </div>
+                                <div class="time-range-selector">
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-outline-primary btn-sm time-range-btn ${timeRange === '5m' ? 'active' : ''}" data-range="5m" data-label="最近5分钟">
+                                            <i class="bi bi-clock me-1"></i>5分钟
+                                        </button>
+                                        <button type="button" class="btn btn-outline-primary btn-sm time-range-btn ${timeRange === '1h' ? 'active' : ''}" data-range="1h" data-label="过去1小时">
+                                            <i class="bi bi-clock me-1"></i>1小时
+                                        </button>
+                                        <button type="button" class="btn btn-outline-primary btn-sm time-range-btn ${timeRange === '3h' ? 'active' : ''}" data-range="3h" data-label="过去3小时">
+                                            <i class="bi bi-clock me-1"></i>3小时
+                                        </button>
+                                        <button type="button" class="btn btn-outline-primary btn-sm time-range-btn ${timeRange === '6h' ? 'active' : ''}" data-range="6h" data-label="过去6小时">
+                                            <i class="bi bi-clock me-1"></i>6小时
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 竖列大卡片展示 - 增加宽度 -->
+                    <div class="row justify-content-center">
+                        <div class="col-lg-10 col-md-11 col-12">
+            `;
+            
+            // 定义图表显示顺序：CPU使用率、内存使用率、磁盘使用率
+            const chartOrder = ['cpu', 'mem', 'disk'];
+            
+            // 为每个指标创建大卡片 - 按指定顺序显示
+            let chartCount = 0;
+            chartOrder.forEach(key => {
+                const chartData = results[key];
+                if (!chartData) return; // 如果没有该指标数据，跳过
+                
+                const chartId = `chart_${key}_${chartCount++}`;
+                chartsHTML += `
+                    <div class="mb-4">
+                        <div class="chart-section">
+                            <h5 class="chart-title d-flex align-items-center">
+                                <i class="bi bi-graph-up me-3"></i>
+                                ${chartData.label}
+                            </h5>
+                            <div class="chart-container">
+                                <canvas id="${chartId}"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            chartsHTML += `
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            content.innerHTML = chartsHTML;
+            
+            // 获取时间范围适合的数据点显示配置 - 固定显示15个时间标签，保持所有数据点
+            const getChartConfig = (timeRange) => {
+                const configs = {
+                    '5m': { maxTicksLimit: 15, pointRadius: 0, borderWidth: 3 },   // 不显示点，只显示曲线
+                    '1h': { maxTicksLimit: 15, pointRadius: 0, borderWidth: 3 },   // 不显示点，只显示曲线
+                    '3h': { maxTicksLimit: 15, pointRadius: 0, borderWidth: 3 },   // 不显示点，只显示曲线
+                    '6h': { maxTicksLimit: 15, pointRadius: 0, borderWidth: 3 }    // 不显示点，只显示曲线
+                };
+                return configs[timeRange] || configs['1h'];
+            };
+            
+            const chartConfig = getChartConfig(timeRange);
+            
+            // 添加时间范围切换事件监听
+            setTimeout(() => {
+                const timeRangeBtns = document.querySelectorAll('.time-range-btn');
+                timeRangeBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        // 避免重复点击
+                        if (this.classList.contains('active')) return;
+                        
+                        // 移除所有按钮的active状态
+                        timeRangeBtns.forEach(b => b.classList.remove('active'));
+                        // 添加当前按钮的active状态
+                        this.classList.add('active');
+                        
+                        const range = this.dataset.range;
+                        const label = this.dataset.label;
+                        
+                        // 使用平滑的数据更新而不是完整重新渲染（避免闪烁）
+                        updateChartsData(data.ip, range);
+                    });
+                });
+            }, 100);
+            
+            // 创建图表 - 按指定顺序
+            let chartIndex = 0;
+            chartOrder.forEach(key => {
+                const chartData = results[key];
+                if (!chartData) return; // 如果没有该指标数据，跳过
+                
+                const chartId = `chart_${key}_${chartIndex++}`;
+                const ctx = document.getElementById(chartId);
+                
+                if (ctx) {
+                    // 设置图表配置 - 优化大卡片显示
+                    const config = {
+                        type: 'line',
+                        data: {
+                            labels: timestamps,
+                            datasets: [{
+                                label: data.ip,
+                                data: chartData.data,
+                                borderColor: getChartColor(chartIndex),
+                                backgroundColor: getChartColor(chartIndex, 0.1),
+                                tension: 0.4,
+                                fill: true,
+                                borderWidth: chartConfig.borderWidth, // 使用动态配置
+                                pointRadius: chartConfig.pointRadius, // 使用动态配置，设为0不显示点
+                                pointBackgroundColor: getChartColor(chartIndex),
+                                pointBorderColor: '#ffffff',
+                                pointBorderWidth: 0, // 设为0不显示边框
+                                pointHoverRadius: 0 // 悬停时也不显示点
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: {
+                                duration: 1200,
+                                easing: 'easeInOutQuart'
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                    labels: {
+                                        usePointStyle: true,
+                                        padding: 25,
+                                        font: {
+                                            size: 14, // 增大图例字体
+                                            weight: 'bold'
+                                        }
+                                    }
+                                },
+                                tooltip: {
+                                    mode: 'index',
+                                    intersect: false,
+                                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                    titleColor: '#1f2937',
+                                    bodyColor: '#4b5563',
+                                    borderColor: '#e5e7eb',
+                                    borderWidth: 2,
+                                    titleFont: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    },
+                                    bodyFont: {
+                                        size: 13
+                                    },
+                                    padding: 12,
+                                    callbacks: {
+                                        label: function(context) {
+                                            let value = context.parsed.y;
+                                            if (value === null || value === undefined) {
+                                                return context.dataset.label + ': N/A';
+                                            }
+                                            // 根据指标类型格式化数值
+                                            if (key === 'cpu' || key === 'mem' || key === 'disk') {
+                                                return context.dataset.label + ': ' + value.toFixed(1) + '%';
+                                            }
+                                            return context.dataset.label + ': ' + value.toFixed(2);
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    display: true,
+                                    title: {
+                                        display: true,
+                                        text: '时间',
+                                        font: {
+                                            size: 14, // 增大轴标题字体
+                                            weight: 'bold'
+                                        },
+                                        color: '#374151'
+                                    },
+                                    ticks: {
+                                        font: {
+                                            size: 12 // 增大刻度字体
+                                        },
+                                        color: '#6b7280',
+                                        maxTicksLimit: chartConfig.maxTicksLimit // 动态限制时间标签数量
+                                    },
+                                    grid: {
+                                        color: '#e5e7eb',
+                                        lineWidth: 1
+                                    }
+                                },
+                                y: {
+                                    display: true,
+                                    title: {
+                                        display: true,
+                                        text: getYAxisLabel(key),
+                                        font: {
+                                            size: 14, // 增大轴标题字体
+                                            weight: 'bold'
+                                        },
+                                        color: '#374151'
+                                    },
+                                    beginAtZero: true,
+                                    max: (key === 'cpu' || key === 'mem' || key === 'disk') ? 100 : undefined,
+                                    ticks: {
+                                        font: {
+                                            size: 12 // 增大刻度字体
+                                        },
+                                        color: '#6b7280',
+                                        precision: 0,
+                                        callback: function(value) {
+                                            if (key === 'cpu' || key === 'mem' || key === 'disk') {
+                                                return value + '%';
+                                            }
+                                            return value;
+                                        }
+                                    },
+                                    grid: {
+                                        color: '#e5e7eb',
+                                        lineWidth: 1
+                                    }
+                                }
+                            },
+                            interaction: {
+                                mode: 'index',  // 改为index模式，适合曲线图
+                                axis: 'x',
+                                intersect: false
+                            },
+                            elements: {
+                                point: {
+                                    hoverBorderWidth: 0  // 悬停时也不显示点边框
+                                },
+                                line: {
+                                    borderJoinStyle: 'round',
+                                    tension: 0.4  // 增加曲线平滑度
+                                }
+                            }
+                        }
+                    };
+                    
+                    // 创建图表实例
+                    hostMetricsCharts[chartId] = new Chart(ctx, config);
+                }
+            });
+        }
+        
+        // 获取图表颜色
+        function getChartColor(index, alpha = 1) {
+            const colors = [
+                `rgba(59, 130, 246, ${alpha})`,   // 蓝色
+                `rgba(34, 197, 94, ${alpha})`,    // 绿色  
+                `rgba(239, 68, 68, ${alpha})`,    // 红色
+                `rgba(245, 158, 11, ${alpha})`,   // 黄色
+                `rgba(139, 92, 246, ${alpha})`,   // 紫色
+                `rgba(236, 72, 153, ${alpha})`    // 粉色
+            ];
+            return colors[index % colors.length];
+        }
+        
+        // 获取Y轴标签
+        function getYAxisLabel(key) {
+            const labels = {
+                'cpu': 'CPU使用率 (%)',
+                'mem': '内存使用率 (%)',
+                'disk': '磁盘使用率 (%)'
+            };
+            return labels[key] || '数值';
+        }
+        
+        // 显示指标错误信息
+        function showMetricsError(message, ip = null, isMaxRetries = false) {
+            const content = document.getElementById('hostMetricsContent');
+            const currentIP = ip || currentHostIP;
+            
+            let errorHTML = `
+                <div class="text-center p-4">
+                    <i class="bi bi-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+                    <h4 class="mt-3">无法加载监控数据</h4>
+                    <p class="text-muted">${message}</p>
+            `;
+            
+            // 根据错误类型显示不同的建议
+            if (message.includes('超时') || message.includes('timeout')) {
+                errorHTML += `
+                    <div class="alert alert-danger mt-3">
+                        <h6><i class="bi bi-clock-history"></i> 请求超时问题</h6>
+                        <ul class="text-start mb-0">
+                            <li>服务器响应过慢，超过60秒限制</li>
+                            <li>可能是Prometheus查询耗时过长</li>
+                            <li>建议稍后再试，或联系系统管理员优化查询</li>
+                        </ul>
+                    </div>
+                `;
+            } else if (message.includes('网络') || message.includes('连接') || message.includes('Failed to fetch')) {
+                errorHTML += `
+                    <div class="alert alert-warning mt-3">
+                        <h6><i class="bi bi-wifi-off"></i> 网络连接问题</h6>
+                        <ul class="text-start mb-0">
+                            <li>请检查网络连接是否正常</li>
+                            <li>检查Prometheus服务器(192.168.145.23:9090)是否可访问</li>
+                            <li>稍后再试，或联系系统管理员</li>
+                        </ul>
+                    </div>
+                `;
+            } else if (message.includes('监控数据') || message.includes('无数据')) {
+                errorHTML += `
+                    <div class="alert alert-info mt-3">
+                        <h6><i class="bi bi-info-circle"></i> 监控数据问题</h6>
+                        <ul class="text-start mb-0">
+                            <li>该主机可能未安装或启动监控代理</li>
+                            <li>检查主机 ${currentIP} 是否在线</li>
+                            <li>检查监控配置是否正确</li>
+                        </ul>
+                    </div>
+                `;
+            }
+            
+            // 按钮区域
+            errorHTML += `
+                    <div class="mt-4">
+                        <button class="btn btn-primary me-2" onclick="loadHostMetricsWithRange('${currentIP}', getCurrentTimeRange())">
+                            <i class="bi bi-arrow-clockwise"></i> 重试
+                        </button>
+            `;
+            
+            // 如果已经最大重试次数，提供更多选项
+            if (isMaxRetries) {
+                errorHTML += `
+                        <button class="btn btn-outline-secondary me-2" onclick="window.open('http://192.168.145.23:9090', '_blank')">
+                            <i class="bi bi-box-arrow-up-right"></i> 检查Prometheus
+                        </button>
+                        <button class="btn btn-outline-info" onclick="checkNetworkStatus()">
+                            <i class="bi bi-wifi"></i> 网络诊断
+                        </button>
+                `;
+            }
+            
+            errorHTML += `
+                    </div>
+                </div>
+            `;
+            
+            content.innerHTML = errorHTML;
+        }
+        
+        // 获取当前选中的时间范围
+        function getCurrentTimeRange() {
+            const activeBtn = document.querySelector('.time-range-btn.active');
+            return activeBtn ? activeBtn.dataset.range : '1h';
+        }
+        
+        // 加载主机指标数据 - 兼容旧的调用方式
+        function loadHostMetrics(ip, retryCount = 0, maxRetries = 3) {
+            loadHostMetricsWithRange(ip, '1h', retryCount, maxRetries);
+        }
+        
+        // 网络状态检查
+        function checkNetworkStatus() {
+            const content = document.getElementById('hostMetricsContent');
+            content.innerHTML = `
+                <div class="text-center p-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">检查中...</span>
+                    </div>
+                    <p class="mt-2">正在诊断网络连接...</p>
+                </div>
+            `;
+            
+            // 检查Prometheus连接
+            fetch('/api/pushgateway/status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        content.innerHTML = `
+                            <div class="text-center p-4">
+                                <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
+                                <h4 class="mt-3 text-success">网络连接正常</h4>
+                                <p class="text-muted">Prometheus服务器可访问，检测到 ${data.total} 个监控目标</p>
+                                <button class="btn btn-primary mt-3" onclick="loadHostMetricsWithRange(currentHostIP, getCurrentTimeRange())">
+                                    <i class="bi bi-arrow-clockwise"></i> 重新加载数据
+                                </button>
+                            </div>
+                        `;
+                    } else {
+                        content.innerHTML = `
+                            <div class="text-center p-4">
+                                <i class="bi bi-x-circle text-danger" style="font-size: 3rem;"></i>
+                                <h4 class="mt-3 text-danger">网络连接异常</h4>
+                                <p class="text-muted">${data.message}</p>
+                                <div class="alert alert-danger mt-3">
+                                    <strong>建议解决方案：</strong>
+                                    <ul class="text-start mb-0">
+                                        <li>检查网络连接</li>
+                                        <li>联系系统管理员检查Prometheus服务</li>
+                                        <li>稍后再试</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    content.innerHTML = `
+                        <div class="text-center p-4">
+                            <i class="bi bi-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+                            <h4 class="mt-3 text-warning">网络诊断失败</h4>
+                            <p class="text-muted">无法连接到服务器进行网络诊断</p>
+                            <button class="btn btn-primary mt-3" onclick="showMetricsError('网络连接错误', currentHostIP, true)">
+                                <i class="bi bi-arrow-left"></i> 返回
+                            </button>
+                        </div>
+                    `;
+                });
+        }
+        
+        // 更新图表数据而不重新渲染整个模态框（避免闪烁）
+        function updateChartsData(ip, timeRange = '1h') {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 60000); // 60秒超时
+            
+            // 显示加载状态在时间范围按钮区域
+            const timeRangeSelector = document.querySelector('.time-range-selector');
+            if (timeRangeSelector) {
+                timeRangeSelector.style.opacity = '0.6';
+                timeRangeSelector.style.pointerEvents = 'none';
+            }
+            
+            fetch(`/api/host-metrics/${encodeURIComponent(ip)}?range=${timeRange}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                signal: controller.signal
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    clearTimeout(timeoutId);
+                    if (data.success) {
+                        updateExistingCharts(data, timeRange);
+                    } else {
+                        console.error('获取数据失败:', data.message);
+                        // 如果局部更新失败，回退到完整重新加载
+                        loadHostMetricsWithRange(ip, timeRange);
+                    }
+                })
+                .catch(error => {
+                    clearTimeout(timeoutId);
+                    console.error('更新图表数据失败:', error);
+                    // 如果局部更新失败，回退到完整重新加载
+                    loadHostMetricsWithRange(ip, timeRange);
+                })
+                .finally(() => {
+                    // 恢复时间范围选择器状态
+                    if (timeRangeSelector) {
+                        timeRangeSelector.style.opacity = '1';
+                        timeRangeSelector.style.pointerEvents = 'auto';
+                    }
+                });
+        }
+        
+        // 更新现有图表的数据
+        function updateExistingCharts(data, timeRange) {
+            const { results, timestamps, os_type, title } = data;
+            
+            if (!results || Object.keys(results).length === 0) {
+                console.error('无可用的监控数据');
+                return;
+            }
+            
+            // 更新时间范围显示
+            const timeRangeLabels = {
+                '5m': '最近5分钟',
+                '1h': '过去1小时',
+                '3h': '过去3小时',
+                '6h': '过去6小时'
+            };
+            const currentRangeLabel = timeRangeLabels[timeRange] || '过去1小时';
+            const currentTimeRangeElement = document.getElementById('currentTimeRange');
+            if (currentTimeRangeElement) {
+                currentTimeRangeElement.textContent = currentRangeLabel;
+            }
+            
+            // 更新数据点信息
+            const infoElements = document.querySelectorAll('[data-info="datapoints"]');
+            infoElements.forEach(el => {
+                el.textContent = `数据点: ${timestamps.length} 个`;
+            });
+            
+            // 定义图表显示顺序
+            const chartOrder = ['cpu', 'mem', 'disk'];
+            
+            // 更新每个图表的数据
+            let chartIndex = 0;
+            chartOrder.forEach(key => {
+                const chartData = results[key];
+                if (!chartData) return;
+                
+                const chartId = `chart_${key}_${chartIndex++}`;
+                const chart = hostMetricsCharts[chartId];
+                
+                if (chart && chart.data) {
+                    // 平滑更新图表数据
+                    chart.data.labels = timestamps;
+                    chart.data.datasets[0].data = chartData.data;
+                    
+                    // 使用动画更新
+                    chart.update('default');
+                }
+            });
+        }
+        
+        // 刷新主机指标
+        function refreshHostMetrics() {
+            if (currentHostIP) {
+                const currentRange = getCurrentTimeRange();
+                // 如果图表已经存在，使用平滑更新；否则完整重新加载
+                if (Object.keys(hostMetricsCharts).length > 0) {
+                    updateChartsData(currentHostIP, currentRange);
+                } else {
+                    loadHostMetricsWithRange(currentHostIP, currentRange);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

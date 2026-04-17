@@ -1,0 +1,2645 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>IT运维管理平台 - 系统概览</title>
+    <link rel="icon" type="image/png" href="/static/images/title.png">
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        :root {
+            /* 全新配色方案 - 现代渐变风格 */
+            --primary-50: #f0f4ff;
+            --primary-100: #e0e9ff;
+            --primary-500: #3b82f6;
+            --primary-600: #2563eb;
+            --primary-700: #1d4ed8;
+            
+            --secondary-50: #fefce8;
+            --secondary-100: #fef9c3;
+            --secondary-500: #eab308;
+            --secondary-600: #ca8a04;
+            
+            --success-50: #f0fdf4;
+            --success-100: #dcfce7;
+            --success-500: #22c55e;
+            --success-600: #16a34a;
+            
+            --info-50: #eff6ff;
+            --info-100: #dbeafe;
+            --info-500: #0ea5e9;
+            --info-600: #0284c7;
+            
+            --warning-50: #fffbeb;
+            --warning-100: #fef3c7;
+            --warning-500: #f59e0b;
+            --warning-600: #d97706;
+            
+            --danger-50: #fef2f2;
+            --danger-100: #fee2e2;
+            --danger-500: #ef4444;
+            --danger-600: #dc2626;
+            
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            
+            /* 渐变背景 */
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-success: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            --gradient-info: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+            --gradient-warning: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            --gradient-danger: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+            --gradient-purple: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            --gradient-orange: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            --gradient-cyan: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+            
+            /* 阴影效果 */
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            
+            /* 圆角 */
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+            --radius-2xl: 1.5rem;
+            
+            /* 过渡动画 */
+            --transition-all: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-transform: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            font-size: 0.875rem;
+            line-height: 1.6;
+            color: var(--gray-900);
+            font-weight: 400;
+            letter-spacing: -0.025em;
+        }
+
+        .main-content {
+            margin-left: 280px;
+            padding: 1.5rem;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        }
+
+        .page-header {
+            background: white;
+            border-radius: var(--radius-2xl);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--gray-200);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-primary);
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.05em;
+        }
+
+        .page-subtitle {
+            color: var(--gray-600);
+            font-size: 1.125rem;
+            font-weight: 500;
+        }
+
+        /* 统计卡片网格 - 重新设计 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            perspective: 1000px;
+        }
+
+        @keyframes slideUpFromBottom {
+            from {
+                opacity: 0;
+                transform: translateY(50px) scale(0.9) rotateX(-10deg);
+                filter: blur(5px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1) rotateX(0deg);
+                filter: blur(0px);
+            }
+        }
+
+        .animate-stagger .stat-card {
+            animation: slideUpFromBottom 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+            animation-play-state: paused;
+        }
+
+        .animate-stagger .stat-card:nth-child(1) { animation-delay: 0.1s; }
+        .animate-stagger .stat-card:nth-child(2) { animation-delay: 0.2s; }
+        .animate-stagger .stat-card:nth-child(3) { animation-delay: 0.3s; }
+        .animate-stagger .stat-card:nth-child(4) { animation-delay: 0.4s; }
+        .animate-stagger .stat-card:nth-child(5) { animation-delay: 0.5s; }
+        .animate-stagger .stat-card:nth-child(6) { animation-delay: 0.6s; }
+        .animate-stagger .stat-card:nth-child(7) { animation-delay: 0.7s; }
+        .animate-stagger .stat-card:nth-child(8) { animation-delay: 0.8s; }
+
+        .stat-card {
+            position: relative;
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 2rem;
+            box-shadow: var(--shadow-md);
+            transition: var(--transition-all);
+            border: 1px solid var(--gray-200);
+            cursor: pointer;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 120px;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-primary);
+            transition: var(--transition-all);
+        }
+
+        .stat-card:hover::before {
+            height: 4px;
+        }
+
+        .stat-card.primary::before {
+            background: var(--gradient-primary);
+        }
+
+        .stat-card.success::before {
+            background: var(--gradient-success);
+        }
+
+        .stat-card.info::before {
+            background: var(--gradient-info);
+        }
+
+        .stat-card.warning::before {
+            background: var(--gradient-warning);
+        }
+
+        .stat-card.danger::before {
+            background: var(--gradient-danger);
+        }
+
+        .stat-card.purple::before {
+            background: var(--gradient-purple);
+        }
+
+        .stat-card.orange::before {
+            background: var(--gradient-orange);
+        }
+
+        .stat-card.cyan::before {
+            background: var(--gradient-cyan);
+        }
+
+        .stat-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            opacity: 0.9;
+            transition: var(--transition-transform);
+        }
+
+        .stat-card:hover .stat-icon {
+            transform: scale(1.1);
+        }
+
+        .stat-info {
+            text-align: right;
+        }
+
+        .stat-number {
+            font-size: 2.25rem;
+            font-weight: 800;
+            color: var(--gray-900);
+            line-height: 1;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            color: var(--gray-600);
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-trend {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--gray-100);
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+
+        .trend-icon {
+            font-size: 1rem;
+        }
+
+        .trend-up {
+            color: var(--success-500);
+        }
+
+        .trend-down {
+            color: var(--danger-500);
+        }
+
+        /* 图表区域 */
+        .chart-section {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 1rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--gray-200);
+            transition: var(--transition-all);
+            display: flex;
+            flex-direction: column;
+            height: 540px;
+        }
+
+        .chart-section-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 0;
+            flex: 1;
+        }
+
+        .host-alerts-container {
+            height: 100%;
+            overflow-y: auto;
+            margin: 0;
+            flex: 1;
+        }
+
+        .pushgateway-nodes-container {
+            height: 100%;
+            overflow-y: auto;
+            margin: 0;
+            flex: 1;
+        }
+
+        /* 快速操作区域 */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .quick-action-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 1.5rem;
+            text-align: center;
+            transition: var(--transition-all);
+            cursor: pointer;
+            border: 1px solid var(--gray-200);
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .quick-action-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-primary);
+            transition: var(--transition-all);
+        }
+
+        .quick-action-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .quick-action-card:hover::before {
+            height: 4px;
+        }
+
+        .quick-action-icon {
+            font-size: 2rem;
+            transition: var(--transition-transform);
+        }
+
+        .quick-action-card:hover .quick-action-icon {
+            transform: scale(1.1);
+        }
+
+        .quick-action-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin: 0;
+        }
+
+        .quick-action-desc {
+            color: var(--gray-600);
+            font-size: 0.875rem;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        /* 详情卡片 */
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .detail-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--gray-200);
+            transition: var(--transition-all);
+        }
+
+        .detail-card:hover {
+            box-shadow: var(--shadow-lg);
+        }
+
+        .detail-header {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--gray-100);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--gray-100);
+            transition: var(--transition-all);
+        }
+
+        .detail-item:hover {
+            background: var(--gray-50);
+            margin: 0 -0.5rem;
+            padding: 0.75rem 0.5rem;
+            border-radius: var(--radius-md);
+        }
+
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            color: var(--gray-600);
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        .detail-value {
+            color: var(--gray-900);
+            font-weight: 700;
+            font-size: 1.125rem;
+        }
+
+        /* 表格样式 */
+        .table-container {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 2rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--gray-200);
+            margin-bottom: 2rem;
+            transition: var(--transition-all);
+        }
+
+        .table-container:hover {
+            box-shadow: var(--shadow-lg);
+        }
+
+        .table-header {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .table {
+            margin-bottom: 0;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+        }
+
+        .table thead th {
+            background: var(--gray-50);
+            color: var(--gray-700);
+            font-weight: 600;
+            border: none;
+            padding: 1rem;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .table tbody td {
+            padding: 1rem;
+            vertical-align: middle;
+            border-bottom: 1px solid var(--gray-100);
+            font-size: 0.875rem;
+            transition: var(--transition-all);
+        }
+
+        .table tbody tr {
+            transition: var(--transition-all);
+        }
+
+        .table tbody tr:hover {
+            background: var(--gray-50);
+            transform: translateX(2px);
+        }
+
+        /* 状态徽章 */
+        .badge {
+            font-size: 0.75rem;
+            padding: 0.375rem 0.75rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            letter-spacing: 0.025em;
+        }
+
+        .badge-success {
+            background: var(--success-100);
+            color: var(--success-700);
+        }
+
+        .badge-warning {
+            background: var(--warning-100);
+            color: var(--warning-700);
+        }
+
+        .badge-danger {
+            background: var(--danger-100);
+            color: var(--danger-700);
+        }
+
+        .badge-info {
+            background: var(--info-100);
+            color: var(--info-700);
+        }
+
+        /* 高级加载动画 */
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 3rem;
+            min-height: 200px;
+        }
+
+        .spinner-container {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .spinner-ring {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 4px solid transparent;
+            border-top-color: var(--primary-500);
+            animation: spinner-ring-rotate 1.5s cubic-bezier(0.68, -0.75, 0.27, 1.75) infinite;
+        }
+
+        .spinner-ring:nth-child(2) {
+            border-top-color: var(--success-500);
+            animation-delay: -0.15s;
+            width: 85%;
+            height: 85%;
+        }
+
+        .spinner-ring:nth-child(3) {
+            border-top-color: var(--info-500);
+            animation-delay: -0.3s;
+            width: 70%;
+            height: 70%;
+        }
+
+        .spinner-ring:nth-child(4) {
+            border-top-color: var(--warning-500);
+            animation-delay: -0.45s;
+            width: 55%;
+            height: 55%;
+        }
+
+        @keyframes spinner-ring-rotate {
+            0% {
+                transform: rotate(0deg) scale(1);
+            }
+            50% {
+                transform: rotate(180deg) scale(1.1);
+            }
+            100% {
+                transform: rotate(360deg) scale(1);
+            }
+        }
+
+        .spinner-text {
+            position: absolute;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-700);
+            text-align: center;
+            animation: pulse-text 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-text {
+            0%, 100% {
+                opacity: 0.7;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.05);
+            }
+        }
+
+        /* 脉冲加载动画 */
+        .pulse-loader {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pulse-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse-dot 1.4s ease-in-out infinite both;
+        }
+
+        .pulse-dot:nth-child(1) {
+            background-color: var(--primary-500);
+            animation-delay: -0.32s;
+        }
+
+        .pulse-dot:nth-child(2) {
+            background-color: var(--success-500);
+            animation-delay: -0.16s;
+        }
+
+        .pulse-dot:nth-child(3) {
+            background-color: var(--info-500);
+            animation-delay: 0s;
+        }
+
+        @keyframes pulse-dot {
+            0%, 80%, 100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
+        }
+
+        /* 波浪加载动画 */
+        .wave-loader {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 60px;
+        }
+
+        .wave-bar {
+            width: 6px;
+            height: 40px;
+            margin: 0 3px;
+            border-radius: 3px;
+            animation: wave 1.2s ease-in-out infinite;
+        }
+
+        .wave-bar:nth-child(1) {
+            background: linear-gradient(to top, var(--primary-500), var(--primary-300));
+            animation-delay: -1.2s;
+        }
+
+        .wave-bar:nth-child(2) {
+            background: linear-gradient(to top, var(--success-500), var(--success-300));
+            animation-delay: -1.1s;
+        }
+
+        .wave-bar:nth-child(3) {
+            background: linear-gradient(to top, var(--info-500), var(--info-300));
+            animation-delay: -1.0s;
+        }
+
+        .wave-bar:nth-child(4) {
+            background: linear-gradient(to top, var(--warning-500), var(--warning-300));
+            animation-delay: -0.9s;
+        }
+
+        .wave-bar:nth-child(5) {
+            background: linear-gradient(to top, var(--danger-500), var(--danger-300));
+            animation-delay: -0.8s;
+        }
+
+        @keyframes wave {
+            0%, 40%, 100% {
+                transform: scaleY(0.4);
+            }
+            20% {
+                transform: scaleY(1);
+            }
+        }
+
+        /* 高级骨架屏加载效果 */
+        .skeleton-loading {
+            background: linear-gradient(90deg, 
+                var(--gray-100) 0%, 
+                var(--gray-200) 25%, 
+                var(--gray-100) 50%, 
+                var(--gray-200) 75%, 
+                var(--gray-100) 100%);
+            background-size: 400% 100%;
+            animation: skeleton-loading 2s ease-in-out infinite;
+            border-radius: var(--radius-md);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .skeleton-loading::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.4), 
+                transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes skeleton-loading {
+            0% {
+                background-position: 400% 0;
+            }
+            100% {
+                background-position: -400% 0;
+            }
+        }
+
+        @keyframes shimmer {
+            0% {
+                left: -100%;
+            }
+            100% {
+                left: 100%;
+            }
+        }
+
+        .skeleton-text {
+            height: 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: var(--radius-sm);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .skeleton-text.sm {
+            height: 0.75rem;
+            width: 60%;
+        }
+
+        .skeleton-text.md {
+            height: 1rem;
+            width: 80%;
+        }
+
+        .skeleton-text.lg {
+            height: 1.25rem;
+            width: 100%;
+        }
+
+        .skeleton-circle {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .skeleton-rect {
+            border-radius: var(--radius-md);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .skeleton-card {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-xl);
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .skeleton-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .skeleton-stat-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 2rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
+        }
+
+        .skeleton-chart {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 2rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
+            height: 400px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .skeleton-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .skeleton-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: var(--radius-md);
+            margin-right: 1rem;
+        }
+
+        .skeleton-title {
+            height: 1.5rem;
+            width: 150px;
+            border-radius: var(--radius-sm);
+        }
+
+        /* 详细统计区域样式 */
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+            padding: 0 2rem;
+        }
+        
+        .detail-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .detail-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary-color);
+        }
+        
+        .detail-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .detail-header i {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+        }
+        
+        .detail-content {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            transition: background 0.3s ease;
+        }
+        
+        .detail-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .detail-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        
+        .detail-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            font-family: 'Courier New', monospace;
+        }
+
+        /* PushGateway 节点状态卡片样式 - 简化版 */
+        .pushgateway-nodes-container {
+            height: 400px;
+            overflow-y: auto;
+            margin: 1rem 0;
+        }
+
+        .pushgateway-node-item {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+
+        .pushgateway-node-item:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .pushgateway-node-address {
+            font-size: 0.9rem;
+            color: #374151;
+            font-family: monospace;
+        }
+
+        .pushgateway-node-status {
+            font-size: 0.8rem;
+            font-weight: bold;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            text-transform: uppercase;
+        }
+
+        .pushgateway-node-status.status-up {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .pushgateway-node-status.status-down {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        <!-- 主机告警详情卡片样式 -->
+        .host-alerts-container {
+            height: 400px;
+            overflow-y: auto;
+            margin: 1rem 0;
+            scroll-behavior: smooth;
+        }
+
+        /* 自定义滚动条样式 */
+        .host-alerts-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .host-alerts-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+
+        .host-alerts-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+
+        .host-alerts-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .host-alert-item {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            transition: all 0.2s ease;
+        }
+
+        .host-alert-item:hover {
+            border-color: #ef4444;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.1);
+        }
+
+        .host-alert-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .host-alert-ip {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #374151;
+            font-family: monospace;
+        }
+
+        .host-alert-count {
+            background: #fee2e2;
+            color: #dc2626;
+            font-size: 0.75rem;
+            font-weight: bold;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+        }
+
+        .host-alert-info {
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin-bottom: 0.5rem;
+        }
+
+        .host-alert-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .host-alert-badge {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .host-alert-badge.cpu {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .host-alert-badge.memory {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+
+        .host-alert-badge.disk {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            }
+        }
+
+        @media (max-width: 992px) {
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+            
+            .page-header {
+                padding: 2rem;
+            }
+            
+            .page-title {
+                font-size: 2rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .details-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                padding: 0 1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stat-card,
+            .chart-section,
+            .detail-card,
+            .table-container,
+            .quick-action-card {
+                padding: 1.5rem;
+            }
+            
+            .stat-number {
+                font-size: 2rem;
+            }
+            
+            .stat-icon {
+                font-size: 2rem;
+            }
+        }
+
+        /* 动画效果 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+                filter: blur(5px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+                filter: blur(0);
+            }
+        }
+
+        /* 数据加载完成动画 */
+        @keyframes data-loaded {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .data-loaded {
+            animation: data-loaded 0.6s ease-out;
+        }
+
+        /* 进度条加载动画 */
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 9999;
+            backdrop-filter: blur(10px);
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, 
+                var(--primary-500), 
+                var(--success-500), 
+                var(--info-500), 
+                var(--warning-500));
+            background-size: 200% 100%;
+            transition: width 0.3s ease;
+            animation: progress-shine 2s linear infinite;
+            border-radius: 0 2px 2px 0;
+        }
+
+        @keyframes progress-shine {
+            0% {
+                background-position: 200% 0;
+            }
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        /* 浮动加载提示 */
+        .loading-toast {
+            position: fixed;
+            top: 20px;
+            right: 1px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 12px 20px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.875rem;
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-lg);
+            z-index: 10000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .loading-toast.show {
+            transform: translateX(0);
+        }
+
+        .loading-toast .mini-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: mini-spin 1s linear infinite;
+        }
+
+        @keyframes mini-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 卡片加载遮罩 */
+        .card-loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: inherit;
+            z-index: 10;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .card-loading-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .card-loading-overlay .mini-loader {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--gray-200);
+            border-top: 3px solid var(--primary-500);
+            border-radius: 50%;
+            animation: card-spin 1s linear infinite;
+        }
+
+        @keyframes card-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .animate-fade-in {
+            animation: slideUpFromBottom 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+        @keyframes slideUpFromBottom {
+            0% {
+                opacity: 0;
+                transform: translateY(60px) scale(0.9);
+                filter: blur(8px);
+            }
+            50% {
+                opacity: 0.7;
+                transform: translateY(-10px) scale(1.02);
+                filter: blur(2px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+                filter: blur(0px);
+            }
+        }
+
+        .animate-stagger > * {
+            opacity: 0;
+            transform: translateY(80px);
+            animation: slideUpFromBottom 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--gray-100);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--gray-300);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--gray-400);
+        }
+    </style>
+</head>
+<body>
+    <!-- 引入统一侧边栏 -->
+    {% include 'sidebar.html' %}
+
+    <!-- 全局加载进度条 -->
+    <div class="progress-container" id="progressContainer" style="display: none;">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <!-- 浮动加载提示 -->
+    <div class="loading-toast" id="loadingToast">
+        <div class="mini-spinner"></div>
+        <span>正在加载数据...</span>
+    </div>
+
+    <main class="main-content">
+
+        <!-- 统计卡片 - 重新设计 -->
+        <div class="stats-grid">
+            <div class="stat-card primary" style="cursor: pointer; transition: all 0.3s ease;" onclick="window.location.href='{{ url_for('port_mapping.port_mapping') }}'" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)';">
+                <div class="stat-content">
+                    <div class="stat-icon">
+                        <i class="bi bi-diagram-3" style="color: #3b82f6;"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number" id="portCount">0</div>
+                        <div class="stat-label">端口映射</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stat-card success" style="cursor: pointer; transition: all 0.3s ease;" onclick="window.location.href='{{ url_for('domain_mapping.domain_mapping') }}'" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)';">
+                <div class="stat-content">
+                    <div class="stat-icon">
+                        <i class="bi bi-globe" style="color: #22c55e;"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number" id="domainCount">0</div>
+                        <div class="stat-label">域名映射</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stat-card info">
+                <div class="stat-content">
+                    <div class="stat-icon">
+                        <i class="bi bi-activity" style="color: #0ea5e9;"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number" id="activePortCount">0</div>
+                        <div class="stat-label">活跃端口</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stat-card warning">
+                <div class="stat-content">
+                    <div class="stat-icon">
+                        <i class="bi bi-shield-check" style="color: #f59e0b;"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number" id="activeDomainCount">0</div>
+                        <div class="stat-label">启用域名</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stat-card purple" style="cursor: pointer; transition: all 0.3s ease;" onclick="window.location.href='{{ url_for('virtual_machines.virtual_machines') }}'" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)';">
+                <div class="stat-content">
+                    <div class="stat-icon">
+                        <i class="bi bi-server" style="color: #8b5cf6;"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number" id="vmCount">0</div>
+                        <div class="stat-label">虚拟机</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stat-card orange" style="cursor: pointer; transition: all 0.3s ease;" onclick="window.location.href='{{ url_for('physical_machines.physical_machines') }}'" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)';">
+                <div class="stat-content">
+                    <div class="stat-icon">
+                        <i class="bi bi-cpu" style="color: #f97316;"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number" id="pmCount">0</div>
+                        <div class="stat-label">物理机</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stat-card cyan" style="cursor: pointer; transition: all 0.3s ease;" onclick="window.location.href='{{ url_for('namespaces.namespaces') }}'" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)';">
+                <div class="stat-content">
+                    <div class="stat-icon">
+                        <i class="bi bi-stack" style="color: #06b6d4;"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number" id="nsCount">0</div>
+                        <div class="stat-label">Namespace</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stat-card danger" style="cursor: pointer; transition: all 0.3s ease;" onclick="window.location.href='{{ url_for('host_monitoring.host_monitoring') }}'" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)';">
+                <div class="stat-content">
+                    <div class="stat-icon">
+                        <i class="bi bi-exclamation-triangle-fill" style="color: #ef4444;"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number" id="alertCount">0</div>
+                        <div class="stat-label">资源告警</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 图表和快速操作区域 -->
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="chart-section">
+                    <div class="d-flex justify-content-between align-items-center chart-section-header">
+                        <h5 class="chart-title mb-0">
+                            <i class="bi bi-shield-check"></i>
+                            BSECP授权数据一览表
+                        </h5>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-primary" data-range="week" onclick="changeTimeRange('week')">一周</button>
+                            <button type="button" class="btn btn-outline-primary" data-range="halfmonth" onclick="changeTimeRange('halfmonth')">半月</button>
+                            <button type="button" class="btn btn-outline-primary" data-range="month" onclick="changeTimeRange('month')">一月</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="authorizationChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-section">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="chart-title mb-0">
+                            <i class="bi bi-server"></i>
+                            <span id="vmChartTitle">虚拟机资源统计表</span>
+                        </h5>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-sm btn-outline-primary active" 
+                                    onclick="switchVMChart('resource')" id="btnResource">
+                                <i class="bi bi-hdd-network"></i> 按主机IP
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" 
+                                    onclick="switchVMChart('department')" id="btnDepartment">
+                                <i class="bi bi-building"></i> 按部门
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chart-container" id="vmChartContainer">
+                        <canvas id="vmResourceChart" style="display: block;"></canvas>
+                        <canvas id="vmDepartmentChart" style="display: none;"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 右侧快速操作和状态区域 -->
+            <div class="col-lg-4">
+                <!-- 主机告警详情卡片 -->
+                <div class="chart-section">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="chart-title mb-0">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                            主机资源告警
+                        </h5>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="sendAlertEmails()" id="sendEmailBtn">
+                                <i class="bi bi-envelope"></i> 发送邮件通知
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="refreshHostAlerts()">
+                                <i class="bi bi-arrow-clockwise"></i> 刷新
+                            </button>
+                        </div>
+                    </div>
+                    <div class="host-alerts-container" id="hostAlertsContainer">
+                        <div class="text-center p-4">
+                            <div class="spinner-border text-danger" role="status">
+                                <span class="visually-hidden">加载中...</span>
+                            </div>
+                            <p class="mt-2 mb-0 text-muted">正在获取告警数据...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PushGateway节点状态卡片 -->
+                <div class="chart-section">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="chart-title mb-0">
+                            <i class="bi bi-hdd-network"></i>
+                            PushGateway节点状态
+                        </h5>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="refreshPushGatewayStatus()">
+                            <i class="bi bi-arrow-clockwise"></i> 刷新
+                        </button>
+                    </div>
+                    <div class="pushgateway-nodes-container" id="pushgatewayNodesContainer">
+                        <div class="text-center p-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">加载中...</span>
+                            </div>
+                            <p class="mt-2 mb-0 text-muted">正在获取节点状态...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 详细统计区域 -->
+        <div class="details-grid">
+            <div class="detail-card" style="cursor: pointer; transition: all 0.3s ease;" onclick="window.location.href='{{ url_for('port_mapping.port_mapping') }}'" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)';">
+                <h5 class="detail-header">
+                    <i class="bi bi-diagram-3"></i>
+                    端口映射详细统计
+                    <i class="bi bi-arrow-right" style="float: right; margin-top: 2px; opacity: 0.7;"></i>
+                </h5>
+                <div class="detail-content">
+                    <div class="detail-item">
+                        <span class="detail-label">TCP端口</span>
+                        <span class="detail-value" id="tcpCount">0</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">UDP端口</span>
+                        <span class="detail-value" id="udpCount">0</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">HTTP端口</span>
+                        <span class="detail-value" id="httpCount">0</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">HTTPS端口</span>
+                        <span class="detail-value" id="httpsCount">0</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="detail-card">
+                <h5 class="detail-header">
+                    <i class="bi bi-globe"></i>
+                    域名映射详细统计
+                </h5>
+                <div class="detail-content">
+                    <div class="detail-item">
+                        <span class="detail-label">A记录</span>
+                        <span class="detail-value" id="aRecordCount">0</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">CNAME记录</span>
+                        <span class="detail-value" id="cnameCount">0</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">启用域名</span>
+                        <span class="detail-value" id="enabledCount">0</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">总域名数</span>
+                        <span class="detail-value" id="totalDomains">0</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="detail-card">
+                <h5 class="detail-header">
+                    <i class="bi bi-server"></i>
+                    资源状态统计
+                </h5>
+                <div class="detail-content">
+                    <div class="detail-item">
+                        <span class="detail-label">运行中虚拟机</span>
+                        <span class="detail-value" id="runningVMs">0</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">在线物理机</span>
+                        <span class="detail-value" id="onlinePMs">0</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">活跃Namespace</span>
+                        <span class="detail-value" id="activeNamespaces">0</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">总资源数</span>
+                        <span class="detail-value" id="totalResources">0</span>
+                    </div>
+                </div>
+            </div>
+            
+
+        </div>
+    </main>
+
+    <script src="/static/js/jquery-3.7.1.min.js"></script>
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/chart.min.js"></script>
+    <script>
+        // 加载进度管理器
+        class LoadingProgressManager {
+            constructor() {
+                this.progressContainer = document.getElementById('progressContainer');
+                this.progressBar = document.getElementById('progressBar');
+                this.loadingToast = document.getElementById('loadingToast');
+                this.currentProgress = 0;
+                this.isLoading = false;
+            }
+
+            start() {
+                this.isLoading = true;
+                this.currentProgress = 0;
+                if (this.progressContainer) {
+                    this.progressContainer.style.display = 'block';
+                }
+                if (this.loadingToast) {
+                    this.loadingToast.classList.add('show');
+                }
+                this.updateProgress(0);
+                this.simulateProgress();
+            }
+
+            updateProgress(percentage) {
+                this.currentProgress = Math.min(100, Math.max(0, percentage));
+                if (this.progressBar) {
+                    this.progressBar.style.width = this.currentProgress + '%';
+                }
+                
+                if (this.currentProgress >= 100) {
+                    setTimeout(() => this.complete(), 300);
+                }
+            }
+
+            simulateProgress() {
+                const steps = [
+                    { progress: 20, delay: 500 },
+                    { progress: 45, delay: 800 },
+                    { progress: 70, delay: 600 },
+                    { progress: 90, delay: 400 },
+                    { progress: 100, delay: 300 }
+                ];
+
+                steps.forEach((step, index) => {
+                    setTimeout(() => {
+                        if (this.isLoading) {
+                            this.updateProgress(step.progress);
+                        }
+                    }, step.delay * (index + 1));
+                });
+            }
+
+            complete() {
+                this.isLoading = false;
+                this.updateProgress(100);
+                
+                setTimeout(() => {
+                    if (this.progressContainer) {
+                        this.progressContainer.style.display = 'none';
+                    }
+                    if (this.loadingToast) {
+                        this.loadingToast.classList.remove('show');
+                    }
+                    if (this.progressBar) {
+                        this.progressBar.style.width = '0%';
+                    }
+                }, 500);
+            }
+
+            showCardLoading(cardSelector) {
+                const card = document.querySelector(cardSelector);
+                if (card) {
+                    let overlay = card.querySelector('.card-loading-overlay');
+                    if (!overlay) {
+                        overlay = document.createElement('div');
+                        overlay.className = 'card-loading-overlay';
+                        overlay.innerHTML = '<div class="mini-loader"></div>';
+                        card.style.position = 'relative';
+                        card.appendChild(overlay);
+                    }
+                    overlay.classList.add('active');
+                    return overlay;
+                }
+            }
+
+            hideCardLoading(cardSelector) {
+                const card = document.querySelector(cardSelector);
+                if (card) {
+                    const overlay = card.querySelector('.card-loading-overlay');
+                    if (overlay) {
+                        overlay.classList.remove('active');
+                    }
+                }
+            }
+        }
+
+        // 页面加载动画
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化加载系统
+            const progressManager = new LoadingProgressManager();
+            
+            // 启动全局加载
+            progressManager.start();
+
+            // 从下往上依次弹出动画
+            function animateCardsFromBottom() {
+                const containers = [
+                    '.stats-grid',
+                    '.details-grid',
+                    '.chart-section',
+                    '.table-container',
+                    '.quick-actions'
+                ];
+
+                containers.forEach((containerSelector, containerIndex) => {
+                    const container = document.querySelector(containerSelector);
+                    if (container) {
+                        const cards = container.querySelectorAll('.stat-card, .detail-card, .chart-section, .table-container, .quick-action-card');
+                        
+                        cards.forEach((card, cardIndex) => {
+                            // 清除原有的动画类
+                            card.classList.remove('animate-fade-in');
+                            
+                            // 设置从下往上弹出的延迟时间
+                            const delay = (containerIndex * 200) + (cardIndex * 150);
+                            
+                            // 添加动画延迟
+                            card.style.animationDelay = `${delay}ms`;
+                            
+                            // 添加动画类
+                            setTimeout(() => {
+                                card.classList.add('animate-fade-in');
+                            }, 50);
+                        });
+                    }
+                });
+            }
+
+            // 等待页面加载完成后启动从下往上弹出动画
+            setTimeout(() => {
+                animateCardsFromBottom();
+            }, 500);
+
+            // 优化后的观察器，用于动态加载的元素
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        // 确保元素有动画效果
+                        if (!entry.target.classList.contains('animate-fade-in')) {
+                            entry.target.classList.add('animate-fade-in');
+                        }
+                    }
+                });
+            }, {
+                threshold: 0.1,
+                rootMargin: '50px'
+            });
+
+            // 观察所有需要动画的元素
+            document.querySelectorAll('.stat-card, .detail-card, .chart-section, .table-container, .quick-action-card').forEach(el => {
+                observer.observe(el);
+            });
+
+            // 优雅加载数据 - 分阶段加载
+            async function loadAllData() {
+                try {
+                    // 阶段1: 基础数据
+                    progressManager.updateProgress(20);
+                    await loadDashboardData();
+                    
+                    // 阶段2: 图表初始化
+                    progressManager.updateProgress(40);
+                    await initializeCharts();
+                    
+                    // 阶段3: 虚拟机统计
+                    progressManager.updateProgress(60);
+                    await loadVMResourceStats();
+                    
+                    // 阶段4: 部门统计
+                    progressManager.updateProgress(80);
+                    await loadVMDepartmentStats();
+                    
+                    // 阶段5: 授权统计
+                    progressManager.updateProgress(90);
+                    await loadAuthorizationStats('week');
+                    
+                    // 阶段6: PushGateway节点状态
+                    await loadPushGatewayStatus();
+                    
+                    // 阶段7: 主机告警数据
+                    await loadHostAlerts();
+                    
+                    // 完成
+                    progressManager.complete();
+                    
+                } catch (error) {
+                    console.error('数据加载失败:', error);
+                    progressManager.complete();
+                }
+            }
+
+            // 启动分阶段加载
+            loadAllData();
+            
+            // 每30秒自动刷新数据 - 使用卡片加载遮罩
+            setInterval(() => {
+                progressManager.showCardLoading('.stats-grid');
+                loadDashboardData().finally(() => {
+                    progressManager.hideCardLoading('.stats-grid');
+                });
+            }, 30000);
+
+            setInterval(() => {
+                progressManager.showCardLoading('#vmChartContainer');
+                Promise.all([
+                    loadVMResourceStats(),
+                    loadVMDepartmentStats()
+                ]).finally(() => {
+                    progressManager.hideCardLoading('#vmChartContainer');
+                });
+            }, 30000);
+
+            setInterval(() => {
+                const activeRange = document.querySelector('.btn-group .btn.active');
+                const range = activeRange ? activeRange.dataset.range : 'week';
+                progressManager.showCardLoading('#authChartContainer');
+                loadAuthorizationStats(range).finally(() => {
+                    progressManager.hideCardLoading('#authChartContainer');
+                });
+            }, 30000);
+            
+            // 每60秒刷新PushGateway状态
+            setInterval(() => {
+                loadPushGatewayStatus();
+            }, 60000);
+            
+            // 每60秒刷新主机告警数据
+            setInterval(() => {
+                loadHostAlerts();
+            }, 60000);
+        });
+
+        let authorizationChart, vmResourceChart, vmDepartmentChart;
+
+        // 安全更新DOM元素
+        function safeUpdateElement(id, value, defaultValue = 0) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = value || defaultValue;
+            } else {
+                console.warn(`DOM元素不存在: ${id}`);
+            }
+        }
+
+        // 加载仪表板数据
+        async function loadDashboardData() {
+            try {
+                // 获取基础统计数据
+                const response = await fetch('/api/dashboard/stats');
+                const data = await response.json();
+                
+                // 更新统计数字 - 使用安全函数避免TypeError
+                safeUpdateElement('portCount', data.portMappings?.total);
+                safeUpdateElement('domainCount', data.domainMappings?.total);
+                safeUpdateElement('activePortCount', data.portMappings?.active);
+                safeUpdateElement('activeDomainCount', data.domainMappings?.active);
+                
+                // 更新新增的统计数字
+                safeUpdateElement('vmCount', data.vmStats?.total);
+                safeUpdateElement('pmCount', data.pmStats?.total);
+                safeUpdateElement('nsCount', data.nsStats?.total);
+                
+                // 更新详细统计
+                safeUpdateElement('tcpCount', data.portMappings?.tcp);
+                safeUpdateElement('udpCount', data.portMappings?.udp);
+                safeUpdateElement('httpCount', data.portMappings?.http);
+                safeUpdateElement('httpsCount', data.portMappings?.https);
+                
+                // 更新域名统计
+                safeUpdateElement('aRecordCount', data.domainMappings?.aRecords);
+                safeUpdateElement('cnameCount', data.domainMappings?.cnameRecords);
+                safeUpdateElement('enabledCount', data.domainMappings?.enabled);
+                safeUpdateElement('totalDomains', data.domainMappings?.total);
+                
+                // 更新资源统计
+                safeUpdateElement('runningVMs', data.vmStats?.running);
+                safeUpdateElement('onlinePMs', data.pmStats?.online);
+                safeUpdateElement('activeNamespaces', data.nsStats?.active);
+                
+                const totalResources = (data.portMappings?.total || 0) + 
+                                     (data.domainMappings?.total || 0) + 
+                                     (data.vmStats?.total || 0) + 
+                                     (data.pmStats?.total || 0) + 
+                                     (data.nsStats?.total || 0);
+                safeUpdateElement('totalResources', totalResources);
+                
+                // 更新时间信息
+                safeUpdateElement('lastSync', data.lastSync ? new Date(data.lastSync).toLocaleString('zh-CN') : '-');
+                safeUpdateElement('dataUpdate', data.lastUpdate ? new Date(data.lastUpdate).toLocaleString('zh-CN') : '-');
+                
+                // 更新图表
+                updateCharts(data);
+                
+                // 添加加载完成动画
+                document.querySelectorAll('.stat-number, .detail-value').forEach(element => {
+                    element.classList.add('data-loaded');
+                    setTimeout(() => {
+                        element.classList.remove('data-loaded');
+                    }, 600);
+                });
+                
+            } catch (error) {
+                console.error('加载仪表板数据失败:', error);
+            }
+        }
+
+        // 加载主机告警数据
+        async function loadHostAlerts() {
+            try {
+                const response = await fetch('/api/host-alerts');
+                const data = await response.json();
+                
+                if (data.success) {
+                    safeUpdateElement('alertCount', data.total_alerts);
+                    updateHostAlertsDisplay(data.alerts);
+                    
+                    if (data.total_alerts > 0) {
+                        console.log(`发现 ${data.total_hosts} 台主机存在 ${data.total_alerts} 个告警`);
+                        data.alerts.forEach(alert => {
+                            console.log(`主机 ${alert.ip} (${alert.user} - ${alert.department}): ${alert.alerts.length} 个告警`);
+                            alert.alerts.forEach(a => {
+                                console.log(`  - ${a.type}: ${a.value.toFixed(1)}% (阈值: ${a.threshold}%)`);
+                            });
+                        });
+                    }
+                } else {
+                    console.error('获取主机告警数据失败:', data.message);
+                    safeUpdateElement('alertCount', 0);
+                    updateHostAlertsDisplay(null);
+                }
+            } catch (error) {
+                console.error('加载主机告警数据失败:', error);
+                safeUpdateElement('alertCount', 0);
+                updateHostAlertsDisplay(null);
+            }
+        }
+
+        // 更新主机告警详情显示
+        function updateHostAlertsDisplay(alerts) {
+            const container = document.getElementById('hostAlertsContainer');
+            
+            if (!alerts || alerts.length === 0) {
+                container.innerHTML = '<div class="text-center p-4"><p class="text-muted"><i class="bi bi-check-circle-fill text-success"></i> 暂无告警</p></div>';
+                setupAutoScroll();
+                return;
+            }
+            
+            container.innerHTML = alerts.map(alert => {
+                const alertBadges = alert.alerts.map(a => {
+                    let badgeClass = 'disk';
+                    if (a.type === 'CPU') badgeClass = 'cpu';
+                    else if (a.type === '内存') badgeClass = 'memory';
+                    
+                    return `<span class="host-alert-badge ${badgeClass}">${a.type}: ${a.value.toFixed(1)}%</span>`;
+                }).join('');
+                
+                return `
+                    <div class="host-alert-item">
+                        <div class="host-alert-header">
+                            <span class="host-alert-ip">${alert.ip}</span>
+                            <span class="host-alert-count">${alert.alerts.length} 个告警</span>
+                        </div>
+                        <div class="host-alert-info">
+                            ${alert.system_type} | ${alert.user} | ${alert.department}
+                        </div>
+                        <div class="host-alert-details">
+                            ${alertBadges}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            setupAutoScroll();
+        }
+
+        // 自动滚动功能
+        let autoScrollId = null;
+        let isScrolling = false;
+        let scrollPosition = 0;
+        const scrollSpeed = 0.3; // 滚动速度，数值越小越慢
+        
+        function setupAutoScroll() {
+            const container = document.getElementById('hostAlertsContainer');
+            
+            // 清除之前的滚动
+            stopAutoScroll();
+            
+            // 重置滚动位置
+            scrollPosition = 0;
+            container.scrollTop = 0;
+            
+            // 开始自动滚动
+            startAutoScroll();
+            
+            // 添加鼠标事件监听
+            container.onmouseenter = stopAutoScroll;
+            container.onmouseleave = startAutoScroll;
+        }
+        
+        function startAutoScroll() {
+            if (isScrolling) return;
+            isScrolling = true;
+            animateScroll();
+        }
+        
+        function stopAutoScroll() {
+            if (autoScrollId) {
+                cancelAnimationFrame(autoScrollId);
+                autoScrollId = null;
+            }
+            isScrolling = false;
+        }
+        
+        function animateScroll() {
+            if (!isScrolling) return;
+            
+            const container = document.getElementById('hostAlertsContainer');
+            
+            // 平滑滚动
+            scrollPosition += scrollSpeed;
+            container.scrollTop = scrollPosition;
+            
+            // 当滚动到底部时，平滑重置到顶部
+            if (container.scrollTop + container.clientHeight >= container.scrollHeight - 1) {
+                // 平滑滚动回顶部
+                scrollPosition = 0;
+                container.scrollTop = 0;
+            }
+            
+            // 使用requestAnimationFrame实现平滑动画
+            autoScrollId = requestAnimationFrame(animateScroll);
+        }
+
+        // 初始化时设置自动滚动
+        document.addEventListener('DOMContentLoaded', () => {
+            // 页面加载完成后设置自动滚动
+            setupAutoScroll();
+        });
+
+        // 刷新主机告警数据
+        function refreshHostAlerts() {
+            document.getElementById('hostAlertsContainer').innerHTML = 
+                '<div class="text-center p-4"><div class="spinner-border text-danger"></div></div>';
+            loadHostAlerts();
+        }
+
+        // 发送告警邮件通知
+        async function sendAlertEmails() {
+            const sendEmailBtn = document.getElementById('sendEmailBtn');
+            const originalText = sendEmailBtn.innerHTML;
+            
+            try {
+                sendEmailBtn.disabled = true;
+                sendEmailBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> 发送中...';
+                
+                const response = await fetch('/api/host-alerts');
+                const data = await response.json();
+                
+                if (!data.success || !data.alerts || data.alerts.length === 0) {
+                    alert('当前没有告警数据，无需发送邮件');
+                    sendEmailBtn.disabled = false;
+                    sendEmailBtn.innerHTML = originalText;
+                    return;
+                }
+                
+                const selectedIps = data.alerts.map(alert => alert.ip);
+                
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+                const emailResponse = await fetch('/api/host-alerts/send-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ ips: selectedIps })
+                });
+                
+                const emailData = await emailResponse.json();
+                
+                if (emailData.success) {
+                    alert(`邮件发送成功！\n成功发送: ${emailData.success_count} 封\n发送失败: ${emailData.fail_count} 封`);
+                } else {
+                    alert(`邮件发送失败: ${emailData.message}`);
+                }
+                
+            } catch (error) {
+                console.error('发送邮件失败:', error);
+                alert('发送邮件失败，请检查网络连接或联系管理员');
+            } finally {
+                sendEmailBtn.disabled = false;
+                sendEmailBtn.innerHTML = originalText;
+            }
+        }
+
+        // 加载BSECP授权统计数据
+        async function loadAuthorizationStats(range = 'week') {
+            try {
+                const response = await fetch(`/api/bsecp/authorization-stats?range=${range}`);
+                const data = await response.json();
+                
+                console.log('BSECP授权统计数据:', data);
+                
+                if (data.success) {
+                    updateAuthorizationCharts(data);
+                    
+                    // 更新按钮状态
+                    document.querySelectorAll('.btn-group .btn').forEach(btn => {
+                        btn.classList.remove('active');
+                        if (btn.dataset.range === range) {
+                            btn.classList.add('active');
+                        }
+                    });
+                } else {
+                    console.error('获取授权统计数据失败:', data.message);
+                }
+            } catch (error) {
+                console.error('加载授权统计数据失败:', error);
+            }
+        }
+
+        // 切换时间范围
+        function changeTimeRange(range) {
+            loadAuthorizationStats(range);
+        }
+
+        // 初始化图表
+        function initializeCharts() {
+            // BSECP授权趋势图（折线图）
+            const authCtx = document.getElementById('authorizationChart').getContext('2d');
+            authorizationChart = new Chart(authCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: '授权成功',
+                            data: [],
+                            borderColor: '#22c55e',
+                            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            borderWidth: 3,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#22c55e'
+                        },
+                        {
+                            label: '授权失败',
+                            data: [],
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            borderWidth: 3,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#ef4444'
+                        },
+                        {
+                            label: '待处理',
+                            data: [],
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            borderWidth: 3,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#f59e0b'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            titleColor: '#1f2937',
+                            bodyColor: '#4b5563',
+                            borderColor: '#e5e7eb',
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: '#f3f4f6'
+                            },
+                            ticks: {
+                                precision: 0
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: '#f3f4f6'
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+
+            // 虚拟机资源一览表（按主机IP统计）
+            const vmResourceCtx = document.getElementById('vmResourceChart').getContext('2d');
+            vmResourceChart = new Chart(vmResourceCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '虚拟机数量',
+                        data: [],
+                        backgroundColor: [],
+                        borderColor: '#ffffff',
+                        borderWidth: 2,
+                        borderRadius: 6,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: function(context) {
+                                    return `主机IP: ${context[0].label}`;
+                                },
+                                label: function(context) {
+                                    return `虚拟机数量: ${context.parsed.y} 台`;
+                                }
+                            },
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            titleColor: '#1f2937',
+                            bodyColor: '#4b5563',
+                            borderColor: '#e5e7eb',
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '虚拟机数量（台）',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                }
+                            },
+                            grid: {
+                                color: '#f3f4f6'
+                            },
+                            ticks: {
+                                precision: 0
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: '主机IP地址',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                }
+                            },
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                maxRotation: 90,
+                                minRotation: 45,
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 虚拟机部门统计表（按部门统计）
+            const vmDepartmentCtx = document.getElementById('vmDepartmentChart').getContext('2d');
+            vmDepartmentChart = new Chart(vmDepartmentCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '虚拟机数量',
+                        data: [],
+                        backgroundColor: [
+                            '#4361ee', '#3a0ca3', '#7209b7', '#f72585', '#b5179e',
+                            '#560bad', '#480ca8', '#3f37c9', '#4895ef', '#4cc9f0',
+                            '#00b4d8', '#0077b6', '#023e8a', '#03045e', '#0096c7',
+                            '#48cae4', '#90e0ef', '#ade8f4', '#03071e', '#370617',
+                            '#6a040f', '#9d0208', '#d00000', '#dc2f02', '#e85d04',
+                            '#ffba08', '#faa307', '#f48c06', '#e85d04', '#dc2f02'
+                        ],
+                        borderColor: '#ffffff',
+                        borderWidth: 2,
+                        borderRadius: 6,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: function(context) {
+                                    return `部门: ${context[0].label}`;
+                                },
+                                label: function(context) {
+                                    return `虚拟机数量: ${context.parsed.y} 台`;
+                                }
+                            },
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            titleColor: '#1f2937',
+                            bodyColor: '#4b5563',
+                            borderColor: '#e5e7eb',
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '虚拟机数量（台）',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                }
+                            },
+                            grid: {
+                                color: '#f3f4f6'
+                            },
+                            ticks: {
+                                precision: 0
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: '部门名称',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                }
+                            },
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 0,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 加载虚拟机资源统计数据（按主机IP统计）
+        async function loadVMResourceStats() {
+            try {
+                const response = await fetch('/api/dashboard/vm-resource-stats');
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateVMResourceChart(data);
+                } else {
+                    console.error('获取虚拟机资源统计数据失败:', data.message);
+                }
+            } catch (error) {
+                console.error('加载虚拟机资源统计数据失败:', error);
+            }
+        }
+
+        // 加载虚拟机部门统计数据
+        async function loadVMDepartmentStats() {
+            try {
+                const response = await fetch('/api/dashboard/vm-department-stats');
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateVMDepartmentChart(data);
+                } else {
+                    console.error('获取虚拟机部门统计数据失败:', data.message);
+                }
+            } catch (error) {
+                console.error('加载虚拟机部门统计数据失败:', error);
+            }
+        }
+
+        // 更新BSECP授权趋势图数据
+        function updateAuthorizationCharts(data) {
+            console.log('更新BSECP授权图表, data:', data);
+            console.log('authorizationChart对象:', authorizationChart);
+            
+            if (!data || !authorizationChart) {
+                console.error('数据或图表对象为空');
+                return;
+            }
+            
+            authorizationChart.data.labels = data.dates || [];
+            authorizationChart.data.datasets[0].data = data.success_data || [];
+            authorizationChart.data.datasets[1].data = data.failed_data || [];
+            authorizationChart.data.datasets[2].data = data.pending_data || [];
+            
+            console.log('更新后的图表数据:', {
+                labels: authorizationChart.data.labels,
+                success: authorizationChart.data.datasets[0].data,
+                failed: authorizationChart.data.datasets[1].data,
+                pending: authorizationChart.data.datasets[2].data
+            });
+            
+            authorizationChart.update();
+        }
+
+        // 更新虚拟机资源图表数据
+        function updateVMResourceChart(data) {
+            if (!data || !data.hostStats) return;
+            
+            // 按虚拟机数量排序，显示所有主机
+            const sortedHosts = Object.entries(data.hostStats)
+                .sort(([,a], [,b]) => b - a); // 移除slice限制，显示所有主机
+            
+            const labels = sortedHosts.map(([hostIP]) => hostIP);
+            const values = sortedHosts.map(([,count]) => count);
+            
+            // 为22台主机准备渐变颜色
+            const colors = [
+                '#4361ee', '#3a0ca3', '#7209b7', '#f72585', '#b5179e',
+                '#560bad', '#480ca8', '#3f37c9', '#4895ef', '#4cc9f0', 
+                '#00b4d8', '#0077b6', '#023e8a', '#03045e', '#0096c7', 
+                '#48cae4', '#90e0ef', '#ade8f4', '#03071e', '#370617', 
+                '#6a040f', '#9d0208', '#d00000', '#dc2f02', '#e85d04'
+            ];
+            
+            vmResourceChart.data.labels = labels;
+            vmResourceChart.data.datasets[0].data = values;
+            vmResourceChart.data.datasets[0].backgroundColor = colors.slice(0, labels.length);
+            
+            // 根据主机数量调整图表高度
+            const chartContainer = document.querySelector('#vmResourceChart')?.parentElement;
+            if (chartContainer) {
+                const baseHeight = 300;
+                const heightPerHost = 20;
+                const newHeight = Math.max(baseHeight, labels.length * heightPerHost);
+                chartContainer.style.height = `${newHeight}px`;
+            }
+            
+            vmResourceChart.update();
+        }
+
+        // 更新虚拟机部门图表数据
+        function updateVMDepartmentChart(data) {
+            if (!data || !data.departmentStats) return;
+            
+            // 按虚拟机数量排序
+            const sortedDepartments = Object.entries(data.departmentStats)
+                .sort(([,a], [,b]) => b - a);
+            
+            const labels = sortedDepartments.map(([department]) => department);
+            const values = sortedDepartments.map(([,count]) => count);
+            
+            vmDepartmentChart.data.labels = labels;
+            vmDepartmentChart.data.datasets[0].data = values;
+            
+            // 根据部门数量调整图表高度
+            const chartContainer = document.querySelector('#vmDepartmentChart')?.parentElement;
+            if (chartContainer) {
+                const baseHeight = 300;
+                const heightPerDepartment = 30;
+                const newHeight = Math.max(baseHeight, labels.length * heightPerDepartment);
+                chartContainer.style.height = `${newHeight}px`;
+            }
+            
+            vmDepartmentChart.update();
+        }
+
+        // 切换虚拟机图表显示
+        function switchVMChart(type) {
+            const resourceChart = document.getElementById('vmResourceChart');
+            const departmentChart = document.getElementById('vmDepartmentChart');
+            const title = document.getElementById('vmChartTitle');
+            const btnResource = document.getElementById('btnResource');
+            const btnDepartment = document.getElementById('btnDepartment');
+            
+            if (type === 'resource') {
+                if (resourceChart) resourceChart.style.display = 'block';
+                if (departmentChart) departmentChart.style.display = 'none';
+                if (title) title.textContent = '虚拟机资源统计表';
+                if (btnResource) btnResource.classList.add('active');
+                if (btnDepartment) btnDepartment.classList.remove('active');
+            } else {
+                if (resourceChart) resourceChart.style.display = 'none';
+                if (departmentChart) departmentChart.style.display = 'block';
+                if (title) title.textContent = '部门主机统计表';
+                if (btnResource) btnResource.classList.remove('active');
+                if (btnDepartment) btnDepartment.classList.add('active');
+            }
+        }
+
+        // 更新图表（保留原有功能，但简化处理）
+        function updateCharts(data) {
+            console.log('基础数据已更新');
+        }
+
+        // 刷新数据
+        function refreshData() {
+            const btn = event.target;
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<i class="bi bi-arrow-clockwise bi-spin"></i> 刷新中...';
+            btn.disabled = true;
+            
+            loadDashboardData().then(() => {
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            });
+        }
+
+        // 加载PushGateway节点状态
+        async function loadPushGatewayStatus() {
+            try {
+                const response = await fetch('/api/pushgateway/status');
+                const data = await response.json();
+                updatePushGatewayDisplay(data.success ? data.targets : null);
+            } catch (error) {
+                updatePushGatewayDisplay(null);
+            }
+        }
+
+        // 更新PushGateway显示
+        function updatePushGatewayDisplay(targets) {
+            const container = document.getElementById('pushgatewayNodesContainer');
+            
+            if (!targets || targets.length === 0) {
+                container.innerHTML = '<div class="text-center p-4"><p class="text-muted">暂无监控节点</p></div>';
+                return;
+            }
+            
+            container.innerHTML = targets.map(target => `
+                <div class="pushgateway-node-item">
+                    <div class="pushgateway-node-address">${target.endpoint}</div>
+                    <div class="pushgateway-node-status ${target.health === 'up' ? 'status-up' : 'status-down'}">
+                        ${target.health === 'up' ? 'UP' : 'DOWN'}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 刷新PushGateway状态
+        function refreshPushGatewayStatus() {
+            document.getElementById('pushgatewayNodesContainer').innerHTML = 
+                '<div class="text-center p-4"><div class="spinner-border"></div></div>';
+            loadPushGatewayStatus();
+        }
+
+        // 导出报告
+        function exportReport() {
+            window.open('/api/dashboard/export', '_blank');
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+        });
+    </script>
+</body>
+</html>

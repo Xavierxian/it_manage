@@ -1,0 +1,325 @@
+from flask import Blueprint, render_template, request, jsonify, Response
+from flask_login import login_required
+from .database import get_db_connection
+from .auth import permission_required
+from .cache_manager import cache_manager, clear_vm_cache
+from datetime import datetime, date
+import json
+import pandas as pd
+import re
+from io import BytesIO
+from urllib.parse import quote
+
+def clear_password_cache():
+    """清除包含密码的缓存"""
+    try:
+        cache_manager.redis_client.delete('VM_LIST')
+        keys = cache_manager.redis_client.keys('VM_DETAIL:*')
+        if keys:
+            cache_manager.redis_client.delete(*keys)
+    except Exception as e:
+        print(f"清除密码缓存失败: {e}")
+
+class DateTimeEncoder(json.JSONEncoder):
+    """自定义 JSON 编码器，处理 datetime 对象"""
+    def default(self, obj):
+        if isinstance(obj, (datetime, date)):
+            return obj.strftime('%Y-%m-%d')
+        return super().default(obj)
+
+def validate_ip_address(ip):
+    """验证IP地址格式"""
+    if not ip:
+        return True
+    pattern = r'^(\d{1,3}\.){3}\d{1,3}$'
+    if not re.match(pattern, ip):
+        return False
+    parts = ip.split('.')
+    return all(0 <= int(part) <= 255 for part in parts)
+
+def validate_port(port):
+    """验证端口号"""
+    if not port:
+        return True
+    try:
+        port_num = int(port)
+        return 1 <= port_num <= 65535
+    except ValueError:
+        return False
+
+def validate_asset_data(data):
+    """验证资产数据"""
+    errors = []
+    
+    if data.get('主机IP') and not validate_ip_address(data.get('主机IP')):
+        errors.append('主机IP格式不正确')
+    
+    if data.get('虚拟机IP') and not validate_ip_address(data.get('虚拟机IP')):
+        errors.append('虚拟机IP格式不正确')
+    
+    if data.get('远程端口') and not validate_port(data.get('远程端口')):
+        errors.append('远程端口必须在1-65535之间')
+    
+    return errors
+
+virtual_machines_bp = Blueprint('virtual_machines', __name__)
+
+@virtual_machines_bp.route('/virtual_machines')
+@login_required
+@permission_required('virtual_machines')
+def virtual_machines():
+    return render_template('virtual_machines.html')
+
+@virtual_machines_bp.route('/api/assets')
+@login_required
+@permission_required('virtual_machines')
+def get_assets():
+    try:
+        cache_key = cache_manager.get_full_key('VM_LIST')
+        cached_data = cache_manager.get_cache('VM_LIST')
+        if cached_data:
+            return jsonify({'assets': cached_data})
+        
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM assets")
+            assets = cursor.fetchall()
+        connection.close()
+        
+        for asset in assets:
+            if '开机密码' in asset:
+                del asset['开机密码']
+        
+        cache_manager.set_cache('VM_LIST', assets, timeout=300)
+        return Response(json.dumps({'assets': assets}, cls=DateTimeEncoder), mimetype='application/json')
+    except Exception as e:
+        return jsonify({'assets': []})
+
+@virtual_machines_bp.route('/api/assets/<int:asset_id>')
+@login_required
+@permission_required('virtual_machines')
+def get_asset(asset_id):
+    try:
+        cache_key = cache_manager.get_full_key('VM_DETAIL', asset_id)
+        
+        cached_data = cache_manager.redis_client.get(cache_key)
+        if cached_data:
+            asset = json.loads(cached_data)
+            if '开机密码' in asset:
+                del asset['开机密码']
+            return jsonify(asset)
+        
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM assets WHERE id=%s", (asset_id,))
+            asset = cursor.fetchone()
+        connection.close()
+        
+        if asset:
+            if '开机密码' in asset:
+                del asset['开机密码']
+                cache_manager.redis_client.setex(cache_key, 300, json.dumps(asset, cls=DateTimeEncoder))
+                return Response(json.dumps(asset, cls=DateTimeEncoder), mimetype='application/json')
+            else:
+                cache_manager.redis_client.setex(cache_key, 300, json.dumps(asset, cls=DateTimeEncoder))
+                return Response(json.dumps(asset, cls=DateTimeEncoder), mimetype='application/json')
+        return jsonify({'error': 'Asset not found'}), 404
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+@virtual_machines_bp.route('/api/assets', methods=['POST'])
+@login_required
+def add_asset():
+    try:
+        data = request.get_json()
+        
+        errors = validate_asset_data(data)
+        if errors:
+            return jsonify({
+                'success': False,
+                'message': '; '.join(errors)
+            })
+        
+        def get_value(key, default=None):
+            value = data.get(key)
+            if value == '' or value is None:
+                return default
+            return value
+        
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                INSERT INTO assets (主机IP, 虚拟机IP, 操作系统, 系统版本, 登录名, 远程端口, 
+                    开机密码, CPU, 内存, 硬盘, 申请人, 部门, 用途, 环境, 开通日期, 是否在用, 结束日期)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                get_value('主机IP'),
+                get_value('虚拟机IP'),
+                get_value('操作系统'),
+                get_value('系统版本'),
+                get_value('登录名'),
+                get_value('远程端口'),
+                get_value('开机密码'),
+                get_value('CPU'),
+                get_value('内存'),
+                get_value('硬盘'),
+                get_value('申请人'),
+                get_value('部门'),
+                get_value('用途'),
+                get_value('环境'),
+                get_value('开通日期'),
+                get_value('是否在用'),
+                get_value('结束日期')
+            ))
+            connection.commit()
+        connection.close()
+        
+        clear_vm_cache()
+        
+        return jsonify({'success': True, 'message': '虚拟机添加成功'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': '添加失败'})
+
+@virtual_machines_bp.route('/api/assets/<int:asset_id>', methods=['PUT'])
+@login_required
+def update_asset(asset_id):
+    try:
+        data = request.get_json()
+        
+        def get_value(key, default=None):
+            value = data.get(key)
+            if value == '' or value is None:
+                return default
+            return value
+        
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                UPDATE assets SET 
+                    主机IP=%s, 虚拟机IP=%s, 操作系统=%s, 系统版本=%s, 登录名=%s, 远程端口=%s, 
+                    开机密码=%s, CPU=%s, 内存=%s, 硬盘=%s, 申请人=%s, 部门=%s, 
+                    用途=%s, 环境=%s, 开通日期=%s, 是否在用=%s, 结束日期=%s
+                WHERE id=%s
+            """, (
+                get_value('主机IP'),
+                get_value('虚拟机IP'),
+                get_value('操作系统'),
+                get_value('系统版本'),
+                get_value('登录名'),
+                get_value('远程端口'),
+                get_value('开机密码'),
+                get_value('CPU'),
+                get_value('内存'),
+                get_value('硬盘'),
+                get_value('申请人'),
+                get_value('部门'),
+                get_value('用途'),
+                get_value('环境'),
+                get_value('开通日期'),
+                get_value('是否在用'),
+                get_value('结束日期'),
+                asset_id
+            ))
+            connection.commit()
+        connection.close()
+        
+        clear_vm_cache()
+        
+        # 清除该虚拟机的详情缓存
+        detail_cache_key = cache_manager.get_full_key('VM_DETAIL', asset_id)
+        cache_manager.redis_client.delete(detail_cache_key)
+        
+        return jsonify({'success': True, 'message': '虚拟机更新成功'})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': '更新失败'})
+
+@virtual_machines_bp.route('/api/assets/<int:asset_id>', methods=['DELETE'])
+@login_required
+def delete_asset(asset_id):
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM assets WHERE id=%s", (asset_id,))
+            connection.commit()
+        connection.close()
+        
+        clear_vm_cache()
+        
+        # 清除该虚拟机的详情缓存
+        detail_cache_key = cache_manager.get_full_key('VM_DETAIL', asset_id)
+        cache_manager.redis_client.delete(detail_cache_key)
+        
+        return jsonify({'success': True, 'message': '虚拟机删除成功'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': '删除失败'})
+
+@virtual_machines_bp.route('/api/assets/<int:asset_id>/password')
+@login_required
+@permission_required('virtual_machines')
+def get_asset_password(asset_id):
+    try:
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({'success': False, 'message': '数据库连接失败'}), 500
+        
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 开机密码 FROM assets WHERE id=%s", (asset_id,))
+            result = cursor.fetchone()
+        connection.close()
+        
+        if not result:
+            return jsonify({'success': False, 'message': '虚拟机不存在'}), 404
+        
+        password = result.get('开机密码')
+        if not password:
+            return jsonify({'success': False, 'message': '该虚拟机没有设置密码'}), 404
+        
+        return jsonify({'success': True, 'password': password})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': f'获取密码失败: {str(e)}'}), 500
+
+@virtual_machines_bp.route('/api/assets/export')
+@login_required
+@permission_required('virtual_machines')
+def export_assets():
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM assets")
+            assets = cursor.fetchall()
+        connection.close()
+        
+        if not assets:
+            return jsonify({'error': '没有数据可导出'}), 404
+        
+        for asset in assets:
+            if '开机密码' in asset:
+                del asset['开机密码']
+            if '登录名' in asset:
+                del asset['登录名']
+        
+        df = pd.DataFrame(assets)
+        
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='虚拟机列表')
+        output.seek(0)
+        
+        filename = f'虚拟机列表_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+        encoded_filename = quote(filename)
+        
+        return Response(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            headers={'Content-Disposition': f'attachment; filename*=UTF-8\'\'{encoded_filename}'}
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500

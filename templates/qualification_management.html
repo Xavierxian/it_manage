@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>资质管理 - IT运维管理平台</title>
+    <link rel="icon" type="image/png" href="/static/images/title.png">
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/font-awesome/all.min.css">
+    <style>
+        :root {
+            --sidebar-width: 280px;
+            --page-bg: #f4f7fb;
+            --card-bg: #ffffff;
+            --text-primary: #162033;
+            --text-secondary: #5f6f86;
+            --border-color: #e3e9f3;
+            --line-soft: #eef3f9;
+            --primary: #2563eb;
+            --primary-soft: #eff6ff;
+            --success: #059669;
+            --success-soft: #ecfdf5;
+            --warning: #d97706;
+            --warning-soft: #fff7ed;
+            --danger: #dc2626;
+            --danger-soft: #fef2f2;
+            --slate-soft: #f8fafc;
+            --shadow-sm: 0 8px 24px rgba(15, 23, 42, 0.06);
+            --shadow-lg: 0 18px 40px rgba(15, 23, 42, 0.12);
+            --radius-lg: 16px;
+            --radius-md: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            color: var(--text-primary);
+            background:
+                radial-gradient(circle at top left, rgba(37, 99, 235, 0.07), transparent 28%),
+                linear-gradient(180deg, #f8fbff 0%, var(--page-bg) 100%);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            padding: 1%;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .stat-card,
+        .section-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .stat-card {
+            padding: 1.15rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .stat-card:nth-child(1) .stat-icon { background: linear-gradient(135deg, #2563eb, #3b82f6); }
+        .stat-card:nth-child(2) .stat-icon { background: linear-gradient(135deg, #059669, #10b981); }
+        .stat-card:nth-child(3) .stat-icon { background: linear-gradient(135deg, #d97706, #f59e0b); }
+        .stat-card:nth-child(4) .stat-icon { background: linear-gradient(135deg, #dc2626, #ef4444); }
+        .stat-card:nth-child(5) .stat-icon { background: linear-gradient(135deg, #475569, #64748b); }
+
+        .stat-label {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.18rem;
+        }
+
+        .stat-value {
+            font-size: 1.85rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .section-card {
+            margin-bottom: 1.25rem;
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 1rem 1.2rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .section-title {
+            margin: 0;
+            font-size: 1.05rem;
+            font-weight: 800;
+        }
+
+        .filters {
+            padding: 1.2rem;
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto auto;
+            gap: 0.85rem;
+            align-items: end;
+        }
+
+        .form-label {
+            font-weight: 600;
+            font-size: 0.84rem;
+            margin-bottom: 0.45rem;
+            color: var(--text-secondary);
+        }
+
+        .form-control,
+        .form-select {
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            padding: 0.72rem 0.9rem;
+            min-height: 44px;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 0.18rem rgba(96, 165, 250, 0.18);
+        }
+
+        .btn-toolbar-action,
+        .table-action,
+        .action-choice-btn {
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 700;
+            transition: 0.2s ease;
+        }
+
+        .btn-toolbar-action {
+            min-height: 44px;
+            padding: 0.72rem 1rem;
+        }
+
+        .btn-refresh {
+            background: linear-gradient(135deg, #1d4ed8, #2563eb);
+            color: #fff;
+        }
+
+        .btn-reset {
+            background: #eef2ff;
+            color: #3730a3;
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, #059669, #10b981);
+            color: #fff;
+        }
+
+        .btn-toolbar-action:hover,
+        .btn-save:hover,
+        .table-action:hover,
+        .action-choice-btn:hover {
+            transform: translateY(-1px);
+            opacity: 0.96;
+        }
+
+        .section-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .scroll-hint {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            padding: 0.35rem 0.68rem;
+            border-radius: 999px;
+            background: #f8fbff;
+            border: 1px solid var(--border-color);
+        }
+
+        .table-summary {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding-bottom: 0.35rem;
+            scrollbar-width: thin;
+            scrollbar-color: #94a3b8 #edf2f7;
+        }
+
+        .table-responsive::-webkit-scrollbar {
+            height: 10px;
+        }
+
+        .table-responsive::-webkit-scrollbar-track {
+            background: #edf2f7;
+            border-radius: 999px;
+        }
+
+        .table-responsive::-webkit-scrollbar-thumb {
+            background: linear-gradient(90deg, #94a3b8, #64748b);
+            border-radius: 999px;
+        }
+
+        .table {
+            margin: 0;
+            width: 100%;
+            min-width: 1500px;
+            border-collapse: separate;
+            border-spacing: 0;
+            table-layout: auto;
+        }
+
+        .table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background: #f8fbff;
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--text-secondary);
+            padding: 0.72rem 0.7rem;
+            border-bottom: 1px solid var(--border-color);
+            white-space: normal;
+            line-height: 1.35;
+            vertical-align: middle;
+        }
+
+        .table tbody td {
+            padding: 0.72rem 0.7rem;
+            border-bottom: 1px solid var(--line-soft);
+            vertical-align: top;
+            font-size: 0.76rem;
+            line-height: 1.45;
+            white-space: normal;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+        }
+
+        .table tbody tr:nth-child(even) {
+            background: rgba(248, 251, 255, 0.55);
+        }
+
+        .table tbody tr.is-clickable {
+            cursor: pointer;
+        }
+
+        .table tbody tr.is-clickable:hover {
+            background: #eef5ff;
+        }
+
+        .table thead th:first-child,
+        .table tbody td:first-child {
+            position: sticky;
+            left: 0;
+            z-index: 3;
+            background: inherit;
+        }
+
+        .table thead th:nth-child(4),
+        .table tbody td:nth-child(4) {
+            position: sticky;
+            left: 140px;
+            z-index: 3;
+            background: inherit;
+            box-shadow: 8px 0 16px rgba(15, 23, 42, 0.04);
+        }
+
+        .table thead th:first-child,
+        .table thead th:nth-child(4) {
+            background: #f8fbff;
+            z-index: 4;
+        }
+
+        .table tbody tr:nth-child(odd) td:first-child,
+        .table tbody tr:nth-child(odd) td:nth-child(4) {
+            background: #ffffff;
+        }
+
+        .table tbody tr:nth-child(even) td:first-child,
+        .table tbody tr:nth-child(even) td:nth-child(4) {
+            background: rgba(248, 251, 255, 0.97);
+        }
+
+        .name-cell {
+            min-width: 240px;
+        }
+
+        .name-block {
+            display: flex;
+            flex-direction: column;
+            gap: 0.32rem;
+        }
+
+        .name-main {
+            font-size: 0.82rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            white-space: normal;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+        }
+
+        .name-sub {
+            font-size: 0.64rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            white-space: normal;
+        }
+
+        .tag-chip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.3rem 0.6rem;
+            border-radius: 999px;
+            font-size: 0.66rem;
+            font-weight: 700;
+            line-height: 1.25;
+            white-space: normal;
+            text-align: center;
+        }
+
+        .chip-blue {
+            background: rgba(37, 99, 235, 0.1);
+            color: #1d4ed8;
+        }
+
+        .chip-slate {
+            background: rgba(100, 116, 139, 0.12);
+            color: #475569;
+        }
+
+        .chip-green {
+            background: rgba(5, 150, 105, 0.1);
+            color: var(--success);
+        }
+
+        .chip-amber {
+            background: rgba(217, 119, 6, 0.1);
+            color: var(--warning);
+        }
+
+        .muted-text {
+            color: #94a3b8;
+        }
+
+        .two-line-text {
+            display: block;
+            white-space: normal;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+        }
+
+        .mono-text,
+        .password-text {
+            font-family: Consolas, "Courier New", monospace;
+            font-size: 0.72rem;
+            word-break: break-all;
+            line-height: 1.45;
+        }
+
+        .account-block {
+            min-width: 220px;
+        }
+
+        .cost-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.28rem;
+            padding: 0.28rem 0.62rem;
+            border-radius: 12px;
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .status-badge,
+        .expiry-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            padding: 0.28rem 0.62rem;
+            font-size: 0.65rem;
+            font-weight: 700;
+            white-space: normal;
+            line-height: 1.25;
+            text-align: center;
+        }
+
+        .status-normal {
+            background: rgba(5, 150, 105, 0.12);
+            color: var(--success);
+        }
+
+        .status-warning {
+            background: rgba(217, 119, 6, 0.12);
+            color: var(--warning);
+        }
+
+        .status-danger {
+            background: rgba(220, 38, 38, 0.12);
+            color: var(--danger);
+        }
+
+        .status-neutral {
+            background: rgba(100, 116, 139, 0.12);
+            color: #475569;
+        }
+
+        .inline-stack {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.25rem;
+        }
+
+        .date-block {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+            min-width: 108px;
+        }
+
+        .date-main {
+            font-weight: 700;
+            color: var(--text-primary);
+            white-space: normal;
+        }
+
+        .date-sub {
+            font-size: 0.64rem;
+            color: var(--text-secondary);
+            white-space: normal;
+        }
+
+        .count-chip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 22px;
+            height: 22px;
+            border-radius: 999px;
+            padding: 0 0.45rem;
+            background: rgba(4, 120, 87, 0.15);
+            color: #047857;
+            font-size: 0.72rem;
+            font-weight: 800;
+        }
+
+        .table td:nth-child(1) { min-width: 180px; }
+        .table td:nth-child(2) { min-width: 140px; }
+        .table td:nth-child(3) { min-width: 140px; }
+        .table td:nth-child(4) { min-width: 240px; }
+        .table td:nth-child(5) { min-width: 120px; }
+        .table td:nth-child(6) { min-width: 140px; }
+        .table td:nth-child(7) { min-width: 110px; }
+        .table td:nth-child(8) { min-width: 240px; }
+        .table td:nth-child(9) { min-width: 100px; text-align: center; }
+        .table td:nth-child(10) { min-width: 90px; }
+        .table td:nth-child(11) { min-width: 120px; }
+        .table td:nth-child(12) { min-width: 220px; }
+        .table td:nth-child(13) { min-width: 140px; }
+        .table td:nth-child(14) { min-width: 150px; }
+        .table td:nth-child(15) { min-width: 150px; }
+
+        .modal-content {
+            border: none;
+            border-radius: 18px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 1.25rem;
+        }
+
+        .modal-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+        }
+
+        .modal-body {
+            padding: 1.25rem;
+        }
+
+        .qualification-brief {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .brief-item {
+            background: #f8fbff;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 0.8rem 0.9rem;
+        }
+
+        .brief-label {
+            font-size: 0.76rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.2rem;
+        }
+
+        .brief-value {
+            font-weight: 700;
+            color: var(--text-primary);
+            word-break: break-word;
+        }
+
+        .detail-table-wrap {
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            overflow: hidden;
+            background: #ffffff;
+        }
+
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .detail-table thead th {
+            background: #f8fbff;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 0.9rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        .detail-table tbody td {
+            padding: 0.95rem 1rem;
+            border-bottom: 1px solid var(--line-soft);
+            vertical-align: top;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+
+        .detail-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .detail-table tbody tr:nth-child(even) {
+            background: rgba(248, 251, 255, 0.55);
+        }
+
+        .detail-table .amount-cell {
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .detail-table .remark-cell {
+            min-width: 240px;
+            color: var(--text-secondary);
+            word-break: break-word;
+        }
+
+        .row-action-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 0.9rem;
+        }
+
+        .row-action-title {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.2rem;
+        }
+
+        .row-action-name {
+            font-size: 1.12rem;
+            font-weight: 800;
+        }
+
+        .row-action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.9rem;
+        }
+
+        .action-choice-btn {
+            padding: 1rem;
+            text-align: left;
+            background: #fff;
+            border: 1px solid var(--border-color);
+        }
+
+        .action-choice-btn.renew {
+            background: var(--primary-soft);
+            color: var(--primary);
+        }
+
+        .action-choice-btn.detail {
+            background: var(--success-soft);
+            color: var(--success);
+        }
+
+        .action-choice-btn .action-label {
+            font-size: 1rem;
+            font-weight: 800;
+            margin-bottom: 0.35rem;
+        }
+
+        .action-choice-btn .action-desc {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+        }
+
+        .loading-state,
+        .empty-state,
+        .detail-empty {
+            padding: 2.6rem 1.2rem;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i,
+        .loading-state i,
+        .detail-empty i {
+            font-size: 2.2rem;
+            margin-bottom: 0.75rem;
+            color: #94a3b8;
+        }
+
+        .toast-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1080;
+        }
+
+        @media (max-width: 1200px) {
+            .filters-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .table {
+                min-width: 1320px;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid,
+            .filters-grid,
+            .row-action-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .table thead th:first-child,
+            .table tbody td:first-child,
+            .table thead th:nth-child(4),
+            .table tbody td:nth-child(4) {
+                position: static;
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    {% include 'sidebar.html' %}
+
+    <main class="main-content">
+        <section class="stats-grid">
+            <article class="stat-card">
+                <div class="stat-icon"><i class="bi bi-card-checklist"></i></div>
+                <div>
+                    <div class="stat-label">资质总数</div>
+                    <div class="stat-value" id="statTotal">0</div>
+                </div>
+            </article>
+            <article class="stat-card">
+                <div class="stat-icon"><i class="bi bi-shield-check"></i></div>
+                <div>
+                    <div class="stat-label">有效状态</div>
+                    <div class="stat-value" id="statActive">0</div>
+                </div>
+            </article>
+            <article class="stat-card">
+                <div class="stat-icon"><i class="bi bi-alarm"></i></div>
+                <div>
+                    <div class="stat-label">30天内到期</div>
+                    <div class="stat-value" id="statExpiring">0</div>
+                </div>
+            </article>
+            <article class="stat-card">
+                <div class="stat-icon"><i class="bi bi-exclamation-octagon"></i></div>
+                <div>
+                    <div class="stat-label">已过期</div>
+                    <div class="stat-value" id="statExpired">0</div>
+                </div>
+            </article>
+            <article class="stat-card">
+                <div class="stat-icon"><i class="bi bi-tags"></i></div>
+                <div>
+                    <div class="stat-label">资质类别数</div>
+                    <div class="stat-value" id="statCategories">0</div>
+                </div>
+            </article>
+        </section>
+
+        <section class="section-card">
+            <div class="section-header">
+                <h2 class="section-title">筛选条件</h2>
+            </div>
+            <div class="filters">
+                <div class="filters-grid">
+                    <div>
+                        <label class="form-label" for="searchInput">关键词</label>
+                        <input id="searchInput" class="form-control" type="text" placeholder="搜索资质名称、管理员、供应商、备注等">
+                    </div>
+                    <div>
+                        <label class="form-label" for="categoryFilter">资质类别</label>
+                        <select id="categoryFilter" class="form-select">
+                            <option value="">全部类别</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label" for="departmentFilter">归属部门</label>
+                        <select id="departmentFilter" class="form-select">
+                            <option value="">全部部门</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label" for="statusFilter">状态</label>
+                        <select id="statusFilter" class="form-select">
+                            <option value="">全部状态</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label" for="expiryFilter">到期范围</label>
+                        <select id="expiryFilter" class="form-select">
+                            <option value="">全部范围</option>
+                            <option value="expiring_soon">30天内到期</option>
+                            <option value="expired">已过期</option>
+                            <option value="valid">未到期</option>
+                            <option value="unknown">未填写到期日</option>
+                        </select>
+                    </div>
+                    <button id="refreshBtn" class="btn-toolbar-action btn-refresh" type="button">
+                        <i class="bi bi-arrow-clockwise"></i>
+                        刷新
+                    </button>
+                    <button id="resetBtn" class="btn-toolbar-action btn-reset" type="button">
+                        <i class="bi bi-x-circle"></i>
+                        重置
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="section-card">
+            <div class="section-header">
+                <h2 class="section-title">资质列表</h2>
+                <div class="section-meta">
+                    <div class="scroll-hint">
+                        <i class="bi bi-arrows-move"></i>
+                        可左右滚动查看更多字段
+                    </div>
+                    <div class="table-summary" id="tableSummary">当前展示 0 / 0 条</div>
+                </div>
+            </div>
+
+            <div id="loadingState" class="loading-state">
+                <i class="bi bi-hourglass-split d-block"></i>
+                正在加载资质数据...
+            </div>
+
+            <div class="table-responsive d-none" id="tableWrapper">
+                <table class="table">
+                    <colgroup>
+                        <col style="width:140px">
+                        <col style="width:150px">
+                        <col style="width:140px">
+                        <col style="width:220px">
+                        <col style="width:120px">
+                        <col style="width:220px">
+                        <col style="width:110px">
+                        <col style="width:250px">
+                        <col style="width:120px">
+                        <col style="width:110px">
+                        <col style="width:140px">
+                        <col style="width:250px">
+                        <col style="width:160px">
+                        <col style="width:165px">
+                        <col style="width:165px">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>资质类别</th>
+                            <th>归属主体</th>
+                            <th>归属部门</th>
+                            <th>资质名称</th>
+                            <th>管理员</th>
+                            <th>用途</th>
+                            <th>费用</th>
+                            <th>账号</th>
+                            <th>密码</th>
+                            <th>状态</th>
+                            <th>到期日</th>
+                            <th>备注说明</th>
+                            <th>供应商</th>
+                            <th>最新修改日期</th>
+                            <th>创建时间</th>
+                        </tr>
+                    </thead>
+                    <tbody id="qualificationTableBody"></tbody>
+                </table>
+            </div>
+
+            <div id="emptyState" class="empty-state d-none">
+                <i class="bi bi-inbox d-block"></i>
+                <div>当前没有符合条件的资质数据。</div>
+            </div>
+        </section>
+    </main>
+
+    <div class="modal fade" id="rowActionModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">资质操作</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row-action-panel">
+                        <div>
+                            <div class="row-action-title">当前选中资质</div>
+                            <div class="row-action-name" id="rowActionName">-</div>
+                        </div>
+                        <div class="row-action-buttons">
+                            <button type="button" class="action-choice-btn renew" id="rowActionRenewBtn">
+                                <div class="action-label">续费</div>
+                                <div class="action-desc">新增一条续费或更新记录</div>
+                            </button>
+                            <button type="button" class="action-choice-btn detail" id="rowActionDetailBtn">
+                                <div class="action-label">明细</div>
+                                <div class="action-desc">查看该资质的全部记录</div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="renewModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">新增续费记录</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="qualification-brief">
+                        <div class="brief-item">
+                            <div class="brief-label">资质名称</div>
+                            <div class="brief-value" id="renewQualificationName">-</div>
+                        </div>
+                        <div class="brief-item">
+                            <div class="brief-label">当前到期日</div>
+                            <div class="brief-value" id="renewCurrentExpire">-</div>
+                        </div>
+                        <div class="brief-item">
+                            <div class="brief-label">当前费用</div>
+                            <div class="brief-value" id="renewCurrentCost">-</div>
+                        </div>
+                    </div>
+
+                    <form id="renewForm">
+                        <input type="hidden" id="renewQualificationId">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label" for="renewCostAmount">续费金额</label>
+                                <input id="renewCostAmount" class="form-control" type="number" min="0" step="0.01" placeholder="请输入本次续费金额">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="renewExpireDate">新的到期日期</label>
+                                <input id="renewExpireDate" class="form-control" type="datetime-local">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" for="renewRemark">备注</label>
+                                <textarea id="renewRemark" class="form-control" rows="3" placeholder="补充说明本次续费内容"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-save" id="saveRenewBtn">保存续费记录</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">资质明细记录</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="qualification-brief" id="detailBrief"></div>
+                    <div class="detail-table-wrap">
+                        <table class="detail-table">
+                            <thead>
+                                <tr>
+                                    <th>续费金额</th>
+                                    <th>到期日期</th>
+                                    <th>创建时间</th>
+                                    <th>备注</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detailList"></tbody>
+                        </table>
+                    </div>
+                    <div id="detailEmpty" class="detail-empty d-none">
+                        <i class="bi bi-clock-history d-block"></i>
+                        <div>当前资质还没有续费记录。</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const searchInput = document.getElementById('searchInput');
+        const categoryFilter = document.getElementById('categoryFilter');
+        const departmentFilter = document.getElementById('departmentFilter');
+        const statusFilter = document.getElementById('statusFilter');
+        const expiryFilter = document.getElementById('expiryFilter');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const loadingState = document.getElementById('loadingState');
+        const tableWrapper = document.getElementById('tableWrapper');
+        const tableBody = document.getElementById('qualificationTableBody');
+        const emptyState = document.getElementById('emptyState');
+        const tableSummary = document.getElementById('tableSummary');
+        const saveRenewBtn = document.getElementById('saveRenewBtn');
+        const renewModal = new bootstrap.Modal(document.getElementById('renewModal'));
+        const detailModal = new bootstrap.Modal(document.getElementById('detailModal'));
+        const rowActionModal = new bootstrap.Modal(document.getElementById('rowActionModal'));
+
+        let filterOptionsInitialized = false;
+        let searchTimer = null;
+        let currentDetailQualificationId = null;
+        let currentActionQualificationId = null;
+        let qualificationMap = new Map();
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function plainText(value) {
+            return (value ?? '').toString().trim();
+        }
+
+        function getText(value) {
+            const text = plainText(value);
+            return text ? escapeHtml(text) : '<span class="muted-text">-</span>';
+        }
+
+        function showToast(message, type = 'success') {
+            const toastContainer = document.getElementById('toastContainer');
+            const bgClass = type === 'error' ? 'text-bg-danger' : 'text-bg-success';
+            const toastElement = document.createElement('div');
+            toastElement.className = `toast align-items-center border-0 ${bgClass}`;
+            toastElement.role = 'alert';
+            toastElement.ariaLive = 'assertive';
+            toastElement.ariaAtomic = 'true';
+            toastElement.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">${escapeHtml(message)}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="关闭"></button>
+                </div>
+            `;
+            toastContainer.appendChild(toastElement);
+            const toast = new bootstrap.Toast(toastElement, { delay: 2800 });
+            toast.show();
+            toastElement.addEventListener('hidden.bs.toast', () => toastElement.remove());
+        }
+
+        function formatDateTime(value) {
+            if (!value) {
+                return '<span class="muted-text">-</span>';
+            }
+
+            const [datePart, timePart] = String(value).split(' ');
+            return `
+                <div class="date-block">
+                    <span class="date-main">${escapeHtml(datePart || value)}</span>
+                    <span class="date-sub">${escapeHtml(timePart || '')}</span>
+                </div>
+            `;
+        }
+
+        function getStatusClass(status, expiryState) {
+            if (expiryState === 'expired') return 'status-danger';
+            if (expiryState === 'expiring_soon') return 'status-warning';
+
+            const normalized = plainText(status).toLowerCase();
+            if (['有效', '正常', '启用', 'active', 'valid', 'enabled', '使用中', '生效中'].includes(normalized)) {
+                return 'status-normal';
+            }
+
+            return 'status-neutral';
+        }
+
+        function getExpiryLabel(expiryState, expireDate, daysToExpire) {
+            if (!expireDate) {
+                return '<span class="muted-text">-</span>';
+            }
+
+            const badgeClass = expiryState === 'expired'
+                ? 'status-danger'
+                : expiryState === 'expiring_soon'
+                    ? 'status-warning'
+                    : 'status-normal';
+
+            let badgeText = '正常';
+            if (expiryState === 'expired') {
+                badgeText = '已过期';
+            } else if (expiryState === 'expiring_soon') {
+                badgeText = typeof daysToExpire === 'number' && daysToExpire >= 0 ? `${daysToExpire}天内到期` : '即将到期';
+            } else if (typeof daysToExpire === 'number') {
+                badgeText = `${daysToExpire}天后到期`;
+            }
+
+            return `
+                <div class="inline-stack">
+                    <span class="date-main">${escapeHtml(expireDate)}</span>
+                    <span class="expiry-badge ${badgeClass}">${badgeText}</span>
+                </div>
+            `;
+        }
+
+        function populateSelect(selectElement, values, placeholder) {
+            const currentValue = selectElement.value;
+            selectElement.innerHTML = `<option value="">${placeholder}</option>`;
+            values.forEach((value) => {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = value;
+                if (value === currentValue) option.selected = true;
+                selectElement.appendChild(option);
+            });
+        }
+
+        function updateStats(stats) {
+            document.getElementById('statTotal').textContent = stats.total ?? 0;
+            document.getElementById('statActive').textContent = stats.active ?? 0;
+            document.getElementById('statExpiring').textContent = stats.expiring_soon ?? 0;
+            document.getElementById('statExpired').textContent = stats.expired ?? 0;
+            document.getElementById('statCategories').textContent = stats.categories ?? 0;
+        }
+
+        function renderRows(rows, total, filteredTotal) {
+            tableSummary.textContent = `当前展示 ${filteredTotal} / ${total} 条`;
+            qualificationMap = new Map(rows.map((row) => [row.id, row]));
+
+            if (!rows.length) {
+                tableBody.innerHTML = '';
+                tableWrapper.classList.add('d-none');
+                emptyState.classList.remove('d-none');
+                return;
+            }
+
+            emptyState.classList.add('d-none');
+            tableWrapper.classList.remove('d-none');
+
+            tableBody.innerHTML = rows.map((row) => `
+                <tr class="is-clickable" data-row-id="${row.id}">
+                    <td><span class="tag-chip chip-blue">${getText(row.qualification_category)}</span></td>
+                    <td><span class="tag-chip chip-slate">${getText(row.belong_entity)}</span></td>
+                    <td><span class="tag-chip chip-slate">${getText(row.belong_department)}</span></td>
+                    <td class="name-cell">
+                        <div class="name-block">
+                            <div class="name-main">${row.qualification_name ? escapeHtml(row.qualification_name) : '<span class="muted-text">-</span>'}</div>
+                            <div class="name-sub">明细记录：${row.purchase_count || 0} 条</div>
+                        </div>
+                    </td>
+                    <td><span class="tag-chip chip-green">${getText(row.manager)}</span></td>
+                    <td><div class="two-line-text">${getText(row.usage)}</div></td>
+                    <td>${row.cost ? `<span class="cost-pill">¥ ${escapeHtml(row.cost)}</span>` : '<span class="muted-text">-</span>'}</td>
+                    <td class="account-block"><div class="mono-text">${getText(row.account)}</div></td>
+                    <td class="password-text">${row.has_password ? escapeHtml(row.password_masked) : '<span class="muted-text">-</span>'}</td>
+                    <td>
+                        <span class="status-badge ${getStatusClass(row.status, row.expiry_state)}">
+                            ${row.status ? escapeHtml(row.status) : '未填写'}
+                        </span>
+                    </td>
+                    <td>${getExpiryLabel(row.expiry_state, row.expire_date, row.days_to_expire)}</td>
+                    <td><div class="two-line-text">${getText(row.remark)}</div></td>
+                    <td><span class="tag-chip chip-amber">${getText(row.supplier_name)}</span></td>
+                    <td>${formatDateTime(row.last_update_time)}</td>
+                    <td>${formatDateTime(row.create_time)}</td>
+                </tr>
+            `).join('');
+
+            bindTableActions();
+        }
+
+        function bindTableActions() {
+            document.querySelectorAll('[data-row-id]').forEach((row) => {
+                row.addEventListener('click', () => openRowActionModal(Number(row.dataset.rowId)));
+            });
+        }
+
+        function openRowActionModal(qualificationId) {
+            const qualification = qualificationMap.get(qualificationId);
+            if (!qualification) return;
+
+            currentActionQualificationId = qualificationId;
+            document.getElementById('rowActionName').textContent = qualification.qualification_name || '-';
+            document.getElementById('rowActionDetailBtn').innerHTML = `
+                <div class="action-label">明细 <span class="count-chip">${qualification.purchase_count || 0}</span></div>
+                <div class="action-desc">查看该资质的全部记录</div>
+            `;
+            rowActionModal.show();
+        }
+
+        function openRenewModal(qualificationId) {
+            const qualification = qualificationMap.get(qualificationId);
+            if (!qualification) return;
+
+            document.getElementById('renewQualificationId').value = qualificationId;
+            document.getElementById('renewQualificationName').textContent = qualification.qualification_name || '-';
+            document.getElementById('renewCurrentExpire').textContent = qualification.expire_date || '-';
+            document.getElementById('renewCurrentCost').textContent = qualification.cost || '-';
+            document.getElementById('renewCostAmount').value = qualification.cost || '';
+            document.getElementById('renewRemark').value = '';
+
+            if (qualification.expire_date) {
+                document.getElementById('renewExpireDate').value = `${qualification.expire_date}T00:00`;
+            } else {
+                document.getElementById('renewExpireDate').value = '';
+            }
+
+            rowActionModal.hide();
+            renewModal.show();
+        }
+
+        async function openDetailModal(qualificationId) {
+            currentDetailQualificationId = qualificationId;
+            const detailList = document.getElementById('detailList');
+            const detailBrief = document.getElementById('detailBrief');
+            const detailEmpty = document.getElementById('detailEmpty');
+
+            detailBrief.innerHTML = '';
+            detailList.innerHTML = `
+                <tr>
+                    <td colspan="4" class="detail-empty">
+                        <i class="bi bi-hourglass-split d-block"></i>
+                        <div>正在加载明细记录...</div>
+                    </td>
+                </tr>
+            `;
+            detailEmpty.classList.add('d-none');
+            rowActionModal.hide();
+            detailModal.show();
+
+            try {
+                const response = await fetch(`/api/qualifications/${qualificationId}/purchase-details`);
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || '获取明细失败');
+                }
+
+                const qualification = data.qualification;
+                detailBrief.innerHTML = `
+                    <div class="brief-item">
+                        <div class="brief-label">资质名称</div>
+                        <div class="brief-value">${escapeHtml(qualification.qualification_name || '-')}</div>
+                    </div>
+                    <div class="brief-item">
+                        <div class="brief-label">当前费用</div>
+                        <div class="brief-value">${escapeHtml(qualification.cost || '-')}</div>
+                    </div>
+                    <div class="brief-item">
+                        <div class="brief-label">当前到期日</div>
+                        <div class="brief-value">${escapeHtml(qualification.expire_date || '-')}</div>
+                    </div>
+                    <div class="brief-item">
+                        <div class="brief-label">记录数量</div>
+                        <div class="brief-value">${data.details.length}</div>
+                    </div>
+                `;
+
+                if (!data.details.length) {
+                    detailList.innerHTML = '';
+                    detailEmpty.classList.remove('d-none');
+                    return;
+                }
+
+                detailEmpty.classList.add('d-none');
+                detailList.innerHTML = data.details.map((detail) => `
+                    <tr>
+                        <td class="amount-cell">${detail.cost_amount ? `¥ ${escapeHtml(detail.cost_amount)}` : '-'}</td>
+                        <td>${escapeHtml(detail.expire_date || '-')}</td>
+                        <td>${escapeHtml(detail.create_time || '-')}</td>
+                        <td class="remark-cell">${detail.remark ? escapeHtml(detail.remark) : '<span class="muted-text">-</span>'}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                detailList.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="detail-empty">
+                            <i class="bi bi-exclamation-triangle d-block"></i>
+                            <div>${escapeHtml(error.message || '获取明细失败')}</div>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        async function saveRenewRecord() {
+            const qualificationId = Number(document.getElementById('renewQualificationId').value);
+            const payload = {
+                cost_amount: document.getElementById('renewCostAmount').value,
+                expire_date: document.getElementById('renewExpireDate').value,
+                remark: document.getElementById('renewRemark').value,
+            };
+
+            if (!payload.cost_amount) {
+                showToast('请填写续费金额', 'error');
+                return;
+            }
+
+            if (!payload.expire_date) {
+                showToast('请选择到期日期', 'error');
+                return;
+            }
+
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            saveRenewBtn.disabled = true;
+            saveRenewBtn.textContent = '保存中...';
+
+            try {
+                const response = await fetch(`/api/qualifications/${qualificationId}/purchase-details`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken,
+                    },
+                    body: JSON.stringify(payload),
+                });
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || '保存续费记录失败');
+                }
+
+                renewModal.hide();
+                showToast('续费记录添加成功');
+                await loadQualifications();
+
+                if (currentDetailQualificationId === qualificationId) {
+                    await openDetailModal(qualificationId);
+                }
+            } catch (error) {
+                showToast(error.message || '保存续费记录失败', 'error');
+            } finally {
+                saveRenewBtn.disabled = false;
+                saveRenewBtn.textContent = '保存续费记录';
+            }
+        }
+
+        async function loadQualifications() {
+            loadingState.classList.remove('d-none');
+            tableWrapper.classList.add('d-none');
+            emptyState.classList.add('d-none');
+
+            const params = new URLSearchParams();
+            if (searchInput.value.trim()) params.set('search', searchInput.value.trim());
+            if (categoryFilter.value) params.set('category', categoryFilter.value);
+            if (departmentFilter.value) params.set('department', departmentFilter.value);
+            if (statusFilter.value) params.set('status', statusFilter.value);
+            if (expiryFilter.value) params.set('expiry_state', expiryFilter.value);
+
+            try {
+                const response = await fetch(`/api/qualifications?${params.toString()}`);
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || '加载失败');
+                }
+
+                updateStats(data.stats || {});
+
+                if (!filterOptionsInitialized) {
+                    populateSelect(categoryFilter, data.filter_options?.categories || [], '全部类别');
+                    populateSelect(departmentFilter, data.filter_options?.departments || [], '全部部门');
+                    populateSelect(statusFilter, data.filter_options?.statuses || [], '全部状态');
+                    filterOptionsInitialized = true;
+                }
+
+                renderRows(data.qualifications || [], data.total || 0, data.filtered_total || 0);
+            } catch (error) {
+                tableSummary.textContent = '加载失败';
+                tableBody.innerHTML = '';
+                tableWrapper.classList.add('d-none');
+                emptyState.classList.remove('d-none');
+                emptyState.innerHTML = `
+                    <i class="bi bi-exclamation-triangle d-block"></i>
+                    <div>${escapeHtml(error.message || '资质数据加载失败')}</div>
+                `;
+            } finally {
+                loadingState.classList.add('d-none');
+            }
+        }
+
+        function resetFilters() {
+            searchInput.value = '';
+            categoryFilter.value = '';
+            departmentFilter.value = '';
+            statusFilter.value = '';
+            expiryFilter.value = '';
+            loadQualifications();
+        }
+
+        function handleSearchInput() {
+            window.clearTimeout(searchTimer);
+            searchTimer = window.setTimeout(loadQualifications, 250);
+        }
+
+        searchInput.addEventListener('input', handleSearchInput);
+        categoryFilter.addEventListener('change', loadQualifications);
+        departmentFilter.addEventListener('change', loadQualifications);
+        statusFilter.addEventListener('change', loadQualifications);
+        expiryFilter.addEventListener('change', loadQualifications);
+        refreshBtn.addEventListener('click', loadQualifications);
+        resetBtn.addEventListener('click', resetFilters);
+        saveRenewBtn.addEventListener('click', saveRenewRecord);
+        document.getElementById('rowActionRenewBtn').addEventListener('click', () => {
+            if (currentActionQualificationId) {
+                openRenewModal(currentActionQualificationId);
+            }
+        });
+        document.getElementById('rowActionDetailBtn').addEventListener('click', () => {
+            if (currentActionQualificationId) {
+                openDetailModal(currentActionQualificationId);
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', loadQualifications);
+    </script>
+</body>
+</html>

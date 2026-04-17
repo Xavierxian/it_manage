@@ -1,0 +1,1029 @@
+<!-- 三角形侧边栏触发器 (仅在移动端显示) -->
+<div class="sidebar-trigger" id="menuToggle" aria-label="切换侧边栏">
+    <div class="trigger-triangle"></div>
+</div>
+
+<div class="sidebar" id="sidebar">
+    <a class="sidebar-brand" href="/dashboard" style="text-decoration: none; color: inherit;">
+        <img src="/static/images/title1.png" alt="IT运维管理平台" style="height: 32px; width: auto; border-radius: 6px;">
+        <div class="brand-text">
+            <span class="letter" style="animation-delay: 0s">I</span>
+            <span class="letter" style="animation-delay: 0.1s">T</span>
+            <span class="letter" style="animation-delay: 0.2s">S</span>
+            <span class="letter" style="animation-delay: 0.3s">M</span>
+        </div>
+    </a>
+    
+    <nav class="sidebar-nav">
+        <ul class="nav-list">
+            <li class="nav-item" data-permission="dashboard">
+                <a class="nav-link" href="/dashboard" data-page="dashboard">
+                    <i class="bi bi-house-door"></i>
+                    <span>系统概览</span>
+                </a>
+            </li>
+            <li class="nav-item" data-permission="qualification_management">
+                <a class="nav-link" href="/qualification_management" data-page="qualification_management">
+                    <i class="bi bi-patch-check"></i>
+                    <span>资质管理</span>
+                </a>
+            </li>
+<li class="nav-item has-submenu">
+                <a class="nav-link submenu-toggle" href="#mappingSubmenu" role="button">
+                    <i class="bi bi-diagram-3"></i>
+                    <span>映射管理</span>
+                    <i class="bi bi-chevron-down ms-auto"></i>
+                </a>
+                <ul class="submenu collapse" id="mappingSubmenu">
+                    <li data-permission="port_mapping">
+                        <a class="nav-link" href="/port_mapping" data-page="port_mapping">
+                            <i class="bi bi-router"></i>
+                            <span>端口映射</span>
+                        </a>
+                    </li>
+                    <li data-permission="domain_mapping">
+                        <a class="nav-link" href="/domain_mapping" data-page="domain_mapping">
+                            <i class="bi bi-globe"></i>
+                            <span>域名映射</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            
+            <li class="nav-item has-submenu">
+                <a class="nav-link submenu-toggle" href="#assetSubmenu" role="button">
+                    <i class="bi bi-hdd-network"></i>
+                    <span>资产管理</span>
+                    <i class="bi bi-chevron-down ms-auto"></i>
+                </a>
+                <ul class="submenu collapse" id="assetSubmenu">
+                    <li data-permission="virtual_machines">
+                        <a class="nav-link" href="/virtual_machines" data-page="virtual_machines">
+                            <i class="bi bi-server"></i>
+                            <span>虚拟机</span>
+                        </a>
+                    </li>
+                    <li data-permission="physical_machines">
+                        <a class="nav-link" href="/physical_machines" data-page="physical_machines">
+                            <i class="bi bi-cpu"></i>
+                            <span>物理机</span>
+                        </a>
+                    </li>
+                    <li data-permission="namespaces">
+                        <a class="nav-link" href="/namespaces" data-page="namespaces">
+                            <i class="bi bi-stack"></i>
+                            <span>NameSpace</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            
+
+<li class="nav-item has-submenu">
+                <a class="nav-link submenu-toggle" href="#bsecpSubmenu" role="button">
+                    <i class="bi bi-box-seam"></i>
+                    <span>BSECP</span>
+                    <i class="bi bi-chevron-down ms-auto"></i>
+                </a>
+                <ul class="submenu collapse" id="bsecpSubmenu">
+                    <li data-permission="bsecp_modules">
+                        <a class="nav-link" href="/bsecp/modules" data-page="bsecp_modules">
+                            <i class="bi bi-grid-3x3-gap-fill"></i>
+                            <span>Module管理</span>
+                        </a>
+                    </li>
+                    <li data-permission="auth_query">
+                        <a class="nav-link" href="/bsecp/authorization-query" data-page="bsecp_authorization_query">
+                            <i class="bi bi-search"></i>
+                            <span>授权查询</span>
+                        </a>
+                    </li>
+                    <li data-permission="auth_detail">
+                        <a class="nav-link" href="/bsecp/auth-query-modify" data-page="bsecp_auth_query_modify">
+                            <i class="bi bi-file-earmark-text"></i>
+                            <span>授权详情</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            
+            <li class="nav-item has-submenu">
+                <a class="nav-link submenu-toggle" href="#baoleijiSubmenu" role="button">
+                    <i class="bi bi-cloud"></i>
+                    <span>行云管家</span>
+                    <i class="bi bi-chevron-down ms-auto"></i>
+                </a>
+                <ul class="submenu collapse" id="baoleijiSubmenu">
+                    <li data-permission="bastion_management">
+                        <a class="nav-link" href="/bastionManagement" data-page="baoleiji_list">
+                            <i class="fas fa-shield-halved"></i>
+                            <span>堡垒机清单</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="nav-link" href="/oauth_login" target="_blank">
+                            <i class="bi bi-box-arrow-in-right"></i>
+                            <span>免登录</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            
+            <li class="nav-item has-submenu">
+                <a class="nav-link submenu-toggle" href="#monitorSubmenu" role="button">
+                    <i class="bi bi-activity"></i>
+                    <span>运维监控</span>
+                    <i class="bi bi-chevron-down ms-auto"></i>
+                </a>
+                <ul class="submenu collapse" id="monitorSubmenu">
+                    <li data-permission="host_monitoring">
+                        <a class="nav-link" href="/host_monitoring" data-page="host_monitoring">
+                            <i class="bi bi-cpu-fill"></i>
+                            <span>主机资源监控</span>
+                        </a>
+                    </li>
+                    <li data-permission="k8s_monitoring">
+                        <a class="nav-link" href="/k8smonitoring" data-page="k8s_monitoring">
+                            <i class="bi bi-diagram-3-fill"></i>
+                            <span>K8S资源监控</span>
+                        </a>
+                    </li>
+                    <li data-permission="cron_monitoring">
+                        <a class="nav-link" href="/cron_monitoring" data-page="cron_monitoring">
+                            <i class="bi bi-clock-history"></i>
+                            <span>定时任务监控</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            
+            <li class="nav-item has-submenu">
+                <a class="nav-link submenu-toggle" href="#systemSubmenu" role="button">
+                    <i class="bi bi-gear"></i>
+                    <span>系统管理</span>
+                    <i class="bi bi-chevron-down ms-auto"></i>
+                </a>
+                <ul class="submenu collapse" id="systemSubmenu">
+                    <li data-permission="user_management">
+                        <a class="nav-link" href="/user_management" data-page="user_management">
+                            <i class="bi bi-people"></i>
+                            <span>用户管理</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+    
+    <div class="sidebar-footer">
+        <div class="user-info">
+            <i class="bi bi-person-circle"></i>
+            <span id="current-user-name">加载中...</span>
+        </div>
+        <a class="nav-link" href="/logout">
+            <i class="bi bi-box-arrow-right"></i>
+            <span>退出登录</span>
+        </a>
+    </div>
+</div>
+
+<!-- Bootstrap CSS -->
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/bootstrap-icons.css" rel="stylesheet">
+    <!-- Font Awesome CSS -->
+    <link rel="stylesheet" href="/static/css/font-awesome/all.min.css">
+    <style>
+        /* 修复Font Awesome字体路径 */
+        @font-face {
+            font-family: "Font Awesome 6 Free";
+            font-style: normal;
+            font-weight: 900;
+            font-display: block;
+            src: url("/static/webfonts/fa-solid-900.woff2") format("woff2"),
+                 url("/static/webfonts/fa-solid-900.ttf") format("truetype");
+        }
+        @font-face {
+            font-family: "Font Awesome 6 Free";
+            font-style: normal;
+            font-weight: 400;
+            font-display: block;
+            src: url("/static/webfonts/fa-regular-400.woff2") format("woff2"),
+                 url("/static/webfonts/fa-regular-400.ttf") format("truetype");
+        }
+        @font-face {
+            font-family: "Font Awesome 6 Brands";
+            font-style: normal;
+            font-weight: 400;
+            font-display: block;
+            src: url("/static/webfonts/fa-brands-400.woff2") format("woff2"),
+                 url("/static/webfonts/fa-brands-400.ttf") format("truetype");
+        }
+    </style>
+
+<style>
+:root {
+    --sidebar-bg: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+    --sidebar-hover: rgba(226, 232, 240, 0.7);
+    --sidebar-active: rgba(226, 232, 240, 0.9);
+    --sidebar-text: #334155;
+    --sidebar-text-muted: rgba(51, 65, 85, 0.7);
+    --sidebar-border: rgba(51, 65, 85, 0.1);
+    --transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --sidebar-width: 280px;
+    --mobile-menu-width: 280px;
+}
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: var(--sidebar-width);
+    background: var(--sidebar-bg);
+    backdrop-filter: blur(20px);
+    padding: 2rem 0 0 0;
+    box-shadow: 8px 0 32px rgba(0, 0, 0, 0.12);
+    z-index: 1000;
+    transition: var(--transition);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.sidebar-brand {
+    color: var(--sidebar-text);
+    font-size: 1.25rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 2rem;
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    flex-shrink: 0;
+}
+
+.sidebar-brand img {
+    height: 32px;
+    width: auto;
+    border-radius: 6px;
+    object-fit: contain;
+}
+
+.brand-text {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.letter {
+    display: inline-block;
+    font-size: 1.25rem;
+    font-weight: 700;
+    animation: collisionBounce 2s infinite;
+    transform-origin: bottom;
+}
+
+@keyframes collisionBounce {
+    0% {
+        transform: translateY(0) scaleY(1) scaleX(1);
+    }
+    10% {
+        transform: translateY(-12px) scaleY(0.9) scaleX(1.1);
+    }
+    20% {
+        transform: translateY(0) scaleY(1.2) scaleX(0.8);
+    }
+    25% {
+        transform: translateY(0) scaleY(1) scaleX(1);
+    }
+    100% {
+        transform: translateY(0) scaleY(1) scaleX(1);
+    }
+}
+
+.sidebar-nav {
+    padding: 0 1rem;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin-bottom: 1rem;
+    /* 自定义滚动条样式 */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(51, 65, 85, 0.3) transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+    background: rgba(51, 65, 85, 0.3);
+    border-radius: 3px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+    background: rgba(51, 65, 85, 0.5);
+}
+
+.nav-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.nav-item {
+    margin-bottom: 0.5rem;
+}
+
+.nav-link {
+    color: var(--sidebar-text);
+    padding: 0.875rem 1.25rem;
+    border-radius: 12px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+    font-weight: 500;
+    font-size: 0.9rem;
+    position: relative;
+    overflow: hidden;
+    will-change: transform, background-color, box-shadow;
+}
+
+.nav-link::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.5s;
+}
+
+.nav-link:hover::before {
+    left: 100%;
+}
+
+.nav-link:hover {
+    background: var(--sidebar-hover);
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.nav-link.active {
+    background: var(--sidebar-active);
+    color: var(--sidebar-text);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.nav-link i {
+    margin-right: 0.75rem;
+    font-size: 1.1rem;
+    width: 20px;
+    text-align: center;
+}
+
+.submenu {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0 0.5rem 1.5rem;
+    border-left: 2px solid var(--sidebar-border);
+}
+
+.submenu .nav-link {
+    padding: 0.75rem 1rem 0.75rem 2rem;
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+}
+
+.submenu .nav-link:hover {
+    transform: translateX(2px);
+}
+
+.sidebar-footer {
+    flex-shrink: 0;
+    padding: 1rem;
+    margin-top: auto;
+    border-top: 1px solid var(--sidebar-border);
+    background: var(--sidebar-bg);
+}
+
+.sidebar-footer .nav-link {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.85rem;
+    color: var(--sidebar-text-muted);
+}
+
+.sidebar-footer .nav-link:hover {
+        color: var(--sidebar-text);
+    }
+
+/* 用户信息样式 */
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 0.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--sidebar-text);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.user-info i {
+    font-size: 1.25rem;
+    color: var(--sidebar-text-muted);
+}
+
+.user-info span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
+}
+
+/* 简洁三角形侧边栏触发器 */
+.sidebar-trigger {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    z-index: 1001;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.trigger-triangle {
+    width: 0;
+    height: 0;
+    border-left: 12px solid rgba(226, 232, 240, 0.9);
+    border-top: 18px solid transparent;
+    border-bottom: 18px solid transparent;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    filter: drop-shadow(2px 0 6px rgba(0, 0, 0, 0.15));
+}
+
+.sidebar-trigger:hover .trigger-triangle {
+    border-left-color: rgba(226, 232, 240, 1);
+    transform: translateY(-50%) translateX(2px);
+    filter: drop-shadow(3px 0 10px rgba(0, 0, 0, 0.2));
+}
+
+/* 三角形打开状态 */
+.sidebar-trigger.trigger-open .trigger-triangle {
+    border-left-color: rgba(255, 255, 255, 0.95);
+    transform: translateY(-50%) translateX(280px);
+}
+
+/* 点击反馈动画 */
+.nav-link:active {
+    transform: scale(0.98) !important;
+    transition: transform 0.1s ease !important;
+}
+
+/* 键盘导航支持 */
+.nav-link:focus-visible {
+    outline: 2px solid var(--sidebar-text);
+    outline-offset: 2px;
+    background: var(--sidebar-hover);
+}
+
+/* 平滑滚动 */
+html {
+    scroll-behavior: smooth;
+}
+
+/* 页面加载过渡效果 */
+body {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+/* 加载完成后显示 */
+body.loaded {
+    opacity: 1;
+}
+
+/* 侧边栏打开时禁止滚动 */
+body.sidebar-open {
+    overflow: hidden;
+}
+
+/* 增强悬停效果 */
+.nav-link:hover {
+    background: var(--sidebar-hover);
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.submenu .nav-link:hover {
+    transform: translateX(2px);
+}
+
+/* 移动端优化 */
+@media (max-width: 992px) {
+    .nav-link:active {
+        transform: scale(0.95) !important;
+    }
+    
+    /* 触摸设备优化 */
+    .nav-link {
+        -webkit-tap-highlight-color: transparent;
+    }
+    
+    /* 滑动关闭提示 */
+    .sidebar::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        right: 10px;
+        width: 4px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 2px;
+        transform: translateY(-50%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .sidebar.active::after {
+        opacity: 1;
+    }
+}
+
+/* 移动端侧边栏遮罩层 */
+.sidebar-overlay {
+    opacity: 0;
+    visibility: hidden;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    backdrop-filter: blur(5px);
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    will-change: opacity, visibility;
+}
+
+.sidebar-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* 移动端侧边栏样式 */
+@media (max-width: 992px) {
+    .sidebar-trigger {
+        display: block;
+    }
+    
+    .sidebar {
+        width: var(--mobile-menu-width);
+        transform: translateX(-100%);
+        box-shadow: 8px 0 32px rgba(0, 0, 0, 0.3);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        will-change: transform;
+        padding: 1.5rem 0 0 0;
+    }
+    
+    .sidebar.active {
+        transform: translateX(0);
+    }
+    
+    .sidebar-overlay.active {
+        display: block;
+    }
+    
+    .sidebar-brand {
+        margin-bottom: 1.5rem;
+    }
+    
+    .sidebar-nav {
+        padding: 0 1rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .sidebar-footer {
+        padding: 0.75rem 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    :root {
+        --mobile-menu-width: 260px;
+    }
+    
+    .sidebar {
+        padding: 1rem 0 0 0;
+    }
+    
+    .sidebar-brand {
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .nav-link {
+        padding: 0.75rem 1rem;
+        font-size: 0.85rem;
+    }
+    
+    .submenu .nav-link {
+        padding: 0.6rem 0.8rem 0.6rem 1.5rem;
+        font-size: 0.8rem;
+    }
+    
+    .trigger-triangle {
+        border-left-width: 10px;
+        border-top-width: 15px;
+        border-bottom-width: 15px;
+    }
+    
+    .sidebar-trigger.trigger-open .trigger-triangle {
+        transform: translateY(-50%) translateX(260px);
+    }
+    
+    .sidebar-footer {
+        padding: 0.5rem 1rem;
+    }
+    
+    .user-info {
+        font-size: 0.8rem;
+        padding: 0.5rem;
+    }
+}
+</style>
+
+<!-- 侧边栏遮罩层 -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+// 获取当前页面标识
+    const currentPath = window.location.pathname;
+    const pageMap = {
+        '/dashboard': 'dashboard',
+        '/port_mapping': 'port_mapping',
+        '/domain_mapping': 'domain_mapping',
+        '/virtual_machines': 'virtual_machines',
+        '/physical_machines': 'physical_machines',
+        '/namespaces': 'namespaces',
+        '/qualification_management': 'qualification_management',
+        '/bsecp/modules': 'bsecp_modules',
+        '/bsecp/authorization-query': 'bsecp_authorization_query',
+        '/bsecp/auth-query-modify': 'bsecp_auth_query_modify',
+        '/baoleiji': 'baoleiji',
+        '/bastionManagement': 'baoleiji_list',
+        '/host_monitoring': 'host_monitoring',
+        '/k8smonitoring': 'k8s_monitoring',
+        '/cron_monitoring': 'cron_monitoring',
+        '/user_management': 'user_management'
+    };
+    
+    // 设置当前页面为激活状态
+    const currentPage = pageMap[currentPath] || 'dashboard';
+    
+    // 激活主菜单项
+    const activeLink = document.querySelector(`[data-page="${currentPage}"]`);
+    if (activeLink) {
+        activeLink.classList.add('active');
+        
+        // 如果是子菜单项，展开父菜单
+        const parentSubmenu = activeLink.closest('.submenu');
+        if (parentSubmenu) {
+            parentSubmenu.classList.add('show');
+            const toggleBtn = parentSubmenu.previousElementSibling;
+            if (toggleBtn) {
+                toggleBtn.classList.remove('collapsed');
+                toggleBtn.setAttribute('aria-expanded', 'true');
+            }
+        }
+    }
+    
+    // 子菜单切换功能
+    const submenuToggles = document.querySelectorAll('.submenu-toggle');
+    submenuToggles.forEach(toggle => {
+        toggle.addEventListener('click', function(e) {
+            // 阻止默认行为和事件冒泡
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // 获取关联的子菜单
+            const targetId = this.getAttribute('href');
+            const submenu = document.querySelector(targetId);
+            
+            // 检查当前状态
+            const isExpanded = this.classList.contains('collapsed') || this.getAttribute('aria-expanded') === 'true';
+            
+            // 切换当前按钮状态
+            this.classList.toggle('collapsed', !isExpanded);
+            this.setAttribute('aria-expanded', isExpanded ? 'false' : 'true');
+            
+            // 切换子菜单显示
+            if (submenu) {
+                if (isExpanded) {
+                    // 收起子菜单
+                    submenu.classList.remove('show');
+                } else {
+                    // 展开子菜单
+                    submenu.classList.add('show');
+                }
+            }
+            
+            // 图标旋转动画
+            const icon = this.querySelector('.bi-chevron-down');
+            if (icon) {
+                icon.style.transition = 'transform 0.3s ease';
+                icon.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
+            }
+        });
+    });
+    
+    // 移动端菜单交互
+    const menuToggle = document.getElementById('menuToggle');
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+    
+    if (menuToggle && sidebar && sidebarOverlay) {
+        // 打开侧边栏
+        menuToggle.addEventListener('click', function() {
+            sidebar.classList.add('active');
+            sidebarOverlay.classList.add('active');
+            document.body.classList.add('sidebar-open'); // 使用CSS类控制滚动
+            // 添加打开动画
+            menuToggle.classList.add('trigger-open');
+        });
+        
+        // 关闭侧边栏
+        const closeSidebar = function() {
+            sidebar.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+            document.body.classList.remove('sidebar-open'); // 使用CSS类控制滚动
+            // 移除打开动画
+            menuToggle.classList.remove('trigger-open');
+        };
+        
+        // 点击遮罩层关闭侧边栏
+        sidebarOverlay.addEventListener('click', closeSidebar);
+        
+        // 点击侧边栏内部导航链接后关闭侧边栏（延时执行以确保链接跳转）
+        const navLinks = sidebar.querySelectorAll('a[data-page]');
+        navLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                // 移除所有激活状态
+                navLinks.forEach(l => l.classList.remove('active'));
+                // 添加当前链接为激活状态
+                this.classList.add('active');
+                // 添加点击反馈动画
+                this.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    this.style.transform = '';
+                    closeSidebar();
+                }, 150);
+            });
+        });
+        
+        // ESC键关闭侧边栏
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && sidebar.classList.contains('active')) {
+                closeSidebar();
+            }
+        });
+        
+        // 触摸设备优化：滑动关闭侧边栏
+        let touchStartX = 0;
+        let isSwiping = false;
+        
+        sidebar.addEventListener('touchstart', function(e) {
+            touchStartX = e.touches[0].clientX;
+            isSwiping = true;
+        }, { passive: true });
+        
+        sidebar.addEventListener('touchmove', function(e) {
+            if (!isSwiping || !sidebar.classList.contains('active')) return;
+            
+            const touchX = e.touches[0].clientX;
+            const diffX = touchX - touchStartX;
+            
+            // 向右滑动超过50px关闭侧边栏
+            if (diffX > 50) {
+                requestAnimationFrame(() => {
+                    closeSidebar();
+                });
+                isSwiping = false;
+            }
+        }, { passive: true });
+        
+        sidebar.addEventListener('touchend', function() {
+            isSwiping = false;
+        }, { passive: true });
+    }
+    
+    // 页面加载完成后初始化激活状态
+    window.addEventListener('load', function() {
+        try {
+            // 移除所有激活状态
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // 重新设置当前页面激活状态
+            const activeLink = document.querySelector(`[data-page="${currentPage}"]`);
+            if (activeLink) {
+                activeLink.classList.add('active');
+            }
+            
+            // 添加页面加载完成后的平滑过渡
+            setTimeout(() => {
+                document.body.classList.add('loaded');
+            }, 100);
+        } catch (error) {
+            console.error('侧边栏初始化错误:', error);
+            // 确保页面仍然可以正常显示
+            document.body.classList.add('loaded');
+        }
+    });
+    
+    // 页面刷新时确保侧边栏正确展开和定位
+    window.addEventListener('beforeunload', function() {
+        // 保存当前页面状态到 sessionStorage
+        sessionStorage.setItem('currentPage', currentPage);
+    });
+    
+    // 页面加载时检查是否需要展开侧边栏
+    window.addEventListener('pageshow', function() {
+        // 获取保存的页面状态
+        const savedPage = sessionStorage.getItem('currentPage');
+        if (savedPage && savedPage === 'bsecp_auth_query_modify') {
+            // 确保BSECP子菜单展开
+            const bsecpSubmenu = document.getElementById('bsecpSubmenu');
+            const bsecpToggle = document.querySelector('[href="#bsecpSubmenu"]');
+            if (bsecpSubmenu && bsecpToggle) {
+                bsecpSubmenu.classList.add('show');
+                bsecpToggle.classList.remove('collapsed');
+                bsecpToggle.setAttribute('aria-expanded', 'true');
+                
+                // 确保对应的子项被激活
+                const authQueryModifyLink = document.querySelector('[data-page="bsecp_auth_query_modify"]');
+                if (authQueryModifyLink) {
+                    authQueryModifyLink.classList.add('active');
+                }
+            }
+        }
+    });
+
+});
+
+// 获取当前登录用户信息
+function getCurrentUser() {
+    fetch('/api/current-user')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('获取用户信息失败');
+            }
+            return response.json();
+        })
+        .then(data => {
+            const userNameElement = document.getElementById('current-user-name');
+            if (userNameElement && data.username) {
+                userNameElement.textContent = data.username;
+            }
+            
+            // 根据用户权限控制侧边栏显示
+            if (data.permissions) {
+                setupSidebarPermissions(data.permissions, data.role);
+            }
+        })
+        .catch(error => {
+            console.error('获取用户信息失败:', error);
+            const userNameElement = document.getElementById('current-user-name');
+            if (userNameElement) {
+                userNameElement.textContent = '游客';
+            }
+        });
+}
+
+// 根据用户权限设置侧边栏显示
+function setupSidebarPermissions(permissionsJson, role) {
+    try {
+        const permissions = JSON.parse(permissionsJson);
+        
+        // 如果是管理员，显示所有菜单
+        const isAdmin = role === 'admin' || permissions.includes('admin');
+        
+        // 获取所有带权限标识的菜单项
+        const menuItems = document.querySelectorAll('[data-permission]');
+        
+        menuItems.forEach(item => {
+            const permission = item.getAttribute('data-permission');
+            
+            // 管理员显示所有菜单，普通用户根据权限显示
+            if (isAdmin || permissions.includes(permission)) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+        
+        // 检查子菜单是否为空，如果为空则隐藏父菜单
+        const submenus = document.querySelectorAll('.has-submenu');
+        submenus.forEach(submenu => {
+            const submenuItems = submenu.querySelectorAll('li[data-permission]');
+            const visibleItems = Array.from(submenuItems).filter(item => 
+                item.style.display !== 'none'
+            );
+            
+            if (visibleItems.length === 0) {
+                submenu.style.display = 'none';
+            } else {
+                submenu.style.display = 'block';
+            }
+        });
+        
+    } catch (error) {
+        console.error('解析权限失败:', error);
+    }
+}
+
+// 页面加载完成后获取用户信息
+document.addEventListener('DOMContentLoaded', function() {
+    getCurrentUser();
+});
+
+// 页面可见性变化时的处理
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+            // 页面变为可见时，重新检查侧边栏状态
+            const currentPath = window.location.pathname;
+            const pageMap = {
+                '/dashboard': 'dashboard',
+                '/port_mapping': 'port_mapping',
+                '/domain_mapping': 'domain_mapping',
+                '/virtual_machines': 'virtual_machines',
+                '/physical_machines': 'physical_machines',
+                '/namespaces': 'namespaces',
+                '/qualification_management': 'qualification_management',
+                '/bsecp/modules': 'bsecp_modules',
+                '/bsecp/authorization-query': 'bsecp_authorization_query',
+                '/bsecp/auth-query-modify': 'bsecp_auth_query_modify',
+                '/host_monitoring': 'host_monitoring',
+                '/k8smonitoring': 'k8s_monitoring',
+                '/cron_monitoring': 'cron_monitoring',
+                '/user_management': 'user_management'
+            };
+            
+            const currentPage = pageMap[currentPath] || 'dashboard';
+            
+            // 处理不同页面的侧边栏状态
+            if (currentPage === 'bsecp_auth_query_modify') {
+                // 确保BSECP子菜单展开
+                const bsecpSubmenu = document.getElementById('bsecpSubmenu');
+                const bsecpToggle = document.querySelector('[href="#bsecpSubmenu"]');
+                if (bsecpSubmenu && bsecpToggle) {
+                    bsecpSubmenu.classList.add('show');
+                    bsecpToggle.classList.remove('collapsed');
+                    bsecpToggle.setAttribute('aria-expanded', 'true');
+                    
+                    // 确保对应的子项被激活
+                    const authQueryModifyLink = document.querySelector('[data-page="bsecp_auth_query_modify"]');
+                    if (authQueryModifyLink) {
+                        // 移除其他激活状态
+                        document.querySelectorAll('.nav-link').forEach(link => {
+                            link.classList.remove('active');
+                        });
+                        authQueryModifyLink.classList.add('active');
+                    }
+                }
+            } else if (currentPage === 'user_management') {
+                // 确保系统管理子菜单展开
+                const systemSubmenu = document.getElementById('systemSubmenu');
+                const systemToggle = document.querySelector('[href="#systemSubmenu"]');
+                if (systemSubmenu && systemToggle) {
+                    systemSubmenu.classList.add('show');
+                    systemToggle.classList.remove('collapsed');
+                    systemToggle.setAttribute('aria-expanded', 'true');
+                    
+                    // 确保对应的子项被激活
+                    const userManagementLink = document.querySelector('[data-page="user_management"]');
+                    if (userManagementLink) {
+                        // 移除其他激活状态
+                        document.querySelectorAll('.nav-link').forEach(link => {
+                            link.classList.remove('active');
+                        });
+                        userManagementLink.classList.add('active');
+                    }
+                }
+            }
+    }
+});
+</script>
+
+

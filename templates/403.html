@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>访问受限 - IT管理系统</title>
+    <link rel="icon" type="image/png" href="/static/images/title.png">
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/font-awesome/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --secondary-color: #f8fafc;
+            --text-color: #334155;
+            --light-gray: #e2e8f0;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --success-color: #10b981;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 8s ease infinite;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .error-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 24px;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.1),
+                0 1px 2px rgba(0, 0, 0, 0.06),
+                0 0 0 1px rgba(255, 255, 255, 0.1);
+            max-width: 600px;
+            width: 100%;
+            overflow: hidden;
+            animation: entrance 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            transform: scale(0.8) translateY(50px);
+            opacity: 0;
+        }
+
+        @keyframes entrance {
+            to {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .error-header {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24, #ff4757);
+            background-size: 200% 200%;
+            animation: headerGradient 3s ease infinite;
+            color: white;
+            padding: 60px 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        @keyframes headerGradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .error-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 2px,
+                rgba(255, 255, 255, 0.03) 2px,
+                rgba(255, 255, 255, 0.03) 4px
+            );
+            animation: shimmer 8s linear infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        .error-icon {
+            font-size: 5rem;
+            margin-bottom: 20px;
+            animation: iconPulse 2s ease-in-out infinite;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+        }
+
+        @keyframes iconPulse {
+            0%, 100% { 
+                transform: scale(1) rotate(0deg);
+                filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+            }
+            50% { 
+                transform: scale(1.05) rotate(5deg);
+                filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
+            }
+        }
+
+        .error-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin: 0;
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .error-code {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            margin-top: 8px;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+
+        .error-body {
+            padding: 50px 40px;
+            text-align: center;
+        }
+
+        .error-message {
+            font-size: 1.2rem;
+            color: var(--text-color);
+            margin-bottom: 40px;
+            line-height: 1.7;
+            font-weight: 400;
+        }
+
+        .error-actions {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 40px;
+        }
+
+        .btn-custom {
+            padding: 16px 32px;
+            border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-custom::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-custom:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed, #6366f1);
+            background-size: 200% 200%;
+            color: white;
+            box-shadow: 0 8px 25px rgba(79, 70, 229, 0.3);
+            animation: buttonGradient 3s ease infinite;
+        }
+
+        @keyframes buttonGradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 12px 35px rgba(79, 70, 229, 0.4);
+        }
+
+        .btn-secondary-custom {
+            background: rgba(248, 250, 252, 0.9);
+            color: var(--text-color);
+            border: 2px solid rgba(226, 232, 240, 0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-secondary-custom:hover {
+            background: rgba(241, 245, 249, 0.95);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .admin-contact {
+            margin-top: 40px;
+            padding: 30px;
+            background: linear-gradient(135deg, rgba(79, 70, 229, 0.05), rgba(124, 58, 237, 0.05));
+            border-radius: 16px;
+            border: 1px solid rgba(79, 70, 229, 0.1);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .admin-contact::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        }
+
+        .admin-contact h6 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .admin-contact p {
+            margin: 8px 0;
+            color: var(--text-color);
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .admin-contact i {
+            color: var(--primary-color);
+            width: 16px;
+        }
+
+        .floating-shapes {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .shape {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .shape:nth-child(1) {
+            width: 100px;
+            height: 100px;
+            top: 15%;
+            left: 10%;
+            animation-delay: 0s;
+            animation-duration: 8s;
+        }
+
+        .shape:nth-child(2) {
+            width: 70px;
+            height: 70px;
+            top: 65%;
+            right: 15%;
+            animation-delay: 2s;
+            animation-duration: 10s;
+        }
+
+        .shape:nth-child(3) {
+            width: 50px;
+            height: 50px;
+            top: 25%;
+            right: 30%;
+            animation-delay: 4s;
+            animation-duration: 12s;
+        }
+
+        .shape:nth-child(4) {
+            width: 40px;
+            height: 40px;
+            bottom: 20%;
+            left: 20%;
+            animation-delay: 6s;
+            animation-duration: 9s;
+        }
+
+        @keyframes float {
+            0%, 100% { 
+                transform: translateY(0px) rotate(0deg);
+                opacity: 0.7;
+            }
+            50% { 
+                transform: translateY(-30px) rotate(180deg);
+                opacity: 1;
+            }
+        }
+
+        .error-details {
+            margin: 30px 0;
+            padding: 25px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
+        }
+
+        .error-details h5 {
+            color: var(--text-color);
+            margin-bottom: 15px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .error-details ul {
+            text-align: left;
+            color: var(--text-color);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .error-details li {
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .error-details li::before {
+            content: '•';
+            color: var(--primary-color);
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+
+        .loading-dots {
+            display: inline-block;
+            animation: loadingDots 1.5s ease-in-out infinite;
+        }
+
+        @keyframes loadingDots {
+            0%, 60%, 100% { opacity: 1; }
+            30% { opacity: 0.3; }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .error-container {
+                margin: 10px;
+                border-radius: 20px;
+                max-width: none;
+            }
+
+            .error-header {
+                padding: 40px 30px;
+            }
+
+            .error-title {
+                font-size: 1.8rem;
+            }
+
+            .error-body {
+                padding: 40px 30px;
+            }
+
+            .error-actions {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 15px;
+            }
+
+            .btn-custom {
+                justify-content: center;
+                padding: 14px 28px;
+            }
+
+            .admin-contact {
+                padding: 25px 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .error-header {
+                padding: 30px 20px;
+            }
+
+            .error-title {
+                font-size: 1.6rem;
+            }
+
+            .error-body {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-shapes">
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+    </div>
+
+    <div class="error-container">
+        <div class="error-header">
+            <div class="error-icon">
+                <i class="bi bi-shield-lock"></i>
+            </div>
+            <h1 class="error-title">访问受限</h1>
+            <div class="error-code">错误 403 - 权限不足</div>
+        </div>
+
+        <div class="error-body">
+            <div class="error-message">
+                <i class="bi bi-exclamation-triangle" style="color: var(--warning-color); font-size: 1.2rem; margin-right: 8px;"></i>
+                抱歉，您当前没有权限访问此页面
+                <span class="loading-dots">...</span>
+            </div>
+
+            <div class="error-actions">
+                <a href="/dashboard" class="btn-custom btn-primary-custom">
+                    <i class="bi bi-house"></i>
+                    返回首页
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 增强的页面加载动画
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.querySelector('.error-container');
+            const shapes = document.querySelectorAll('.shape');
+            
+            // 延迟显示浮动形状
+            shapes.forEach((shape, index) => {
+                setTimeout(() => {
+                    shape.style.opacity = '1';
+                }, 1000 + (index * 200));
+            });
+
+            // 添加鼠标移动视差效果
+            document.addEventListener('mousemove', function(e) {
+                const x = e.clientX / window.innerWidth;
+                const y = e.clientY / window.innerHeight;
+                
+                shapes.forEach((shape, index) => {
+                    const speed = (index + 1) * 0.5;
+                    const xOffset = (x - 0.5) * speed * 20;
+                    const yOffset = (y - 0.5) * speed * 20;
+                    
+                    shape.style.transform = `translate(${xOffset}px, ${yOffset}px)`;
+                });
+            });
+
+            // 添加键盘快捷键支持
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    history.back();
+                }
+                if (e.key === 'Enter' && e.ctrlKey) {
+                    window.location.href = '/dashboard';
+                }
+                if (e.key === 'r' && e.ctrlKey) {
+                    window.location.href = '/dashboard';
+                }
+            });
+
+            // 添加按钮悬停音效（视觉反馈）
+            const buttons = document.querySelectorAll('.btn-custom');
+            buttons.forEach(button => {
+                button.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-3px) scale(1.05)';
+                });
+                
+                button.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+
+            // 动态更新加载点
+            const loadingDots = document.querySelector('.loading-dots');
+            let dotCount = 0;
+            setInterval(() => {
+                dotCount = (dotCount + 1) % 4;
+                loadingDots.textContent = '.'.repeat(dotCount || 1);
+            }, 500);
+        });
+
+        // 添加页面可见性检测
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                document.title = '⚠️ 访问受限 - IT管理系统';
+            } else {
+                document.title = '访问受限 - IT管理系统';
+            }
+        });
+
+        // 添加触摸设备支持
+        if ('ontouchstart' in window) {
+            document.body.classList.add('touch-device');
+            const buttons = document.querySelectorAll('.btn-custom');
+            buttons.forEach(button => {
+                button.addEventListener('touchstart', function() {
+                    this.style.transform = 'translateY(-2px) scale(1.02)';
+                });
+                
+                button.addEventListener('touchend', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1806 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>IT运维管理平台 - 实体机管理</title>
+    <link rel="icon" type="image/png" href="/static/images/title.png">
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --success-color: #4ade80;
+            --warning-color: #facc15;
+            --danger-color: #f87171;
+            --info-color: #60a5fa;
+            --dark-color: #0f172a;
+            --light-color: #f8fafc;
+            --surface-1: #1e293b;
+            --surface-2: #334155;
+            --surface-3: #475569;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --gradient-primary: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+            --gradient-success: linear-gradient(135deg, #4ade80 0%, #16a34a 100%);
+            --gradient-warning: linear-gradient(135deg, #facc15 0%, #ea580c 100%);
+            --gradient-danger: linear-gradient(135deg, #f87171 0%, #dc2626 100%);
+            --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+            --border-radius: 12px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            margin-left: 280px;
+            padding: 1rem;
+            min-height: 100vh;
+        }
+
+        /* 页面标题 */
+        .page-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .page-title i {
+            color: var(--primary-color);
+        }
+
+        /* 统计卡片 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            perspective: 1000px;
+        }
+
+        /* 从下往上弹出动画 */
+        @keyframes slideUpFromBottom {
+            0% {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+                filter: blur(2px);
+            }
+            50% {
+                opacity: 0.7;
+                transform: translateY(-5px) scale(1.02);
+                filter: blur(0.5px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+                filter: blur(0);
+            }
+        }
+
+        .animate-stagger > * {
+            opacity: 0;
+            animation: slideUpFromBottom 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+        .animate-stagger > *:nth-child(1) { animation-delay: 0.1s; }
+        .animate-stagger > *:nth-child(2) { animation-delay: 0.2s; }
+        .animate-stagger > *:nth-child(3) { animation-delay: 0.3s; }
+        .animate-stagger > *:nth-child(4) { animation-delay: 0.4s; }
+        .animate-stagger > *:nth-child(5) { animation-delay: 0.5s; }
+        .animate-stagger > *:nth-child(6) { animation-delay: 0.6s; }
+        
+        .stat-card {
+            background: rgba(30, 41, 59, 0.9);
+            border-radius: 6px;
+            padding: 0.75rem;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(71, 85, 105, 0.5);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(67, 97, 238, 0.5);
+        }
+
+        .stat-card.primary {
+            box-shadow: 0 0 10px rgba(67, 97, 238, 0.3);
+        }
+
+        .stat-card.success {
+            box-shadow: 0 0 10px rgba(74, 222, 128, 0.3);
+        }
+
+        .stat-card.info {
+            box-shadow: 0 0 10px rgba(96, 165, 250, 0.3);
+        }
+
+        .stat-card.warning {
+            box-shadow: 0 0 10px rgba(250, 204, 21, 0.3);
+        }
+
+        .stat-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.5rem;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .stat-card.primary .stat-icon {
+            background: rgba(67, 97, 238, 0.3);
+            color: #93c5fd;
+        }
+
+        .stat-card.success .stat-icon {
+            background: rgba(74, 222, 128, 0.3);
+            color: #86efac;
+        }
+
+        .stat-card.info .stat-icon {
+            background: rgba(96, 165, 250, 0.3);
+            color: #bfdbfe;
+        }
+
+        .stat-card.warning .stat-icon {
+            background: rgba(250, 204, 21, 0.3);
+            color: #fde047;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+            color: white;
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #cbd5e1;
+            font-weight: 500;
+        }
+
+        /* 筛选区域 */
+        .filter-section {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 1.03rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(200, 200, 200, 0.5);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-input {
+            border: 1px solid rgba(200, 200, 200, 0.3);
+            border-radius: 10px;
+            padding: 0.5rem 0.8rem;
+            transition: all 0.2s ease;
+            font-size: 0.8rem;
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--text-primary);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+            background: rgba(255, 255, 255, 1);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        @media (max-width: 768px) {
+            .search-input {
+                padding: 0.75rem 1rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-title i {
+            color: var(--primary-color);
+        }
+
+        /* 滚动容器 */
+        .scroll-container {
+            width: 100%;
+            height: 70vh;
+            overflow: hidden;
+            position: relative;
+            border-radius: var(--border-radius);
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(200, 200, 200, 0.5);
+            box-shadow: var(--card-shadow);
+        }
+        
+        .scroll-container.search-mode {
+            overflow-y: auto;
+            padding: 1rem;
+        }
+        
+        /* 手机端不滚动 */
+        @media (max-width: 768px) {
+            .scroll-container {
+                height: auto;
+                max-height: 70vh;
+                overflow-y: auto;
+            }
+        }
+
+        .scroll-content {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        .no-exact-match {
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid rgba(71, 85, 105, 0.5);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 1rem;
+            color: #cbd5e1;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .vm-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(200, 200, 200, 0.3);
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            gap: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .vm-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-color), #818cf8);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .vm-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+
+        .vm-card:hover::before {
+            opacity: 1;
+        }
+
+        .vm-header {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            min-width: 180px;
+            padding-right: 1rem;
+            border-right: 2px solid rgba(200, 200, 200, 0.3);
+        }
+
+        .vm-title {
+            font-weight: 700;
+            color: var(--text-primary);
+            font-size: 1rem;
+            margin: 0;
+            line-height: 1.3;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .vm-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .status-badge {
+            padding: 0.3rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            min-width: 60px;
+            text-align: center;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.3rem;
+        }
+
+        .status-badge.running {
+            background: linear-gradient(135deg, rgba(74, 222, 128, 0.15) 0%, rgba(34, 197, 94, 0.15) 100%);
+            color: #16a34a;
+            border: 1px solid rgba(74, 222, 128, 0.3);
+        }
+
+        .status-badge.stopped {
+            background: linear-gradient(135deg, rgba(250, 204, 21, 0.15) 0%, rgba(234, 179, 8, 0.15) 100%);
+            color: #ca8a04;
+            border: 1px solid rgba(250, 204, 21, 0.3);
+        }
+
+        .status-badge.error {
+            background: linear-gradient(135deg, rgba(248, 113, 113, 0.15) 0%, rgba(239, 68, 68, 0.15) 100%);
+            color: #dc2626;
+            border: 1px solid rgba(248, 113, 113, 0.3);
+        }
+
+        .vm-details {
+            display: flex;
+            flex-direction: row;
+            gap: 0.75rem;
+            flex-grow: 1;
+            overflow-x: auto;
+            padding-right: 0.5rem;
+        }
+
+        .vm-details::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .vm-details::-webkit-scrollbar-track {
+            background: rgba(200, 200, 200, 0.2);
+            border-radius: 2px;
+        }
+
+        .vm-details::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.3);
+            border-radius: 2px;
+        }
+
+        .detail-item {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
+            padding: 0.6rem 0.8rem;
+            border-radius: 8px;
+            border: 1px solid rgba(200, 200, 200, 0.25);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            min-width: 100px;
+            flex: 1;
+            transition: all 0.2s ease;
+        }
+
+        .detail-item:hover {
+            border-color: rgba(99, 102, 241, 0.3);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+            transform: translateY(-1px);
+        }
+
+        .detail-label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .detail-label::before {
+            content: '';
+            width: 4px;
+            height: 4px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            opacity: 0.6;
+        }
+
+        .detail-value {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.8rem;
+            word-break: break-all;
+            line-height: 1.3;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: var(--border-radius);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(200, 200, 200, 0.5);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            opacity: 0.3;
+            margin-bottom: 1.5rem;
+        }
+
+        .empty-state h5 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .empty-state p {
+            font-size: 1rem;
+            max-width: 500px;
+            margin: 0 auto 2rem;
+            color: var(--text-secondary);
+        }
+
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            padding: 4rem;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .vm-details {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .scroll-content {
+                flex-direction: column;
+                gap: 0.75rem;
+                padding: 0.5rem;
+            }
+
+            .vm-card {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 0.75rem;
+            }
+            
+            .vm-header {
+                width: 100%;
+                min-width: auto;
+                margin-bottom: 0.5rem;
+            }
+            
+            .vm-details {
+                width: 100%;
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+            
+            .detail-item {
+                min-width: auto;
+                flex: 1 1 calc(50% - 0.25rem);
+                padding: 0.4rem;
+            }
+            
+            .detail-label {
+                font-size: 0.65rem;
+            }
+            
+            .detail-value {
+                font-size: 0.75rem;
+            }
+            
+            .vm-title {
+                font-size: 0.9rem;
+            }
+            
+            .status-badge {
+                font-size: 0.65rem;
+                padding: 0.15rem 0.4rem;
+            }
+            
+            .empty-state {
+                padding: 2rem 1rem;
+            }
+            
+            .empty-state i {
+                font-size: 3rem;
+                margin-bottom: 1rem;
+            }
+            
+            .empty-state h5 {
+                font-size: 1.25rem;
+                margin-bottom: 0.75rem;
+            }
+            
+            .empty-state p {
+                font-size: 0.9rem;
+                margin: 0 auto 1rem;
+            }
+            
+            .loading-spinner {
+                padding: 2rem;
+            }
+            
+            .main-content {
+                margin-left: 0;
+                padding: 0.5rem;
+            }
+            
+            .vm-details {
+                grid-template-columns: 1fr;
+            }
+            
+            .filter-section {
+                padding: 1rem;
+            }
+            
+            .scroll-container {
+                height: 60vh;
+                max-height: 60vh;
+            }
+            
+            /* 移动端卡片优化 */
+            .vm-card {
+                flex-direction: column;
+                padding: 1rem;
+            }
+            
+            .vm-details {
+                flex-direction: row;
+                flex-wrap: wrap;
+                width: 100%;
+                gap: 0.5rem;
+            }
+            
+            .detail-item {
+                min-width: auto;
+                flex: 1 1 calc(50% - 0.25rem);
+                padding: 0.5rem;
+            }
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-refresh {
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: var(--transition);
+            box-shadow: var(--card-shadow);
+        }
+
+        .btn-refresh:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--card-shadow-hover);
+        }
+
+
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 3rem;
+        }
+
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+            border-width: 0.25rem;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+        }
+
+        .filter-btn {
+            border: 2px solid rgba(200, 200, 200, 0.5);
+            background: rgba(255, 255, 255, 0.8);
+            color: var(--text-primary);
+            border-radius: var(--border-radius);
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: var(--transition);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            white-space: nowrap;
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        @media (max-width: 768px) {
+            .filter-buttons {
+                gap: 0.5rem;
+            }
+            
+            .filter-btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.8rem;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stat-card,
+            .table-container {
+                padding: 1.5rem;
+            }
+            
+            .stat-number {
+                font-size: 2rem;
+            }
+            
+            .stat-icon {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 引入统一侧边栏 -->
+    {% include 'sidebar.html' %}
+    <!-- 引入模态框组件 -->
+    {% include 'modal.html' %}
+
+    <main class="main-content">
+        <!-- 统计卡片 -->
+        <div class="stats-grid">
+            <div class="stat-card primary">
+                <div class="stat-icon">
+                    <i class="bi bi-cpu"></i>
+                </div>
+                <div class="stat-number" id="totalPMs">0</div>
+                <div class="stat-label">实体机总数</div>
+            </div>
+            
+            <div class="stat-card success">
+                <div class="stat-icon">
+                    <i class="bi bi-play-circle"></i>
+                </div>
+                <div class="stat-number" id="runningPMs">0</div>
+                <div class="stat-label">运行中</div>
+            </div>
+            
+            <div class="stat-card info">
+                <div class="stat-icon">
+                    <i class="bi bi-pause-circle"></i>
+                </div>
+                <div class="stat-number" id="maintenancePMs">0</div>
+                <div class="stat-label">维护中</div>
+            </div>
+        </div>
+
+        <!-- 筛选区域 -->
+        <div class="filter-section">
+            <div class="row align-items-center">
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <input type="text" class="search-input form-control" id="searchInput" 
+                           placeholder="搜索实体机IP、型号或部门...">
+                </div>
+                <div class="col-md-8">
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" data-filter="all">
+                            <i class="bi bi-list"></i>
+                            全部
+                        </button>
+                        <button class="filter-btn" data-filter="running">
+                            <i class="bi bi-play-circle"></i>
+                            运行中
+                        </button>
+                        <button class="filter-btn" data-filter="maintenance">
+                            <i class="bi bi-pause-circle"></i>
+                            维护中
+                        </button>
+                        <button class="filter-btn" data-filter="error">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            异常
+                        </button>
+                        <!-- 新增按钮 -->
+                        <button class="filter-btn ms-auto" id="addPMButton">
+                            <i class="bi bi-plus-circle"></i>
+                            添加实体机
+                        </button>
+                        <button class="filter-btn" id="exportButton">
+                            <i class="bi bi-download"></i>
+                            导出Excel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 滚动内容区域 -->
+        <div class="loading-spinner" id="loadingSpinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">加载中...</span>
+            </div>
+        </div>
+
+        <div class="scroll-container" id="scrollContainer" style="display: none;">
+            <div class="scroll-content" id="scrollContent"></div>
+        </div>
+
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <i class="bi bi-inbox"></i>
+            <h5>暂无实体机</h5>
+            <p>当前没有任何实体机配置，请添加第一个实体机。</p>
+        </div>
+    </main>
+
+    <!-- 添加实体机模态框 -->
+    <div class="modal fade" id="addPMModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" style="border-radius: 15px; border: none; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);">
+                <div class="modal-header" style="border-radius: 15px 15px 0 0; border: none; padding: 0.75rem;">
+                    <h5 class="modal-title" style="color: #334155; font-weight: 600; font-size: 1.1rem;">添加实体机</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" style="padding: 0.75rem;">
+                    <form id="addPMForm">
+                        <!-- 基本信息 -->
+                        <div style="margin-bottom: 0.75rem;">
+                            <h6 style="color: #334155; font-weight: 600; margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem;">
+                                <i class="bi bi-info-circle"></i> 基本信息
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">服务器IP <span style="color: #f87171;">*</span></label>
+                                    <input type="text" class="form-control" name="服务器IP" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">型号 <span style="color: #f87171;">*</span></label>
+                                    <input type="text" class="form-control" name="型号" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 购买信息 -->
+                        <div style="margin-bottom: 0.75rem;">
+                            <h6 style="color: #334155; font-weight: 600; margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem;">
+                                <i class="bi bi-cart"></i> 购买信息
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">购买途径</label>
+                                    <input type="text" class="form-control" name="购买途径" style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">购买日期</label>
+                                    <input type="date" class="form-control" name="购买日期" style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 连接信息 -->
+                        <div style="margin-bottom: 0.75rem;">
+                            <h6 style="color: #334155; font-weight: 600; margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem;">
+                                <i class="bi bi-plug"></i> 连接信息
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">端口</label>
+                                    <input type="text" class="form-control" name="端口" style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">登录密码</label>
+                                    <input type="password" class="form-control" name="登录密码" style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 硬件配置 -->
+                        <div style="margin-bottom: 0.75rem;">
+                            <h6 style="color: #334155; font-weight: 600; margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem;">
+                                <i class="bi bi-cpu"></i> 硬件配置
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-4 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">内存(GB) <span style="color: #f87171;">*</span></label>
+                                    <input type="number" class="form-control" name="内存" min="1" max="1024" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                                <div class="col-md-4 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">磁盘(GB) <span style="color: #f87171;">*</span></label>
+                                    <input type="number" class="form-control" name="磁盘" min="1" max="10000" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                                <div class="col-md-4 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">硬盘类型</label>
+                                    <input type="text" class="form-control" name="硬盘类型" style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 其他信息 -->
+                        <div>
+                            <h6 style="color: #334155; font-weight: 600; margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem;">
+                                <i class="bi bi-three-dots"></i> 其他信息
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">部门</label>
+                                    <input type="text" class="form-control" name="部门" style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                                <div class="col-md-12 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">用途</label>
+                                    <textarea class="form-control" name="用途" rows="2" style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer" style="border-radius: 0 0 15px 15px; border: none; padding: 0.75rem; background-color: #f8fafc;">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 6px; padding: 0.375rem 0.75rem; font-weight: 500; font-size: 0.85rem;">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="addPM()" style="border-radius: 6px; padding: 0.375rem 0.75rem; font-weight: 500; background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%); border: 1px solid #cbd5e1; color: #334155; font-size: 0.85rem;">添加</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑实体机模态框 -->
+    <div class="modal fade" id="editPMModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" style="border-radius: 15px; border: none; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);">
+                <div class="modal-header" style="border-radius: 15px 15px 0 0; border: none; padding: 0.75rem;">
+                    <h5 class="modal-title" style="color: #334155; font-weight: 600; font-size: 1.1rem;">编辑实体机</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" style="padding: 0.75rem;">
+                    <form id="editPMForm">
+                        <input type="hidden" id="editPMId" name="id">
+                        <!-- 基本信息 -->
+                        <div style="margin-bottom: 0.75rem;">
+                            <h6 style="color: #334155; font-weight: 600; margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem;">
+                                <i class="bi bi-info-circle"></i> 基本信息
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">服务器IP <span style="color: #f87171;">*</span></label>
+                                    <input type="text" class="form-control" id="editServerIP" name="服务器IP" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">型号 <span style="color: #f87171;">*</span></label>
+                                    <input type="text" class="form-control" id="editModel" name="型号" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 购买信息 -->
+                        <div style="margin-bottom: 0.75rem;">
+                            <h6 style="color: #334155; font-weight: 600; margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem;">
+                                <i class="bi bi-cart"></i> 购买信息
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">购买途径</label>
+                                    <input type="text" class="form-control" id="editPurchaseChannel" name="购买途径" style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">购买日期</label>
+                                    <input type="date" class="form-control" id="editPurchaseDate" name="购买日期" style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 连接信息 -->
+                        <div style="margin-bottom: 0.75rem;">
+                            <h6 style="color: #334155; font-weight: 600; margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem;">
+                                <i class="bi bi-plug"></i> 连接信息
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">端口</label>
+                                    <input type="text" class="form-control" id="editPort" name="端口" style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">登录密码</label>
+                                    <input type="password" class="form-control" id="editPassword" name="登录密码" style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 硬件配置 -->
+                        <div style="margin-bottom: 0.75rem;">
+                            <h6 style="color: #334155; font-weight: 600; margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem;">
+                                <i class="bi bi-cpu"></i> 硬件配置
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-4 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">内存(GB) <span style="color: #f87171;">*</span></label>
+                                    <input type="number" class="form-control" id="editMemory" name="内存" min="1" max="1024" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                                <div class="col-md-4 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">磁盘(GB) <span style="color: #f87171;">*</span></label>
+                                    <input type="number" class="form-control" id="editDisk" name="磁盘" min="1" max="10000" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                                <div class="col-md-4 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">硬盘类型</label>
+                                    <input type="text" class="form-control" id="editDiskType" name="硬盘类型" style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 其他信息 -->
+                        <div>
+                            <h6 style="color: #334155; font-weight: 600; margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem;">
+                                <i class="bi bi-three-dots"></i> 其他信息
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">部门</label>
+                                    <input type="text" class="form-control" id="editDepartment" name="部门" style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                                <div class="col-md-12 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">用途</label>
+                                    <textarea class="form-control" id="editPurpose" name="用途" rows="2" style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer" style="border-radius: 0 0 15px 15px; border: none; padding: 0.75rem; background-color: #f8fafc;">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 6px; padding: 0.375rem 0.75rem; font-weight: 500; font-size: 0.85rem;">取消</button>
+                    <button type="button" class="btn btn-primary" id="updatePMButton" style="border-radius: 6px; padding: 0.375rem 0.75rem; font-weight: 500; background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%); border: 1px solid #cbd5e1; color: #334155; font-size: 0.85rem;">更新</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 确认删除模态框 -->
+    <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 15px; border: none; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);">
+                <div class="modal-body text-center" style="padding: 2rem;">
+                    <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #f87171 0%, #dc2626 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+                        <i class="bi bi-exclamation-triangle" style="font-size: 2.5rem; color: white;"></i>
+                    </div>
+                    <h5 style="color: #1e293b; font-weight: 700; margin-bottom: 1rem;">确认删除</h5>
+                    <p style="color: #64748b; font-size: 1rem; margin-bottom: 0;">确定要删除这台实体机吗？</p>
+                </div>
+                <div class="modal-footer" style="border-radius: 0 0 15px 15px; border: none; padding: 0.75rem; background-color: #f8fafc; justify-content: center;">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 6px; padding: 0.375rem 0.75rem; font-weight: 500; font-size: 0.85rem;">取消</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteButton" style="border-radius: 6px; padding: 0.375rem 0.75rem; font-weight: 500; font-size: 0.85rem;">确定删除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/jquery-3.7.1.min.js"></script>
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let allPMs = [];
+        let filteredPMs = [];
+        
+        // 防抖函数
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+        
+        // 分页渲染相关变量
+        const ITEMS_PER_PAGE = 50;
+        let currentPage = 1;
+
+        // 从下往上弹出动画
+        function animateElementsFromBottom() {
+            // 为统计卡片添加动画
+            const statsGrid = document.querySelector('.stats-grid');
+            if (statsGrid) {
+                statsGrid.classList.add('animate-stagger');
+            }
+            
+            // 为筛选区域添加动画
+            const filterSection = document.querySelector('.filter-section');
+            if (filterSection) {
+                filterSection.style.opacity = '0';
+                filterSection.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    filterSection.style.transition = 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    filterSection.style.opacity = '1';
+                    filterSection.style.transform = 'translateY(0)';
+                }, 300);
+            }
+        }
+
+        // Intersection Observer 配置
+        function setupIntersectionObserver() {
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.animationPlayState = 'running';
+                    }
+                });
+            }, observerOptions);
+
+            // 观察统计卡片
+            const statCards = document.querySelectorAll('.stat-card');
+            statCards.forEach(card => {
+                card.style.animation = 'slideUpFromBottom 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards';
+                card.style.animationDelay = '0.1s';
+                observer.observe(card);
+            });
+
+            // 观察物理机卡片
+            const pmCards = document.querySelectorAll('.vm-card');
+            pmCards.forEach((card, index) => {
+                card.style.animation = 'slideUpFromBottom 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards';
+                card.style.animationDelay = `${index * 0.1}s`;
+                observer.observe(card);
+            });
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPMData();
+            animateElementsFromBottom();
+            
+            // 延迟设置观察器，等待内容加载
+            setTimeout(setupIntersectionObserver, 500);
+            
+            // 搜索功能 - 使用防抖优化
+            const debouncedFilterPMs = debounce(filterPMs, 300);
+            document.getElementById('searchInput').addEventListener('input', debouncedFilterPMs);
+            
+            // 筛选按钮
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    filterPMs();
+                });
+            });
+            
+            // 添加实体机按钮
+            document.getElementById('addPMButton').addEventListener('click', function() {
+                showAddPMModal();
+            });
+            
+            // 导出按钮
+            document.getElementById('exportButton').addEventListener('click', function() {
+                exportToExcel();
+            });
+            
+            // 每30秒自动刷新数据
+            setInterval(loadPMData, 30000);
+            
+            // 绑定更新实体机按钮事件
+            document.getElementById('updatePMButton').addEventListener('click', updatePM);
+        });
+
+        // 加载实体机数据
+        async function loadPMData() {
+            try {
+                const response = await fetch('/api/xenserver');
+                const result = await response.json();
+                
+                if (result.error) {
+                    console.error('获取实体机数据失败:', result.error);
+                    return;
+                }
+                
+                allPMs = result.xenserver || [];
+                
+                // 简化数据结构
+                allPMs = allPMs.map(pm => ({
+                    id: pm.id,
+                    ip: pm['服务器IP'] || '-',
+                    model: pm['型号'] || '-',
+                    department: pm['部门'] || '-',
+                    memory: pm['内存'] || 0,
+                    disk: pm['磁盘'] || 0,
+                    diskType: pm['硬盘类型'] || '-',
+                    status: 'running' // 默认状态为运行中
+                }));
+                
+                updateStats();
+                filterPMs();
+                
+                document.getElementById('loadingSpinner').style.display = 'none';
+                document.getElementById('scrollContainer').style.display = 'block';
+                
+                if (allPMs.length === 0) {
+                    document.getElementById('emptyState').style.display = 'block';
+                    document.getElementById('scrollContainer').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('加载实体机数据失败:', error);
+            }
+        }
+
+        // 更新统计信息
+        function updateStats() {
+            document.getElementById('totalPMs').textContent = allPMs.length;
+            
+            const running = allPMs.filter(pm => pm.status === 'running').length;
+            document.getElementById('runningPMs').textContent = running;
+            
+            const maintenance = allPMs.filter(pm => pm.status === 'maintenance').length;
+            document.getElementById('maintenancePMs').textContent = maintenance;
+        }
+
+        // 优化的筛选实体机函数
+        function filterPMs() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+            const activeFilter = document.querySelector('.filter-btn.active').dataset.filter;
+            
+            // 优化的搜索算法 - 一次遍历完成精确和模糊匹配
+            if (searchTerm) {
+                filteredPMs = [];
+                const exactMatches = [];
+                const fuzzyMatches = [];
+                
+                // 一次遍历完成所有匹配
+                for (const pm of allPMs) {
+                    let isExactMatch = false;
+                    let isFuzzyMatch = false;
+                    
+                    // 检查精确匹配
+                    if (pm.ip.toLowerCase() === searchTerm ||
+                        pm.model.toLowerCase() === searchTerm) {
+                        isExactMatch = true;
+                    }
+                    
+                    // 检查模糊匹配
+                    if (!isExactMatch && (
+                        pm.ip.toLowerCase().includes(searchTerm) ||
+                        pm.model.toLowerCase().includes(searchTerm) ||
+                        pm.department.toLowerCase().includes(searchTerm))) {
+                        isFuzzyMatch = true;
+                    }
+                    
+                    if (isExactMatch) {
+                        exactMatches.push(pm);
+                    } else if (isFuzzyMatch) {
+                        fuzzyMatches.push(pm);
+                    }
+                }
+                
+                // 优先显示精确匹配结果，如果没有则显示模糊匹配结果
+                filteredPMs = exactMatches.length > 0 ? exactMatches : fuzzyMatches;
+            } else {
+                // 没有搜索词时显示所有实体机
+                filteredPMs = [...allPMs];
+            }
+            
+            // 状态筛选
+            filteredPMs = filteredPMs.filter(pm => {
+                if (activeFilter === 'running' && pm.status !== 'running') {
+                    return false;
+                }
+                if (activeFilter === 'maintenance' && pm.status !== 'maintenance') {
+                    return false;
+                }
+                if (activeFilter === 'error' && pm.status !== 'error') {
+                    return false;
+                }
+                
+                return true;
+            });
+            
+            // 重置分页
+            currentPage = 1;
+            renderPMs(searchTerm, searchTerm && filteredPMs.some(pm => 
+                pm.ip.toLowerCase() === searchTerm ||
+                pm.model.toLowerCase() === searchTerm
+            ));
+        }
+
+        // 优化的渲染实体机卡片函数
+        function renderPMs(searchTerm, hasExactMatch) {
+            const scrollContent = document.getElementById('scrollContent');
+            const scrollContainer = document.getElementById('scrollContainer');
+            const emptyState = document.getElementById('emptyState');
+            
+            // 根据是否有搜索词来设置滚动容器的类
+            if (searchTerm) {
+                scrollContainer.classList.add('search-mode');
+                // 停止自动滚动动画
+                if (scrollContent.style.animation) {
+                    scrollContent.style.animationPlayState = 'paused';
+                }
+            } else {
+                scrollContainer.classList.remove('search-mode');
+                // 恢复自动滚动动画
+                if (scrollContent.style.animation) {
+                    scrollContent.style.animationPlayState = 'running';
+                }
+            }
+            
+            if (filteredPMs.length === 0) {
+                // 如果有搜索词但没有结果，显示特定的空状态提示
+                if (searchTerm) {
+                    emptyState.innerHTML = `
+                        <i class="bi bi-search"></i>
+                        <h5>未找到匹配的实体机</h5>
+                        <p>没有找到与"${searchTerm}"匹配的实体机配置。</p>
+                    `;
+                } else {
+                    emptyState.innerHTML = `
+                        <i class="bi bi-inbox"></i>
+                        <h5>暂无实体机</h5>
+                        <p>当前没有任何实体机配置，请添加第一个实体机。</p>
+                    `;
+                }
+                emptyState.style.display = 'block';
+                scrollContainer.style.display = 'none';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            scrollContainer.style.display = 'block';
+            
+            // 分页渲染优化
+            const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+            const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, filteredPMs.length);
+            const pageItems = filteredPMs.slice(startIndex, endIndex);
+            
+            // 使用文档片段减少DOM操作
+            const fragment = document.createDocumentFragment();
+            
+            // 如果有搜索词且没有精确匹配，添加提示信息
+            if (searchTerm && !hasExactMatch) {
+                // 判断搜索词是IP地址还是其他
+                const isIP = searchTerm.includes('.');
+                const promptText = isIP ? 
+                    `未搜索到IP地址${searchTerm}的实体机，以下为${searchTerm}的模糊搜索结果` : 
+                    `未搜索到包含"${searchTerm}"的实体机，以下为模糊搜索结果`;
+                
+                const promptDiv = document.createElement('div');
+                promptDiv.className = 'no-exact-match';
+                promptDiv.textContent = promptText;
+                fragment.appendChild(promptDiv);
+            }
+            
+            // 生成卡片内容
+            for (const pm of pageItems) {
+                // 根据状态值确定显示文本和样式类
+                let statusText = '-';
+                let statusClass = '';
+                if (pm.status === 'running') {
+                    statusText = '运行中';
+                    statusClass = 'running';
+                } else if (pm.status === 'maintenance') {
+                    statusText = '维护中';
+                    statusClass = 'stopped';
+                } else {
+                    statusText = '异常';
+                    statusClass = 'error';
+                }
+                
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'vm-card';
+                cardDiv.setAttribute('data-id', pm.id);
+                
+                // 操作按钮HTML（仅在搜索模式下显示）
+                let actionButtonsHtml = '';
+                if (searchTerm) {
+                    actionButtonsHtml = `
+                        <div class="detail-item" style="min-width: 120px;">
+                            <div class="detail-label">操作</div>
+                            <div class="detail-value">
+                                <button class="btn btn-sm btn-primary edit-btn" data-id="${pm.id}" style="padding: 0.1rem 0.3rem; font-size: 0.7rem;">
+                                    <i class="bi bi-pencil"></i> 编辑
+                                </button>
+                                <button class="btn btn-sm btn-danger delete-btn" data-id="${pm.id}" style="padding: 0.1rem 0.3rem; font-size: 0.7rem; margin-left: 0.2rem;">
+                                    <i class="bi bi-trash"></i> 删除
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                cardDiv.innerHTML = `
+                    <div class="vm-details">
+                        <div class="detail-item">
+                            <div class="detail-label">服务器IP</div>
+                            <div class="detail-value">${pm.ip}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">型号</div>
+                            <div class="detail-value">${pm.model}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">管理部门</div>
+                            <div class="detail-value">${pm.department}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">内存</div>
+                            <div class="detail-value">${pm.memory} GB</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">磁盘</div>
+                            <div class="detail-value">${pm.disk} GB</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">硬盘类型</div>
+                            <div class="detail-value">${pm.diskType}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">状态</div>
+                            <div class="detail-value">
+                                <span class="status-badge ${statusClass}">${statusText}</span>
+                            </div>
+                        </div>
+                        ${actionButtonsHtml}
+                    </div>
+                `;
+                
+                fragment.appendChild(cardDiv);
+            }
+            
+            // 清空容器并添加新内容
+            scrollContent.innerHTML = '';
+            scrollContent.appendChild(fragment);
+            
+            // 如果是搜索模式，绑定编辑和删除按钮事件
+            if (searchTerm) {
+                // 绑定编辑和删除按钮事件
+                document.querySelectorAll('.edit-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        editPM(id);
+                    });
+                });
+                
+                document.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        deletePM(id);
+                    });
+                });
+            }
+            
+            // 如果是搜索模式且还有更多数据，添加滚动加载
+            if (searchTerm && filteredPMs.length > ITEMS_PER_PAGE) {
+                // 添加滚动事件监听器实现无限滚动
+                scrollContainer.addEventListener('scroll', handleScroll);
+            } else {
+                scrollContainer.removeEventListener('scroll', handleScroll);
+            }
+            
+            // 默认模式的自动滚动保持不变
+            if (!searchTerm && window.innerWidth > 768) {
+                // 为默认模式复制内容实现无缝滚动
+                const cards = Array.from(scrollContent.children);
+                cards.forEach(card => {
+                    const clone = card.cloneNode(true);
+                    scrollContent.appendChild(clone);
+                });
+                
+                // 添加自动滚动动画（仅在电脑端）
+                scrollContent.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.5rem;
+                    animation: scrollVertical 500s linear infinite;
+                    padding: 1rem;
+                `;
+                
+                // 添加悬停暂停效果（仅在桌面端）
+                scrollContent.addEventListener('mouseover', function() {
+                    this.style.animationPlayState = 'paused';
+                });
+                
+                scrollContent.addEventListener('mouseout', function() {
+                    this.style.animationPlayState = 'running';
+                });
+                
+                // 添加动画样式
+                if (!document.getElementById('scrollAnimationStyle')) {
+                    const style = document.createElement('style');
+                    style.id = 'scrollAnimationStyle';
+                    style.textContent = `
+                        @keyframes scrollVertical {
+                            0% {
+                                transform: translateY(0);
+                            }
+                            100% {
+                                transform: translateY(-50%);
+                            }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+            } else if (!searchTerm) {
+                // 手机端移除动画相关代码
+                const existingStyle = document.getElementById('scrollAnimationStyle');
+                if (existingStyle) {
+                    existingStyle.remove();
+                }
+            }
+        }
+        
+        // 滚动加载处理函数
+        function handleScroll() {
+            const scrollContainer = document.getElementById('scrollContainer');
+            const scrollContent = document.getElementById('scrollContent');
+            
+            // 检查是否滚动到底部
+            if (scrollContainer.scrollTop + scrollContainer.clientHeight >= scrollContainer.scrollHeight - 100) {
+                loadMoreItems();
+            }
+        }
+        
+        // 加载更多项目
+        function loadMoreItems() {
+            const totalPages = Math.ceil(filteredPMs.length / ITEMS_PER_PAGE);
+            
+            if (currentPage < totalPages) {
+                currentPage++;
+                
+                // 计算下一页的数据范围
+                const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+                const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, filteredPMs.length);
+                const pageItems = filteredPMs.slice(startIndex, endIndex);
+                
+                // 使用文档片段减少DOM操作
+                const fragment = document.createDocumentFragment();
+                
+                // 生成卡片内容
+                for (const pm of pageItems) {
+                    // 根据状态值确定显示文本和样式类
+                    let statusText = '-';
+                    let statusClass = '';
+                    if (pm.status === 'running') {
+                        statusText = '运行中';
+                        statusClass = 'running';
+                    } else if (pm.status === 'maintenance') {
+                        statusText = '维护中';
+                        statusClass = 'stopped';
+                    } else {
+                        statusText = '异常';
+                        statusClass = 'error';
+                    }
+                    
+                    const cardDiv = document.createElement('div');
+                    cardDiv.className = 'vm-card';
+                    cardDiv.setAttribute('data-id', pm.id);
+                    
+                    cardDiv.innerHTML = `
+                        <div class="vm-details">
+                            <div class="detail-item">
+                                <div class="detail-label">服务器IP</div>
+                                <div class="detail-value">${pm.ip}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">型号</div>
+                                <div class="detail-value">${pm.model}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">管理部门</div>
+                                <div class="detail-value">${pm.department}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">内存</div>
+                                <div class="detail-value">${pm.memory} GB</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">磁盘</div>
+                                <div class="detail-value">${pm.disk} GB</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">硬盘类型</div>
+                                <div class="detail-value">${pm.diskType}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">状态</div>
+                                <div class="detail-value">
+                                    <span class="status-badge ${statusClass}">${statusText}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    fragment.appendChild(cardDiv);
+                }
+                
+                // 添加新内容
+                document.getElementById('scrollContent').appendChild(fragment);
+            }
+        }
+
+        // 定期刷新数据（优化移动端性能，减少刷新频率）
+        if (window.innerWidth > 768) {
+            // 桌面端每30秒刷新一次
+            setInterval(loadPMData, 30000);
+        } else {
+            // 移动端每60秒刷新一次，减少性能消耗
+            setInterval(loadPMData, 60000);
+        }
+        
+        // 导出到Excel功能
+        function exportToExcel() {
+            // 发送请求到后端导出接口
+            window.location.href = '/api/xenserver/export';
+        }
+        
+        // 显示添加实体机模态框
+        function showAddPMModal() {
+            document.getElementById('addPMForm').reset();
+            new bootstrap.Modal(document.getElementById('addPMModal')).show();
+        }
+        
+        // 添加实体机
+        function addPM() {
+            const form = document.getElementById('addPMForm');
+            const formData = new FormData(form);
+            
+            // 构造实体机数据
+            const pmData = {
+                '服务器IP': formData.get('服务器IP'),
+                '型号': formData.get('型号'),
+                '购买途径': formData.get('购买途径'),
+                '购买日期': formData.get('购买日期'),
+                '端口': formData.get('端口'),
+                '登录密码': formData.get('登录密码'),
+                '内存': formData.get('内存'),
+                '磁盘': formData.get('磁盘'),
+                '硬盘类型': formData.get('硬盘类型'),
+                '部门': formData.get('部门'),
+                '用途': formData.get('用途')
+            };
+            
+            // 显示加载模态框
+            showLoadingModal();
+            
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+            // 发送请求到后端API
+            fetch('/api/xenserver', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify(pmData)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    // 显示成功模态框
+                    showSuccessModal('实体机添加成功！');
+                    // 关闭模态框
+                    bootstrap.Modal.getInstance(document.getElementById('addPMModal')).hide();
+                    // 重新加载数据
+                    loadPMData();
+                } else {
+                    // 显示错误模态框
+                    showErrorModal('添加失败：' + result.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // 显示错误模态框
+                showErrorModal('添加过程中出现错误，请重试。');
+            });
+        }
+        
+        // 编辑实体机
+        function editPM(id) {
+            // 获取实体机数据并填充到编辑模态框
+            fetch(`/api/xenserver/${id}`)
+            .then(response => response.json())
+            .then(result => {
+                if (result.error) {
+                    alert('获取实体机数据失败：' + result.error);
+                    return;
+                }
+                
+                const pm = result.xenserver;
+                
+                // 填充表单数据
+                document.getElementById('editPMId').value = pm.id;
+                document.getElementById('editServerIP').value = pm['服务器IP'] || '';
+                document.getElementById('editModel').value = pm['型号'] || '';
+                document.getElementById('editPurchaseChannel').value = pm['购买途径'] || '';
+                document.getElementById('editPurchaseDate').value = pm['购买日期'] || '';
+                document.getElementById('editPort').value = pm['端口'] || '';
+                document.getElementById('editPassword').value = pm['登录密码'] || '';
+                document.getElementById('editMemory').value = pm['内存'] || '';
+                document.getElementById('editDisk').value = pm['磁盘'] || '';
+                document.getElementById('editDiskType').value = pm['硬盘类型'] || '';
+                document.getElementById('editDepartment').value = pm['部门'] || '';
+                document.getElementById('editPurpose').value = pm['用途'] || '';
+                
+                // 显示编辑模态框
+                new bootstrap.Modal(document.getElementById('editPMModal')).show();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('加载实体机数据时出现错误，请重试。');
+            });
+        }
+        
+        // 删除实体机
+        function deletePM(id) {
+            // 显示确认删除模态框
+            const confirmModal = new bootstrap.Modal(document.getElementById('confirmDeleteModal'));
+            confirmModal.show();
+            
+            // 绑定确认删除按钮事件
+            document.getElementById('confirmDeleteButton').onclick = function() {
+                // 隐藏确认模态框
+                confirmModal.hide();
+                
+                // 显示加载模态框
+                showLoadingModal();
+                
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+                fetch(`/api/xenserver/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': csrfToken
+                    }
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        // 显示成功模态框
+                        showSuccessModal('实体机删除成功！');
+                        // 重新加载数据
+                        loadPMData();
+                    } else {
+                        // 显示错误模态框
+                        showErrorModal('删除失败：' + result.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // 显示错误模态框
+                    showErrorModal('删除过程中出现错误，请重试。');
+                });
+            };
+        }
+        
+        // 更新实体机
+        function updatePM() {
+            const form = document.getElementById('editPMForm');
+            const id = document.getElementById('editPMId').value;
+            
+            // 构造实体机数据
+            const pmData = {
+                '服务器IP': document.getElementById('editServerIP').value,
+                '型号': document.getElementById('editModel').value,
+                '购买途径': document.getElementById('editPurchaseChannel').value,
+                '购买日期': document.getElementById('editPurchaseDate').value,
+                '端口': document.getElementById('editPort').value,
+                '登录密码': document.getElementById('editPassword').value,
+                '内存': document.getElementById('editMemory').value,
+                '磁盘': document.getElementById('editDisk').value,
+                '硬盘类型': document.getElementById('editDiskType').value,
+                '部门': document.getElementById('editDepartment').value,
+                '用途': document.getElementById('editPurpose').value
+            };
+            
+            // 显示加载模态框
+            showLoadingModal();
+            
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+            // 发送请求到后端API
+            fetch(`/api/xenserver/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify(pmData)
+            })
+            .then(response => response.json())
+            .then(result => {
+                    if (result.success) {
+                        // 显示成功模态框
+                        showSuccessModal('实体机更新成功！', true);
+                        // 关闭模态框
+                        bootstrap.Modal.getInstance(document.getElementById('editPMModal')).hide();
+                        // 重新加载数据
+                        loadPMData();
+                    } else {
+                        // 显示错误模态框
+                        showErrorModal('更新失败：' + result.message, false);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // 显示错误模态框
+                    showErrorModal('更新过程中出现错误，请重试。', false);
+                });
+        }
+    </script>
+</body>
+</html>

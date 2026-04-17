@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="/static/images/title.png" type="image/png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>登录 - IT 管理平台</title>
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <script src="/static/js/rsa-crypto.js"></script>
+    <style>
+        /* 禁止页面滚动 */
+        html, body {
+            overflow: hidden;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* 基础样式 */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            touch-action: manipulation; /* 禁用双击缩放 */
+        }
+
+        /* 背景设置 */
+        .login-body {
+            background-image: url('/static/images/ITSM.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            height: 100vh;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            position: fixed;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        /* 登录卡片样式 - 电脑端 */
+        .login-card {
+            background-color: transparent;
+            border: none;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: none;
+            transform: translateX(-350px);
+            width: 100%;
+            max-width: 450px;
+        }
+
+        /* 标题样式 */
+        .card-title {
+            font-weight: bold;
+            font-size: 2.2rem;
+            color: #000;
+            margin-bottom: 3rem;
+        }
+
+        /* 副标题样式 */
+        .text-muted {
+            color: #6c757d;
+            font-size: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        /* 表单标签样式 */
+        .form-label {
+            font-weight: 500;
+            color: #000;
+            margin-bottom: 0.8rem;
+            font-size: 1rem;
+        }
+
+        /* 输入框样式 - 电脑端 */
+        .form-control {
+            padding: 14px 16px;
+            font-size: 1rem;
+            border-radius: 8px;
+            border: 1px solid #ced4da;
+            background-color: rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control:focus {
+            border-color: #80bdff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .form-control.is-invalid {
+            border-color: #dc3545;
+            background-color: rgba(220, 53, 69, 0.1);
+        }
+
+        .form-control.is-invalid:focus {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        }
+
+        /* 按钮样式 - 电脑端 */
+        .login-btn {
+            padding: 12px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            border-radius: 8px;
+            background-color: #007bff;
+            border: none;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+
+        .login-btn:hover {
+            background-color: #0069d9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .login-btn:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 错误提示样式 */
+        .invalid-feedback {
+            display: block;
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .alert-danger {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: clamp(300px, 85%, 400px);
+            background-color: #f8d7da;
+            color: #58151c;
+            border: 1px solid #f1c0c7;
+            border-radius: 12px;
+            padding: 20px 25px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+            z-index: 1055;
+            animation: slideInRight 0.35s ease-out;
+            display: flex;
+            align-items: center;
+        }
+
+        .alert-danger::before {
+            content: "!";
+            font-weight: bold;
+            font-size: 1.5rem;
+            color: #842029;
+            background-color: transparent;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 15px;
+            border: 2px solid #842029;
+            flex-shrink: 0;
+        }
+
+        .alert-danger .alert-message {
+            flex-grow: 1;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .alert-danger .custom-close {
+            filter: invert(20%) sepia(50%) saturate(2000%) hue-rotate(330deg) brightness(60%) contrast(100%);
+            opacity: 0.7;
+            transition: opacity 0.2s ease-in-out;
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background-size: 1em;
+        }
+
+        .alert-danger .custom-close:hover {
+            opacity: 1;
+        }
+
+        .alert-danger .custom-close:focus {
+            box-shadow: none;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* 手机端样式 */
+        @media (max-width: 768px) {
+            .login-body {
+                justify-content: center;
+                padding: 20px;
+            }
+
+            .login-card {
+                transform: translateX(-50px);
+                margin-top: -400px;
+                padding: 20px;
+                max-width: 90%;
+                width: 320px;
+            }
+            .card-title {
+                transform: translateX(72px);
+                white-space: nowrap;
+                font-size: 1.8rem !important;
+                line-height: 5.9;
+            }
+
+            .text-muted {
+                display: none !important;
+            }
+
+            .text-center.mb-4 {
+                margin-bottom: 3rem !important;
+            }
+
+            .card-body {
+                max-height: calc(100vh - 40px);
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            /* 手机端输入框优化 */
+            .form-control {
+                padding: 12px 16px;
+                background-color: rgba(255, 255, 255, 0.25);
+                border: 1px solid rgba(255, 255, 255, 0.4);
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            }
+
+            .form-control:focus {
+                background-color: rgba(255, 255, 255, 0.35);
+                border-color: rgba(0, 123, 255, 0.6);
+                box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+            }
+
+            /* 手机端按钮优化 */
+            .login-btn {
+                padding: 12px;
+                font-size: 1rem;
+                background-color: rgba(0, 123, 255, 0.9);
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            }
+        }
+    </style>
+</head>
+<body class="login-body">
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <span class="alert-message">{{ message }}</span>
+                    <button type="button" class="btn-close custom-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="container-fluid">
+        <div class="row justify-content-center align-items-center" style="height: 100vh;"> <div class="col-md-6 col-lg-4"> <div class="card login-card">
+                    <div class="card-body p-4 p-md-5">
+                        <div class="text-center mb-4">
+                            <h2 class="card-title">ITSM 平台</h2>
+                            <p class="text-muted">请登录以继续</p>
+                        </div>
+                        
+                        <form method="POST" id="loginForm">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <div class="mb-4">
+                                <label for="username" class="form-label">用户名</label>
+                                <input type="text" class="form-control" id="username" name="username" placeholder="请输入用户名" required>
+                            </div>
+                            <div class="mb-4">
+                                <label for="password" class="form-label">密码</label>
+                                <input type="password" class="form-control" id="password" name="password" placeholder="请输入密码" required>
+                            </div>
+                            <div class="alert alert-danger" id="loginError" style="display: none; position: static; transform: none; margin-bottom: 1rem;">
+                                <span id="errorMessage"></span>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 login-btn" id="loginBtn">
+                                <span class="login-text">登录</span>
+                                <span class="login-spinner" style="display: none;">
+                                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                    登录中...
+                                </span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 处理现有的错误提示（如果有的话）
+            var alertElement = document.querySelector('.alert-danger:not(#loginError)');
+            if (alertElement) {
+                setTimeout(function() {
+                    var bsAlert = bootstrap.Alert.getInstance(alertElement);
+                    if (bsAlert) {
+                        bsAlert.close();
+                    }
+                }, 5000);
+            }
+
+            document.addEventListener('touchmove', function(e) {
+                if (e.target.closest('.card-body')) {
+                    return;
+                }
+                e.preventDefault();
+            }, { passive: false });
+
+            // 获取表单元素
+            const loginForm = document.getElementById('loginForm');
+            const loginBtn = document.getElementById('loginBtn');
+            const loginText = loginBtn.querySelector('.login-text');
+            const loginSpinner = loginBtn.querySelector('.login-spinner');
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            const loginError = document.getElementById('loginError');
+            const errorMessage = document.getElementById('errorMessage');
+            const usernameError = document.getElementById('usernameError');
+            const passwordError = document.getElementById('passwordError');
+
+            // 实时验证
+            usernameInput.addEventListener('input', function() {
+                this.classList.remove('is-invalid');
+                hideLoginError();
+            });
+
+            passwordInput.addEventListener('input', function() {
+                this.classList.remove('is-invalid');
+                hideLoginError();
+            });
+
+            // 显示错误信息
+            function showLoginError(message) {
+                errorMessage.textContent = message;
+                loginError.style.display = 'block';
+                loginBtn.disabled = false;
+                loginText.style.display = 'inline';
+                loginSpinner.style.display = 'none';
+            }
+
+            // 隐藏错误信息
+            function hideLoginError() {
+                loginError.style.display = 'none';
+            }
+
+            // 显示字段错误
+            function showFieldError(field, message) {
+                field.classList.add('is-invalid');
+                const errorDiv = field.parentNode.querySelector('.invalid-feedback');
+                if (errorDiv) {
+                    errorDiv.textContent = message;
+                }
+            }
+
+            // 表单提交处理
+            loginForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // 重置错误状态
+                usernameInput.classList.remove('is-invalid');
+                passwordInput.classList.remove('is-invalid');
+                hideLoginError();
+
+                // 前端验证
+                const username = usernameInput.value.trim();
+                const password = passwordInput.value.trim();
+
+                if (!username) {
+                    showFieldError(usernameInput, '请输入用户名');
+                    usernameInput.focus();
+                    return;
+                }
+
+                if (!password) {
+                    showFieldError(passwordInput, '请输入密码');
+                    passwordInput.focus();
+                    return;
+                }
+
+                if (username.length < 3) {
+                    showFieldError(usernameInput, '用户名至少需要3个字符');
+                    usernameInput.focus();
+                    return;
+                }
+
+                if (password.length < 8) {
+                    showFieldError(passwordInput, '密码至少需要8个字符');
+                    passwordInput.focus();
+                    return;
+                }
+
+                // 显示加载状态
+                loginBtn.disabled = true;
+                loginText.style.display = 'none';
+                loginSpinner.style.display = 'inline';
+
+                // 获取CSRF token
+                const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+
+                try {
+                    const publicKeyResponse = await fetch('/api/public-key');
+                    const publicKeyData = await publicKeyResponse.json();
+                    rsaCrypto.setPublicKey(publicKeyData.public_key);
+                    const encryptedPassword = await rsaCrypto.encryptPassword(password);
+
+                    // 发送加密后的登录请求
+                    const response = await fetch('/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken
+                        },
+                        body: JSON.stringify({ 
+                            username, 
+                            encrypted_password: encryptedPassword,
+                            use_encryption: true
+                        }),
+                        redirect: 'follow'
+                    });
+
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                    } else {
+                        const html = await response.text();
+                        if (html) {
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
+                            const errorAlert = doc.querySelector('.alert-danger:not(#loginError)');
+                            if (errorAlert) {
+                                showLoginError(errorAlert.textContent.trim());
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('登录失败:', error);
+                    showLoginError('登录失败，请重试');
+                } finally {
+                    loginBtn.disabled = false;
+                    loginText.style.display = 'inline';
+                    loginSpinner.style.display = 'none';
+                }
+            });
+
+            // 回车键提交
+            usernameInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    passwordInput.focus();
+                }
+            });
+
+            passwordInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    loginForm.dispatchEvent(new Event('submit'));
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+

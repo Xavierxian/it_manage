@@ -1,0 +1,2139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BSECP Module - IT运维管理平台</title>
+    <link rel="icon" type="image/png" href="/static/images/title.png">
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            /* 主色调 */
+            --primary-color: #4361ee;
+            --primary-light: #93c5fd;
+            --primary-dark: #3a0ca3;
+            --success-color: #4ade80;
+            --warning-color: #facc15;
+            --danger-color: #f87171;
+            --info-color: #60a5fa;
+            
+            /* 中性色 */
+            --dark-color: #0f172a;
+            --light-color: #f8fafc;
+            --surface-1: #1e293b;
+            --surface-2: #334155;
+            --surface-3: #475569;
+            
+            /* 文字颜色 */
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            
+            /* 边框和背景 */
+            --border-color: #e2e8f0;
+            --background-color: #f1f5f9;
+            --card-bg: rgba(255, 255, 255, 0.9);
+            
+            /* 阴影 */
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --neumorphism-shadow: 8px 8px 16px #e2e8f0, -8px -8px 16px #ffffff;
+            --neumorphism-shadow-inset: inset 4px 4px 8px #e2e8f0, inset -4px -4px 8px #ffffff;
+            
+            /* 圆角 */
+            --border-radius: 16px;
+            --border-radius-sm: 8px;
+            --border-radius-lg: 24px;
+            
+            /* 过渡动画 */
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            
+            /* 渐变 */
+            --gradient-primary: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+            --gradient-success: linear-gradient(135deg, #4ade80 0%, #16a34a 100%);
+            --gradient-warning: linear-gradient(135deg, #facc15 0%, #ea580c 100%);
+            --gradient-danger: linear-gradient(135deg, #f87171 0%, #dc2626 100%);
+            --gradient-info: linear-gradient(135deg, #60a5fa 0%, #1d4ed8 100%);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f1f5f9;
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            margin-left: 280px;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* 页面标题 */
+        .page-title {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .page-title i {
+            color: var(--primary-color);
+            background: rgba(99, 102, 241, 0.1);
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+
+        /* 筛选区域 */
+        .filter-section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-title i {
+            color: var(--primary-color);
+        }
+
+        .search-input {
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            transition: var(--transition);
+            font-size: 0.875rem;
+            background: white;
+            color: var(--text-primary);
+            width: 100%;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-buttons-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .filter-buttons-right {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            border: 1px solid var(--border-color);
+            background: white;
+            color: var(--text-secondary);
+            border-radius: 8px;
+            padding: 0.625rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: var(--transition);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* 从下往上弹出动画 */
+        @keyframes slideUpFromBottom {
+            0% {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+                filter: blur(2px);
+            }
+            50% {
+                opacity: 0.7;
+                transform: translateY(-5px) scale(1.02);
+                filter: blur(0.5px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+                filter: blur(0);
+            }
+        }
+
+        .animate-stagger > * {
+            opacity: 0;
+            animation: slideUpFromBottom 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+        .animate-stagger > *:nth-child(1) { animation-delay: 0.1s; }
+        .animate-stagger > *:nth-child(2) { animation-delay: 0.2s; }
+        .animate-stagger > *:nth-child(3) { animation-delay: 0.3s; }
+        .animate-stagger > *:nth-child(4) { animation-delay: 0.4s; }
+        .animate-stagger > *:nth-child(5) { animation-delay: 0.5s; }
+        .animate-stagger > *:nth-child(6) { animation-delay: 0.6s; }
+
+        .fade-in-up {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .fade-in-up.animate {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+            
+            .page-title {
+                font-size: 1.5rem;
+                margin-bottom: 1rem;
+            }
+            
+            .filter-section {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+            
+            .search-input {
+                padding: 0.75rem 1rem;
+                font-size: 0.875rem;
+            }
+            
+            .filter-buttons-container {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+            
+            .filter-buttons {
+                gap: 0.5rem;
+            }
+            
+            .filter-buttons-right {
+                gap: 0.5rem;
+            }
+            
+            .filter-btn {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.8125rem;
+            }
+        }
+
+        /* 固定大小的网格布局 */
+.modules-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); /* 固定最小宽度为350px */
+    gap: 1rem;
+    grid-auto-rows: min-content;
+    flex: 1;
+    padding: 0.6rem;
+    overflow-y: hidden; /* 去掉垂直滚动 */
+    min-height: 0; /* 允许容器收缩 */
+}
+
+/* 卡片设计优化 */
+.module-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+        
+        /* 卡片高度自适应 */
+        .module-card {
+            height: 100%;
+            min-height: 0;
+            container-type: inline-size;
+        }
+        
+        /* 卡片内容优化 */
+.module-card > * {
+    min-width: 0;
+}
+
+.module-details {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem; /* 进一步减小间距 */
+    padding: 0.25rem; /* 进一步减小内边距 */
+}
+        
+        /* 容器查询 - 更智能的响应式布局 */
+        @container (max-width: 350px) {
+            .module-details {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+            
+            .detail-item {
+                margin-bottom: 0.5rem;
+            }
+            
+            .module-title {
+                font-size: 0.875rem;
+            }
+            
+            .detail-label {
+                font-size: 0.6875rem;
+            }
+            
+            .detail-value {
+                font-size: 0.75rem;
+            }
+        }
+        
+        @container (min-width: 351px) and (max-width: 450px) {
+            .module-details {
+                grid-template-columns: 1fr;
+                gap: 0.6rem;
+            }
+        }
+        
+        @container (min-width: 451px) {
+            .module-details {
+                grid-template-columns: 1fr 1fr;
+                gap: 0.75rem;
+            }
+        }
+
+        .module-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 0.75rem; /* 进一步减小内边距 */
+            box-shadow: var(--neumorphism-shadow);
+            transition: var(--transition);
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+        }
+
+        .module-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--card-shadow-hover);
+            border-color: var(--primary-color);
+        }
+        
+        /* 确保卡片内容不会溢出 */
+        .module-card > * {
+            min-width: 0;
+        }
+
+.module-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem; /* 减小下边距 */
+    padding-bottom: 0.5rem; /* 减小下内边距 */
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.module-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 1rem; /* 减小字体大小 */
+    margin: 0;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+        .status-badge {
+            padding: 0.25rem 0.625rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-badge.active {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+        }
+
+        .status-badge.inactive {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+        }
+
+        .module-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+
+.detail-item {
+    margin-bottom: 0.75rem;
+}
+
+.detail-label {
+    font-size: 0.65rem; /* 进一步减小字体大小 */
+    color: var(--text-muted);
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.detail-value {
+    font-weight: 500;
+    color: var(--text-primary);
+    font-size: 0.8rem; /* 进一步减小字体大小 */
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+        .module-footer {
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--neumorphism-shadow);
+            border: 1px solid var(--border-color);
+            grid-column: 1 / -1;
+            backdrop-filter: blur(10px);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            margin: 0 auto 1.5rem;
+        }
+
+        .empty-state h5 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .empty-state p {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            max-width: 500px;
+            margin: 0 auto 2rem;
+        }
+
+        /* 加载状态 */
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 3rem;
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--neumorphism-shadow);
+            border: 1px solid var(--border-color);
+            grid-column: 1 / -1;
+            backdrop-filter: blur(10px);
+        }
+
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+            border-width: 0.3rem;
+            color: var(--primary-color);
+        }
+        
+        /* 骨架屏加载效果 */
+        .skeleton-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--neumorphism-shadow);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+        }
+        
+        .skeleton-header {
+            height: 24px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+        
+        .skeleton-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .skeleton-item {
+            height: 40px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            border-radius: 4px;
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+        
+        @keyframes loading {
+            0% {
+                background-position: 200% 0;
+            }
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        
+        @media (max-width: 640px) {
+            .modules-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .filter-buttons {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .filter-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .module-card {
+                padding: 0.875rem;
+            }
+            
+            .module-title {
+                font-size: 0.9375rem;
+            }
+            
+            .detail-label {
+                font-size: 0.625rem;
+            }
+            
+            .detail-value {
+                font-size: 0.75rem;
+            }
+            
+            .page-link {
+                padding: 0.5rem 0.6rem;
+                font-size: 0.8125rem;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .main-content {
+                padding: 0.75rem;
+            }
+            
+            .module-card {
+                padding: 0.75rem; /* 极速响应式优化 */
+            }
+            
+            .page-title {
+                font-size: 1.375rem;
+            }
+        }
+        
+        /* 固定在底部的分页控件 */
+        .pagination-container {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+            margin-top: 1rem;
+        }
+        
+        .pagination {
+            display: flex;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            gap: 6px;
+        }
+        
+        .page-item {
+            margin: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .page-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            height: 40px;
+            padding: 0 0.5rem;
+            background: white;
+            color: var(--text-secondary);
+            border: 2px solid transparent;
+            border-radius: 10px;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 600;
+            font-size: 0.9rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .page-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .page-link:hover::before {
+            left: 100%;
+        }
+        
+        .page-link:hover {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(67, 97, 238, 0.35);
+        }
+        
+        .page-link:active {
+            transform: translateY(0) scale(0.95);
+        }
+        
+        .page-item.active .page-link {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: white;
+            box-shadow: 0 6px 16px rgba(67, 97, 238, 0.4);
+            z-index: 2;
+        }
+        
+        .page-item.disabled .page-link {
+            background: #f8f9fa;
+            color: #cbd5e1;
+            cursor: not-allowed;
+            opacity: 0.6;
+            box-shadow: none;
+        }
+        
+        .page-item.disabled .page-link:hover {
+            background: #f8f9fa;
+            color: #cbd5e1;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        /* 每页显示数量选择器 */
+        .pagination-settings {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        /* 分页信息显示 */
+        .pagination-info {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            background: var(--card-bg);
+            padding: 0.35rem 0.6rem;
+            border-radius: 4px;
+            box-shadow: var(--neumorphism-shadow);
+            border: 1px solid var(--border-color);
+            min-height: 32px;
+        }
+        
+        .pagination-info strong {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        
+        /* 分页跳转区域 */
+        .pagination-jump {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            padding: 0.25rem 0.5rem;
+            border-radius: 3px;
+            box-shadow: 0 1px 4px rgba(67, 97, 238, 0.2);
+            min-height: 26px;
+        }
+        
+        .pagination-jump .jump-label {
+            font-size: 0.7rem;
+            color: white;
+            font-weight: 500;
+        }
+        
+        .pagination-jump .jump-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+        
+        .pagination-jump input {
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+            padding: 0.15rem 0.35rem;
+            width: 40px;
+            text-align: center;
+            font-size: 0.7rem;
+            color: var(--text-primary);
+            transition: var(--transition);
+            background: white;
+        }
+        
+        .pagination-jump input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+        }
+        
+        .pagination-jump .page-total {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+        }
+        
+        .pagination-jump button {
+            background: white;
+            color: var(--primary-color);
+            border: none;
+            border-radius: 2px;
+            padding: 0.15rem 0.4rem;
+            font-size: 0.65rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.15rem;
+        }
+        
+        .pagination-jump button:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+        }
+        
+        .pagination-jump button:active {
+            transform: translateY(0);
+        }
+        
+        /* 快捷键提示 */
+        .keyboard-shortcuts {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            background: rgba(67, 97, 238, 0.05);
+            padding: 0.35rem 0.6rem;
+            border-radius: 4px;
+            border: 1px solid rgba(67, 97, 238, 0.1);
+            min-height: 32px;
+        }
+        
+        .keyboard-shortcuts kbd {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.125rem 0.375rem;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+        
+        /* 键盘快捷键反馈 */
+        .keyboard-feedback {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--gradient-primary);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 8px 16px rgba(67, 97, 238, 0.3);
+            z-index: 9999;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .keyboard-feedback.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .keyboard-feedback i {
+            font-size: 16px;
+        }
+        
+        /* 页面切换反馈 */
+        .page-change-feedback {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 16px 32px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            z-index: 9999;
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .page-change-feedback.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        
+        .page-change-feedback .page-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .page-change-feedback .current {
+            color: var(--primary-color);
+            font-size: 24px;
+            font-weight: 700;
+        }
+        
+        .page-change-feedback .separator {
+            color: var(--text-muted);
+            font-size: 16px;
+        }
+        
+        .page-change-feedback .total {
+            color: var(--text-muted);
+            font-size: 16px;
+        }
+        
+        /* 响应式分页 - 移动端优化 */
+        @media (max-width: 768px) {
+            .pagination-container {
+                padding: 0.4rem 0.5rem;
+                gap: 0.4rem;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .pagination-settings {
+                flex-direction: row;
+                align-items: center;
+                gap: 0.4rem;
+                width: auto;
+            }
+            
+            .pagination-info {
+                width: auto;
+                justify-content: center;
+                text-align: center;
+                padding: 0.3rem 0.5rem;
+                font-size: 0.7rem;
+                min-height: 28px;
+            }
+            
+            .pagination {
+                width: 100%;
+                max-width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .pagination ul {
+                display: flex;
+                justify-content: flex-start;
+                gap: 0.2rem;
+                margin: 0;
+                padding: 0.3rem;
+                background: white;
+                border-radius: 6px;
+                box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+                min-width: max-content;
+            }
+            
+            .page-link {
+                min-width: 32px;
+                height: 36px;
+                padding: 0 0.5rem;
+                font-size: 0.875rem;
+                border-radius: 8px;
+            }
+            
+            .pagination-jump {
+                flex-direction: column;
+                width: 100%;
+                gap: 0.75rem;
+                padding: 1rem;
+            }
+            
+            .pagination-jump .jump-controls {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .pagination-jump input {
+                flex: 1;
+                max-width: 80px;
+            }
+            
+            .keyboard-shortcuts {
+                display: none;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .pagination-container {
+                padding: 0.5rem;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .page-link {
+                min-width: 32px;
+                height: 32px;
+                font-size: 0.75rem;
+                padding: 0 0.5rem;
+            }
+            
+            .pagination-info,
+            .pagination-jump {
+                font-size: 0.75rem;
+            }
+            
+            .pagination-settings {
+                flex-direction: row;
+                gap: 0.25rem;
+            }
+        }
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                border: 1px solid var(--border-color);
+                width: 100%;
+                max-width: 280px;
+            }
+            
+            .pagination-jump .jump-label {
+                font-size: 0.875rem;
+                color: var(--text-secondary);
+                font-weight: 500;
+            }
+            
+            .pagination-jump .jump-controls {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .pagination-jump input {
+                width: 60px;
+                height: 44px;
+                text-align: center;
+                border: 2px solid var(--border-color);
+                border-radius: 8px;
+                font-size: 1rem;
+                font-weight: 600;
+                color: var(--text-primary);
+                background: var(--background-color);
+                transition: border-color 0.2s ease;
+            }
+            
+            .pagination-jump input:focus {
+                outline: none;
+                border-color: var(--primary-color);
+                box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+            }
+            
+            .pagination-jump .page-total {
+                font-size: 0.875rem;
+                color: var(--text-secondary);
+                font-weight: 500;
+            }
+            
+            .pagination-jump button {
+                height: 44px;
+                padding: 0 1.5rem;
+                background: var(--primary-color);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-size: 0.875rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                box-shadow: 0 2px 4px rgba(67, 97, 238, 0.3);
+            }
+            
+            .pagination-jump button:hover {
+                background: var(--primary-dark);
+                transform: translateY(-1px);
+                box-shadow: 0 4px 8px rgba(67, 97, 238, 0.4);
+            }
+            
+            .pagination-jump button:active {
+                transform: translateY(0);
+                box-shadow: 0 2px 4px rgba(67, 97, 238, 0.3);
+            }
+            
+            /* 页码信息 */
+            .page-info {
+                font-size: 0.875rem;
+                color: var(--text-secondary);
+                text-align: center;
+                margin-top: 0.5rem;
+                font-weight: 500;
+            }
+        }
+
+        /* 超小屏幕优化 */
+        @media (max-width: 375px) {
+            .pagination ul {
+                gap: 0.125rem;
+                padding: 0.375rem;
+            }
+            
+            .page-link {
+                min-width: 36px;
+                height: 36px;
+                font-size: 0.8125rem;
+            }
+            
+            .pagination-jump {
+                max-width: 260px;
+                padding: 0.875rem;
+            }
+            
+            .pagination-jump input {
+                width: 50px;
+                height: 40px;
+                font-size: 0.9375rem;
+            }
+            
+            .pagination-jump button {
+                height: 40px;
+                padding: 0 1.25rem;
+                font-size: 0.8125rem;
+            }
+        }
+
+        /* 移动端优化样式 */
+        @media (max-width: 768px) {
+            /* 主内容区域调整 */
+            .main-content {
+                margin-left: 0;
+                padding: 0.5rem;
+            }
+            
+            .container-fluid {
+                padding: 1rem !important;
+                height: auto !important;
+            }
+            
+            /* 页面标题优化 */
+            .page-title {
+                font-size: 1.375rem;
+                margin-bottom: 1rem;
+                flex-wrap: wrap;
+            }
+            
+            .page-title i {
+                width: 36px;
+                height: 36px;
+                font-size: 1.125rem;
+            }
+            
+            /* 筛选区域优化 */
+            .filter-section {
+                padding: 1rem;
+                margin-bottom: 1rem;
+                border-radius: 12px;
+            }
+            
+            .filter-section .row {
+                margin: 0;
+            }
+            
+            .filter-section .col-md-4,
+            .filter-section .col-md-8 {
+                padding: 0;
+                width: 100%;
+            }
+            
+            .search-input {
+                margin-bottom: 0.75rem;
+                padding: 0.75rem 1rem;
+                font-size: 1rem; /* 防止iOS缩放 */
+                border-radius: 8px;
+            }
+            
+            .filter-buttons {
+                gap: 0.5rem;
+                justify-content: flex-start;
+                flex-wrap: wrap;
+            }
+            
+            .filter-btn {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.875rem;
+                border-radius: 6px;
+                flex: 1;
+                min-width: 80px;
+                justify-content: center;
+            }
+            
+            /* 卡片网格优化 */
+            .modules-container {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+                padding: 0;
+            }
+            
+            .module-card {
+                padding: 1rem;
+                border-radius: 12px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            }
+            
+            .module-card:hover {
+                transform: translateY(-2px);
+            }
+            
+            /* 卡片内容优化 */
+            .module-header {
+                margin-bottom: 0.75rem;
+                padding-bottom: 0.75rem;
+            }
+            
+            .module-title {
+                font-size: 1rem;
+                line-height: 1.3;
+                -webkit-line-clamp: 3;
+            }
+            
+            .status-badge {
+                padding: 0.25rem 0.5rem;
+                font-size: 0.75rem;
+                white-space: nowrap;
+            }
+            
+            .module-details {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+            
+            .detail-item {
+                margin-bottom: 0.25rem;
+            }
+            
+            .detail-label {
+                font-size: 0.75rem;
+                margin-bottom: 0.125rem;
+            }
+            
+            .detail-value {
+                font-size: 0.875rem;
+                word-break: break-word;
+            }
+            
+            /* 分页优化 */
+            .pagination-container {
+                margin-top: 1.5rem;
+                padding: 0.5rem;
+                flex-direction: row;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+            
+            .pagination {
+                justify-content: center;
+                gap: 0.25rem;
+                flex: 1;
+            }
+            
+            .pagination-settings {
+                flex-direction: row;
+                width: auto;
+                gap: 0.5rem;
+            }
+            
+            .pagination-jump {
+                margin-left: 0;
+                margin-top: 0;
+                justify-content: center;
+                flex-wrap: nowrap;
+                max-width: 200px;
+            }
+            
+            /* 页面切换反馈移动端优化 */
+            .page-change-feedback {
+                bottom: 20px;
+                left: 50%;
+                right: 20px;
+                padding: 12px 24px;
+                border-radius: 12px;
+            }
+            
+            .page-change-feedback .page-indicator {
+                font-size: 16px;
+            }
+            
+            .page-change-feedback .current {
+                font-size: 20px;
+            }
+            
+            .page-change-feedback .separator,
+            .page-change-feedback .total {
+                font-size: 14px;
+            }
+            
+            /* 键盘快捷键反馈移动端优化 */
+            .keyboard-feedback {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                padding: 10px 16px;
+                font-size: 13px;
+                justify-content: center;
+            }
+            
+            /* 加载和空状态优化 */
+            .loading-spinner {
+                padding: 2rem 1rem;
+            }
+            
+            .empty-state {
+                padding: 3rem 1rem;
+            }
+            
+            .empty-state i {
+                font-size: 3rem;
+                margin-bottom: 1rem;
+            }
+            
+            .empty-state h5 {
+                font-size: 1.125rem;
+                margin-bottom: 0.5rem;
+            }
+            
+            .empty-state p {
+                font-size: 0.875rem;
+            }
+        }
+
+        /* 超小屏幕优化 */
+        @media (max-width: 375px) {
+            .page-title {
+                font-size: 1.25rem;
+            }
+            
+            .filter-btn {
+                font-size: 0.8125rem;
+                padding: 0.45rem 0.65rem;
+            }
+            
+            .module-title {
+                font-size: 0.9375rem;
+            }
+            
+            .detail-label {
+                font-size: 0.6875rem;
+            }
+            
+            .detail-value {
+                font-size: 0.8125rem;
+            }
+        }
+
+        /* 触摸设备优化 */
+        @media (hover: none) and (pointer: coarse) {
+            .module-card:active {
+                transform: scale(0.98);
+                transition: transform 0.1s ease;
+            }
+            
+            .filter-btn:active {
+                transform: scale(0.95);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 引入统一侧边栏 -->
+    {% include 'sidebar.html' %}
+
+    <main class="main-content">
+        <div class="container-fluid p-4" style="flex: 1; display: flex; flex-direction: column; overflow-y: auto; height: 100vh;">
+            <!-- 筛选区域 -->
+            <div class="filter-section">
+                <div class="row align-items-center">
+                    <div class="col-md-4 mb-4 mb-md-0">
+                        <input type="text" class="search-input" id="searchInput"
+                               placeholder="搜索模块名称、模块代码、产品代码或产品名称">
+                    </div>
+                    <div class="col-md-8">
+                        <div class="filter-buttons-container">
+                            <div class="filter-buttons">
+                                <button class="filter-btn active" data-filter="all">
+                                    <i class="bi bi-list"></i>
+                                    全部
+                                </button>
+                            </div>
+                            <div class="filter-buttons-right">
+                                <button class="filter-btn" id="refreshButton">
+                                    <i class="bi bi-arrow-clockwise"></i>
+                                    刷新
+                                </button>
+                                <button class="filter-btn" id="exportButton">
+                                    <i class="bi bi-download"></i>
+                                    导出Excel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        <!-- 模块列表区域 -->
+        <div class="content-wrapper" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+            <div class="loading-spinner" id="loadingSpinner">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">加载中...</span>
+                </div>
+            </div>
+
+            <div class="modules-container" id="modulesContainer" style="display: none;">
+                <!-- 模块卡片将通过JavaScript动态生成 -->
+            </div>
+
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <i class="bi bi-inbox"></i>
+                <h5>暂无模块记录</h5>
+                <p>当前没有任何BSECP模块配置。</p>
+            </div>
+        </div>
+        </div>
+
+        <!-- 分页控件区域 -->
+        <div class="pagination-container" id="paginationContainer" style="display: none;">
+            <!-- 分页控件将通过JavaScript动态生成 -->
+        </div>
+    </main>
+
+    <script src="/static/js/jquery-3.7.1.min.js"></script>
+    <script>
+        let allModules = [];
+        let filteredModules = [];
+        let currentPage = 1;
+        let cardsPerPage = 9;
+        
+        // 简化的分页计算
+        function calculateCardsPerPage() {
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            
+            if (viewportWidth >= 1920) return 16;
+            if (viewportWidth >= 1600) return 12;
+            if (viewportWidth >= 1200) return 9;
+            if (viewportWidth >= 992) return 6;
+            if (viewportWidth >= 768) return 4;
+            return 3;
+        }
+
+        // 从下往上弹出动画
+        function animateElementsFromBottom() {
+            // 为筛选区域添加动画
+            const filterSection = document.querySelector('.filter-section');
+            if (filterSection) {
+                filterSection.style.opacity = '0';
+                filterSection.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    filterSection.style.transition = 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    filterSection.style.opacity = '1';
+                    filterSection.style.transform = 'translateY(0)';
+                }, 200);
+            }
+
+            // 为模块容器添加动画
+            const modulesContainer = document.getElementById('modulesContainer');
+            if (modulesContainer) {
+                setTimeout(() => {
+                    modulesContainer.classList.add('fade-in-up');
+                    setTimeout(() => {
+                        modulesContainer.classList.add('animate');
+                    }, 50);
+                }, 400);
+            }
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 确保容器可见后再计算尺寸
+            const modulesContainer = document.getElementById('modulesContainer');
+            modulesContainer.style.display = 'grid';
+            modulesContainer.style.visibility = 'hidden'; // 先隐藏但保持布局空间
+            
+            // 使用 requestAnimationFrame 确保 DOM 更新后再计算
+            requestAnimationFrame(() => {
+                // 计算初始卡片数量
+                cardsPerPage = calculateCardsPerPage();
+                
+                // 显示容器
+                modulesContainer.style.visibility = 'visible';
+                
+                loadModules();
+                animateElementsFromBottom();
+            });
+            
+            // 搜索功能 - 使用防抖优化性能
+            let searchTimeout;
+            document.getElementById('searchInput').addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(function() {
+                    filterModules();
+                }, 300); // 300ms防抖
+            });
+            
+            // 筛选按钮
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    filterModules();
+                });
+            });
+            
+            // 刷新按钮
+            document.getElementById('refreshButton').addEventListener('click', function() {
+                loadModules();
+            });
+            
+            // 导出按钮
+            document.getElementById('exportButton').addEventListener('click', function() {
+                exportToExcel();
+            });
+            
+            // 窗口大小变化时重新计算卡片数量（使用防抖优化性能）
+            let resizeTimeout;
+            window.addEventListener('resize', function() {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(function() {
+                    const newCardsPerPage = calculateCardsPerPage();
+                    if (newCardsPerPage !== cardsPerPage) {
+                        cardsPerPage = newCardsPerPage;
+                        currentPage = 1; // 重置到第一页
+                        renderModules();
+                    }
+                }, 250); // 250ms防抖
+            });
+            
+            // 键盘快捷键支持
+            document.addEventListener('keydown', function(e) {
+                const totalPages = Math.ceil(filteredModules.length / cardsPerPage);
+                
+                // 如果焦点在输入框中，不触发快捷键
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                    return;
+                }
+                
+                // 左箭头键 - 上一页
+                if (e.key === 'ArrowLeft' && currentPage > 1) {
+                    e.preventDefault();
+                    changePage(currentPage - 1);
+                    showKeyboardShortcutFeedback('上一页');
+                }
+                
+                // 右箭头键 - 下一页
+                if (e.key === 'ArrowRight' && currentPage < totalPages) {
+                    e.preventDefault();
+                    changePage(currentPage + 1);
+                    showKeyboardShortcutFeedback('下一页');
+                }
+                
+                // Home 键 - 首页
+                if (e.key === 'Home' && currentPage !== 1) {
+                    e.preventDefault();
+                    changePage(1);
+                    showKeyboardShortcutFeedback('首页');
+                }
+                
+                // End 键 - 末页
+                if (e.key === 'End' && currentPage !== totalPages) {
+                    e.preventDefault();
+                    changePage(totalPages);
+                    showKeyboardShortcutFeedback('末页');
+                }
+            });
+        });
+
+        // 显示键盘快捷键反馈
+        function showKeyboardShortcutFeedback(action) {
+            const feedback = document.createElement('div');
+            feedback.className = 'keyboard-feedback';
+            feedback.innerHTML = `<i class="bi bi-keyboard"></i> ${action}`;
+            document.body.appendChild(feedback);
+            
+            setTimeout(() => {
+                feedback.classList.add('show');
+            }, 10);
+            
+            setTimeout(() => {
+                feedback.classList.remove('show');
+                setTimeout(() => feedback.remove(), 300);
+            }, 1000);
+        }
+
+        // 加载模块数据
+        async function loadModules() {
+            try {
+                const response = await fetch('/api/bsecp/modules');
+                const data = await response.json();
+                allModules = data.modules || [];
+                
+                filterModules();
+                
+                document.getElementById('loadingSpinner').style.display = 'none';
+                document.getElementById('modulesContainer').style.display = 'grid';
+                
+                if (allModules.length === 0) {
+                    document.getElementById('emptyState').style.display = 'block';
+                    document.getElementById('modulesContainer').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('加载数据失败:', error);
+            }
+        }
+
+        // 筛选模块
+        function filterModules() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const activeFilter = document.querySelector('.filter-btn.active').dataset.filter;
+            
+            // 如果有搜索词，进行搜索
+            if (searchTerm) {
+                // 使用单一的模糊匹配逻辑（包含精确匹配）
+                filteredModules = allModules.filter(module => {
+                    return (
+                        (module.MD_NAME && module.MD_NAME.toLowerCase().includes(searchTerm)) ||
+                        (module.MD_CODE && module.MD_CODE.toLowerCase().includes(searchTerm)) ||
+                        (module.MD_PRODUCTCODE && module.MD_PRODUCTCODE.toLowerCase().includes(searchTerm)) ||
+                        (module.MD_REMARK && module.MD_REMARK.toLowerCase().includes(searchTerm))
+                    );
+                });
+            } else {
+                // 没有搜索词时显示所有模块
+                filteredModules = allModules;
+            }
+            
+            // 状态筛选
+            filteredModules = filteredModules.filter(module => {
+                if (activeFilter === 'active' && module.MD_STATE !== 1) {
+                    return false;
+                }
+                if (activeFilter === 'inactive' && module.MD_STATE !== 0) {
+                    return false;
+                }
+                
+                return true;
+            });
+            
+            // 重置到第一页
+            currentPage = 1;
+            
+            renderModules(searchTerm);
+        }
+
+        // 渲染模块卡片（带分页）
+        function renderModules(searchTerm) {
+            const modulesContainer = document.getElementById('modulesContainer');
+            const paginationContainer = document.getElementById('paginationContainer');
+            
+            // 显示骨架屏加载效果
+            showSkeletonCards();
+            
+            // 使用setTimeout来确保骨架屏显示
+            setTimeout(() => {
+                if (filteredModules.length === 0) {
+                    // 如果没有结果，显示空状态提示
+                    if (searchTerm) {
+                        document.getElementById('emptyState').innerHTML = `
+                            <i class="bi bi-search"></i>
+                            <h5>未找到匹配的模块记录</h5>
+                            <p>没有找到与"${searchTerm}"匹配的BSECP模块配置。</p>
+                        `;
+                    } else {
+                        document.getElementById('emptyState').innerHTML = `
+                            <i class="bi bi-inbox"></i>
+                            <h5>暂无模块记录</h5>
+                            <p>当前没有任何BSECP模块配置。</p>
+                        `;
+                    }
+                    document.getElementById('emptyState').style.display = 'block';
+                    modulesContainer.style.display = 'none';
+                    paginationContainer.style.display = 'none';
+                    return;
+                }
+                
+                document.getElementById('emptyState').style.display = 'none';
+                modulesContainer.style.display = 'grid';
+                
+                // 计算分页信息
+                const totalCards = filteredModules.length;
+                const totalPages = Math.ceil(totalCards / cardsPerPage);
+                
+                // 确保当前页在有效范围内
+                if (currentPage < 1) currentPage = 1;
+                if (currentPage > totalPages) currentPage = totalPages;
+                
+                // 计算当前页要显示的模块
+                const startIndex = (currentPage - 1) * cardsPerPage;
+                const endIndex = Math.min(startIndex + cardsPerPage, totalCards);
+                const pageModules = filteredModules.slice(startIndex, endIndex);
+                
+                // 使用DocumentFragment优化DOM操作
+                const fragment = document.createDocumentFragment();
+                
+                // 批量创建卡片元素
+                pageModules.forEach((module, index) => {
+                    const isActive = module.MD_STATE === 1;
+                    const statusText = isActive ? '启用' : '停用';
+                    const statusClass = isActive ? 'active' : 'inactive';
+                    
+                    const card = document.createElement('div');
+                    card.className = 'module-card';
+                    card.innerHTML = `
+                        <div class="module-header">
+                            <h3 class="module-title">${module.MD_NAME || '未命名模块'}</h3>
+                        </div>
+                        <div class="module-details">
+                            <div class="detail-item">
+                                <div class="detail-label">模块代码</div>
+                                <div class="detail-value">${module.MD_CODE || '-'}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">产品代码</div>
+                                <div class="detail-value">${module.MD_PRODUCTCODE || '-'}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">产品名称</div>
+                                <div class="detail-value">${module.MD_REMARK || '-'}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">创建时间</div>
+                                <div class="detail-value">${formatDate(module.MD_CREATE_DATE) || '-'}</div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // 添加点击事件
+                    card.onclick = () => viewDetails(module.MD_ID);
+                    
+                    // 添加淡入效果
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(20px)';
+                    card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                    
+                    fragment.appendChild(card);
+                    
+                    // 添加淡入动画延迟
+                    setTimeout(() => {
+                        card.style.opacity = '1';
+                        card.style.transform = 'translateY(0)';
+                    }, index * 50); // 减少延迟时间以提高响应性
+                });
+                
+                // 清空容器并添加所有卡片
+                modulesContainer.innerHTML = '';
+                modulesContainer.appendChild(fragment);
+                
+                // 渲染分页控件
+                renderPagination(totalPages);
+            }, 100); // 减少延迟时间以提高响应性
+        }
+        
+        // 显示骨架屏加载效果
+        function showSkeletonCards() {
+            const modulesContainer = document.getElementById('modulesContainer');
+            modulesContainer.style.display = 'grid';
+            document.getElementById('emptyState').style.display = 'none';
+            
+            // 清空容器
+            modulesContainer.innerHTML = '';
+            
+            // 添加骨架屏卡片
+            for (let i = 0; i < cardsPerPage; i++) {
+                const skeletonCard = document.createElement('div');
+                skeletonCard.className = 'skeleton-card';
+                skeletonCard.innerHTML = `
+                    <div class="skeleton-header"></div>
+                    <div class="skeleton-row">
+                        <div class="skeleton-item"></div>
+                        <div class="skeleton-item"></div>
+                    </div>
+                    <div class="skeleton-row">
+                        <div class="skeleton-item"></div>
+                        <div class="skeleton-item"></div>
+                    </div>
+                `;
+                modulesContainer.appendChild(skeletonCard);
+            }
+        }
+        
+        // 渲染分页控件
+        function renderPagination(totalPages) {
+            const paginationContainer = document.getElementById('paginationContainer');
+            
+            if (totalPages <= 1) {
+                paginationContainer.style.display = 'none';
+                return;
+            }
+            
+            paginationContainer.style.display = 'flex';
+            
+            const totalItems = filteredModules.length;
+            const startItem = (currentPage - 1) * cardsPerPage + 1;
+            const endItem = Math.min(currentPage * cardsPerPage, totalItems);
+            
+            let paginationHTML = `
+                <div class="pagination-info">
+                    <span class="info-text">第 <strong>${currentPage}</strong> 页 / 共 <strong>${totalPages}</strong> 页</span>
+                    <span class="info-divider">|</span>
+                    <span class="info-text">显示 <strong>${startItem}-${endItem}</strong> / 共 <strong>${totalItems}</strong> 条</span>
+                </div>
+                
+                <div class="keyboard-shortcuts">
+                    <kbd>←</kbd> <kbd>→</kbd> 翻页
+                    <kbd>Home</kbd> 首页
+                    <kbd>End</kbd> 末页
+                </div>
+            `;
+            
+            paginationContainer.innerHTML = paginationHTML;
+            
+            // 为所有分页按钮添加波纹效果
+            const pageLinks = paginationContainer.querySelectorAll('.page-link');
+            pageLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // 创建波纹元素
+                    const ripple = document.createElement('span');
+                    ripple.className = 'ripple';
+                    
+                    // 计算波纹位置
+                    const rect = this.getBoundingClientRect();
+                    const size = Math.max(rect.width, rect.height);
+                    const x = e.clientX - rect.left - size / 2;
+                    const y = e.clientY - rect.top - size / 2;
+                    
+                    ripple.style.width = ripple.style.height = size + 'px';
+                    ripple.style.left = x + 'px';
+                    ripple.style.top = y + 'px';
+                    
+                    // 添加波纹到按钮
+                    this.appendChild(ripple);
+                    
+                    // 移除波纹元素
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, 600);
+                });
+            });
+        }
+        
+        // 移动端友好的提示
+        function showMobileToast(message) {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                font-size: 14px;
+                z-index: 1000;
+                animation: fadeIn 0.3s ease;
+                max-width: 80vw;
+                text-align: center;
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'fadeOut 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 2000);
+        }
+        
+        // 切换页面
+        function changePage(page) {
+            const totalPages = Math.ceil(filteredModules.length / cardsPerPage);
+            
+            if (page < 1 || page > totalPages) {
+                return;
+            }
+            
+            const oldPage = currentPage;
+            currentPage = page;
+            
+            // 添加页面切换动画
+            const modulesContainer = document.getElementById('modulesContainer');
+            const direction = page > oldPage ? 'next' : 'prev';
+            
+            // 添加淡出动画
+            modulesContainer.style.opacity = '0';
+            modulesContainer.style.transform = direction === 'next' ? 'translateX(-20px)' : 'translateX(20px)';
+            modulesContainer.style.transition = 'all 0.3s ease';
+            
+            setTimeout(() => {
+                renderModules();
+                
+                // 添加淡入动画
+                modulesContainer.style.opacity = '1';
+                modulesContainer.style.transform = direction === 'next' ? 'translateX(20px)' : 'translateX(-20px)';
+                
+                setTimeout(() => {
+                    modulesContainer.style.transform = 'translateX(0)';
+                }, 50);
+            }, 300);
+            
+            // 滚动到页面顶部
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            // 显示页面切换反馈
+            showPageChangeFeedback(page, totalPages);
+        }
+        
+        // 显示页面切换反馈
+        function showPageChangeFeedback(currentPage, totalPages) {
+            const feedback = document.createElement('div');
+            feedback.className = 'page-change-feedback';
+            feedback.innerHTML = `
+                <div class="page-indicator">
+                    <span class="current">${currentPage}</span>
+                    <span class="separator">/</span>
+                    <span class="total">${totalPages}</span>
+                </div>
+            `;
+            document.body.appendChild(feedback);
+            
+            setTimeout(() => {
+                feedback.classList.add('show');
+            }, 10);
+            
+            setTimeout(() => {
+                feedback.classList.remove('show');
+                setTimeout(() => feedback.remove(), 300);
+            }, 1500);
+        }
+
+        // 查看详情
+        function viewDetails(moduleId) {
+            const module = allModules.find(m => m.MD_ID === moduleId);
+            if (module) {
+                // 创建模态框显示详细信息
+                const modalContent = `
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="bi bi-info-circle me-2"></i>
+                            ${module.MD_NAME} - 详细信息
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label text-muted small">模块ID</label>
+                                    <p class="mb-2">${module.MD_ID}</p>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label text-muted small">模块代码</label>
+                                    <p class="mb-2"><strong>${module.MD_CODE}</strong></p>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label text-muted small">产品ID</label>
+                                    <p class="mb-2">${module.MD_PRODUCTID || '-'}</p>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label text-muted small">产品代码</label>
+                                    <p class="mb-2">${module.MD_PRODUCTCODE || '-'}</p>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label text-muted small">价格</label>
+                                    <p class="mb-2">
+                                        <span class="price-tag">¥${parseFloat(module.MD_PRICE || 0).toLocaleString('zh-CN')}</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label text-muted small">状态</label>
+                                    <p class="mb-2">
+                                        <span class="status-badge ${module.MD_STATE === 1 ? 'active' : 'inactive'}">
+                                            ${module.MD_STATE === 1 ? '启用' : '停用'}
+                                        </span>
+                                    </p>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label text-muted small">是否积分</label>
+                                    <p class="mb-2">${module.MD_ISPOINT === 1 ? '是' : '否'}</p>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label text-muted small">创建时间</label>
+                                    <p class="mb-2">${formatDate(module.MD_CREATE_DATE)}</p>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label text-muted small">更新时间</label>
+                                    <p class="mb-2">${formatDate(module.MD_MODIFY_DATE)}</p>
+                                </div>
+                                ${module.MD_FORBIT_DATE ? `
+                                <div class="mb-3">
+                                    <label class="form-label text-muted small">停用时间</label>
+                                    <p class="mb-2">${formatDate(module.MD_FORBIT_DATE)}</p>
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                        ${module.MD_REMARK ? `
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <label class="form-label text-muted small">备注</label>
+                                <div class="alert alert-light p-3">
+                                    <p class="mb-0">${module.MD_REMARK}</p>
+                                </div>
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="bi bi-x-circle"></i>
+                            关闭
+                        </button>
+                    </div>
+                `;
+                
+                // 创建并显示模态框
+                const modal = new bootstrap.Modal(document.getElementById('detailModal'));
+                document.getElementById('detailModalContent').innerHTML = modalContent;
+                modal.show();
+            }
+        }
+
+        // 格式化日期
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('zh-CN', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (error) {
+                return dateString;
+            }
+        }
+
+        // 定期刷新数据（每5分钟刷新一次）
+        // setInterval(loadModules, 300000);
+        
+        // 导出到Excel功能
+        function exportToExcel() {
+            // 发送请求到后端导出接口
+            window.location.href = '/api/bsecp/modules/export';
+        }
+    </script>
+    
+    <!-- 详情模态框 -->
+    <div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="detailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" id="detailModalContent">
+                <!-- 模态框内容将通过JavaScript动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* 移动端提示动画 */
+        @keyframes fadeIn {
+            from { 
+                opacity: 0; 
+                transform: translate(-50%, -50%) scale(0.8); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translate(-50%, -50%) scale(1); 
+            }
+        }
+        
+        @keyframes fadeOut {
+            from { 
+                opacity: 1; 
+                transform: translate(-50%, -50%) scale(1); 
+            }
+            to { 
+                opacity: 0; 
+                transform: translate(-50%, -50%) scale(0.8); 
+            }
+        }
+        
+        /* 触摸反馈动画 */
+        @media (hover: none) and (pointer: coarse) {
+            .page-link:active,
+            .btn:active {
+                transform: scale(0.95);
+                transition: transform 0.1s ease;
+            }
+        }
+
+        /* 页面加载动画 */
+        @keyframes slideUpFromBottom {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+
+    <script>
+        // 添加触摸反馈支持
+        document.addEventListener('DOMContentLoaded', function() {
+            // 为所有交互元素添加触摸反馈
+            if ('ontouchstart' in window) {
+                document.querySelectorAll('.page-link, .btn, .filter-btn').forEach(btn => {
+                    btn.addEventListener('touchstart', function() {
+                        this.style.transform = 'scale(0.95)';
+                        this.style.transition = 'transform 0.1s ease';
+                    });
+                    btn.addEventListener('touchend', function() {
+                        this.style.transform = 'scale(1)';
+                    });
+                });
+            }
+
+            // 优化移动端输入体验
+            const pageInput = document.getElementById('pageInput');
+            if (pageInput) {
+                pageInput.addEventListener('focus', function() {
+                    if (window.innerWidth <= 768) {
+                        this.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

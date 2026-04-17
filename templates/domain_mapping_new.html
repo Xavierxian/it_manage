@@ -1,0 +1,1620 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>域名映射管理 - IT运维管理平台</title>
+    <link rel="icon" type="image/png" href="/static/images/title.png">
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --success-color: #4ade80;
+            --warning-color: #facc15;
+            --danger-color: #f87171;
+            --info-color: #60a5fa;
+            --dark-color: #0f172a;
+            --light-color: #f8fafc;
+            --surface-1: #1e293b;
+            --surface-2: #334155;
+            --surface-3: #475569;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --gradient-primary: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+            --gradient-success: linear-gradient(135deg, #4ade80 0%, #16a34a 100%);
+            --gradient-warning: linear-gradient(135deg, #facc15 0%, #ea580c 100%);
+            --gradient-danger: linear-gradient(135deg, #f87171 0%, #dc2626 100%);
+            --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+            --border-radius: 12px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            margin-left: 280px;
+            padding: 1rem;
+            min-height: 100vh;
+        }
+        
+        /* 页面标题 */
+        .page-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .page-title i {
+            color: var(--primary-color);
+        }
+
+        /* 统计卡片 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 1.25rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-color);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1), 0 4px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .stat-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .stat-card.primary::before {
+            background: var(--primary-color);
+        }
+
+        .stat-card.success::before {
+            background: var(--gradient-success);
+        }
+
+        .stat-card.warning::before {
+            background: var(--gradient-warning);
+        }
+
+        .stat-card.info::before {
+            background: var(--gradient-info);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            background: linear-gradient(135deg, rgba(67, 97, 238, 0.1), rgba(67, 97, 238, 0.05));
+            color: var(--primary-color);
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .stat-card:hover .stat-icon {
+            transform: scale(1.1);
+        }
+
+        .stat-card.primary .stat-icon {
+            background: linear-gradient(135deg, rgba(67, 97, 238, 0.15), rgba(67, 97, 238, 0.05));
+            color: var(--primary-color);
+        }
+
+        .stat-card.success .stat-icon {
+            background: linear-gradient(135deg, rgba(74, 222, 128, 0.15), rgba(74, 222, 128, 0.05));
+            color: #22c55e;
+        }
+
+        .stat-card.warning .stat-icon {
+            background: linear-gradient(135deg, rgba(250, 204, 21, 0.15), rgba(250, 204, 21, 0.05));
+            color: #eab308;
+        }
+
+        .stat-card.info .stat-icon {
+            background: linear-gradient(135deg, rgba(96, 165, 250, 0.15), rgba(96, 165, 250, 0.05));
+            color: var(--info-color);
+        }
+
+        .stat-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-bottom: 0.25rem;
+            background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* 平台统计卡片样式 */
+        .platform-stats {
+            display: flex;
+            flex-direction: row;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+            padding: 0.75rem;
+            background: rgba(241, 245, 249, 0.8);
+            border-radius: 10px;
+        }
+
+        .platform-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0.75rem;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            flex: 1;
+            transition: all 0.3s ease;
+        }
+
+        .platform-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+            border-color: rgba(67, 97, 238, 0.3);
+        }
+
+        .platform-name {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .platform-count {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* 筛选区域 */
+        .filter-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .filter-section:hover {
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-title i {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+        }
+
+        .search-input {
+            border: 2px solid rgba(226, 232, 240, 0.8);
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 0.9rem;
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1);
+            background: rgba(255, 255, 255, 1);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            padding-bottom: 0.25rem;
+        }
+
+        .filter-btn {
+            border: 2px solid rgba(226, 232, 240, 0.8);
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--text-secondary);
+            border-radius: 12px;
+            padding: 0.6rem 1rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            white-space: nowrap;
+        }
+
+        .filter-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .filter-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+        }
+
+        .filter-btn.active:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(67, 97, 238, 0.4);
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+                padding: 0.75rem;
+            }
+            
+            .stats-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 0.5rem;
+            }
+            
+            .stat-card.info {
+                grid-column: 1 / -1;
+            }
+            
+            .stat-card {
+                padding: 0.6rem;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+            
+            .stat-icon {
+                width: 32px;
+                height: 32px;
+                font-size: 1rem;
+                margin-bottom: 0.5rem;
+            }
+            
+            .stat-content {
+                width: 100%;
+            }
+            
+            .stat-value {
+                font-size: 1.25rem;
+                font-weight: 700;
+                margin-bottom: 0.25rem;
+            }
+            
+            .stat-label {
+                font-size: 0.7rem;
+                white-space: normal;
+                word-break: normal;
+                line-height: 1.2;
+            }
+            
+            .page-title {
+                font-size: 1.5rem;
+                margin-bottom: 1rem;
+            }
+            
+            .filter-section {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+            
+            .search-input {
+                padding: 0.75rem 1rem;
+                font-size: 0.9rem;
+            }
+            
+            .filter-buttons {
+                gap: 0.5rem;
+            }
+            
+            .filter-btn {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.8rem;
+            }
+
+            /* 移动端平台统计卡片优化 */
+            .platform-stats {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .platform-item {
+                padding: 0.5rem 0.75rem;
+            }
+            
+            .platform-name {
+                font-size: 0.7rem;
+            }
+            
+            .platform-count {
+                font-size: 0.9rem;
+            }
+            
+            /* 移动端卡片样式 */
+            .card-container {
+                display: none; /* 默认隐藏卡片视图，只在移动端显示 */
+            }
+            
+            /* 移动端隐藏滚动容器，只显示卡片视图 */
+            .scroll-container {
+                display: none !important;
+            }
+            
+            /* 确保滚动内容也被隐藏 */
+            .scroll-content {
+                display: none !important;
+                position: static !important;
+                animation: none !important;
+                transform: none !important;
+            }
+            
+            /* 显示卡片容器 */
+            .card-container {
+                display: block !important;
+                margin: 1rem 0;
+                padding: 0 0.5rem;
+            }
+            
+            /* 卡片样式优化 */
+            .mapping-card-mobile {
+                background: #ffffff;
+                border-radius: 12px;
+                padding: 1rem;
+                margin-bottom: 0.75rem;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+                border: none;
+                transition: all 0.2s ease;
+            }
+            
+            .mapping-card-mobile:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+            }
+            
+            /* 卡片头部优化 */
+            .card-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 0.75rem;
+                padding-bottom: 0.5rem;
+                border-bottom: 1px solid #e5e7eb;
+            }
+            
+            .card-title {
+                font-size: 1.4rem;
+                font-weight: 600;
+                color: #1f2937;
+                word-break: break-word;
+                flex: 1;
+                padding-right: 0.5rem;
+            }
+            
+            .card-status {
+                font-size: 0.75rem;
+                font-weight: 500;
+                padding: 0.25rem 0.5rem;
+                border-radius: 4px;
+                text-align: center;
+                white-space: nowrap;
+            }
+            
+            .card-status.status-enabled {
+                background: #dcfce7;
+                color: #166534;
+            }
+            
+            .card-status.status-disabled {
+                background: #fee2e2;
+                color: #991b1b;
+            }
+            
+            /* 卡片主体内容 */
+            .card-body {
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .card-field {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                gap: 0.75rem;
+            }
+            
+            .field-label {
+                font-size: 0.85rem;
+                font-weight: 500;
+                color: #6b7280;
+                white-space: nowrap;
+                flex-shrink: 0;
+            }
+            
+            .field-value {
+                font-size: 0.8rem;
+                font-weight: 500;
+                color: #374151;
+                word-break: break-word;
+                text-align: right;
+                flex: 1;
+            }
+            
+            /* 单列字段（跨越两列） */
+            .field-full {
+                grid-column: span 2;
+            }
+            
+            /* 针对小屏幕调整 */
+            @media (max-width: 420px) {
+                .card-body {
+                    grid-template-columns: 1fr;
+                }
+                
+                .field-full {
+                    grid-column: span 1;
+                }
+            }
+            
+            .empty-state {
+                padding: 2rem 1rem;
+            }
+            
+            .empty-state i {
+                font-size: 3rem;
+                margin-bottom: 1rem;
+            }
+            
+            .empty-state h5 {
+                font-size: 1.25rem;
+            }
+            
+            .empty-state p {
+                font-size: 0.9rem;
+            }
+        }
+        
+        /* 小屏手机进一步优化 */
+        @media (max-width: 480px) {
+            .mapping-card-mobile {
+                padding: 0.625rem;
+                margin-bottom: 0.625rem;
+            }
+            
+            .card-header {
+                margin-bottom: 0.4rem;
+                padding-bottom: 0.35rem;
+            }
+            
+            .card-title {
+                font-size: 1.1rem;
+            }
+            
+            .field-label {
+                font-size: 0.75rem;
+            }
+            
+            .field-value {
+                font-size: 0.8rem;
+            }
+        }
+
+        /* 滚动容器 */
+        .scroll-container {
+            width: 100%;
+            height: 70vh;
+            overflow: hidden;
+            position: relative;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .scroll-container:hover {
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+        }
+        
+        .scroll-container.search-mode {
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+
+        /* 自定义滚动条 */
+        .scroll-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .scroll-container::-webkit-scrollbar-track {
+            background: rgba(241, 245, 249, 0.5);
+            border-radius: 4px;
+        }
+
+        .scroll-container::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.5);
+            border-radius: 4px;
+            transition: background 0.3s ease;
+        }
+
+        .scroll-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(100, 116, 139, 0.7);
+        }
+        
+        /* 手机端不滚动 */
+        @media (max-width: 768px) {
+            .scroll-container {
+                height: auto;
+                max-height: 70vh;
+                overflow-y: auto;
+            }
+        }
+
+        .no-exact-match {
+            background: linear-gradient(135deg, rgba(67, 97, 238, 0.05), rgba(67, 97, 238, 0.02));
+            border: 2px solid rgba(67, 97, 238, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .mapping-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+            gap: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-bottom: 0.6rem;
+        }
+
+        .mapping-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+            border-color: rgba(67, 97, 238, 0.3);
+        }
+
+        .mapping-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-width: 200px;
+            gap: 0.75rem;
+        }
+
+        .mapping-title {
+            font-weight: 700;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            margin: 0;
+            line-height: 1.3;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .record-badge {
+            padding: 0.35rem 0.75rem;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            min-width: 55px;
+            text-align: center;
+            border: 2px solid;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .record-badge.a {
+            background: linear-gradient(135deg, #4ade80, #22c55e);
+            color: white;
+            border-color: #16a34a;
+        }
+
+        .record-badge.aaaa {
+            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+            color: white;
+            border-color: #2563eb;
+        }
+
+        .record-badge.cname {
+            background: linear-gradient(135deg, #facc15, #eab308);
+            color: white;
+            border-color: #ca8a04;
+        }
+
+        .record-badge.mx {
+            background: linear-gradient(135deg, #f87171, #ef4444);
+            color: white;
+            border-color: #dc2626;
+        }
+
+        .record-badge.txt {
+            background: linear-gradient(135deg, #94a3b8, #64748b);
+            color: white;
+            border-color: #475569;
+        }
+
+        .mapping-details {
+            display: flex;
+            flex-direction: row;
+            gap: 0.75rem;
+            flex-grow: 1;
+            overflow-x: auto;
+        }
+
+        .detail-item {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+            min-width: 110px;
+            flex: 1;
+            transition: all 0.3s ease;
+        }
+
+        .detail-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+            border-color: rgba(67, 97, 238, 0.3);
+        }
+
+        .detail-label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .detail-value {
+            font-weight: 700;
+            color: var(--text-primary);
+            font-size: 0.8rem;
+            word-break: break-all;
+            line-height: 1.3;
+        }
+        
+        /* 状态样式 */
+        .status-enabled {
+            color: #16a34a !important;
+            font-weight: 600;
+        }
+        
+        .status-ENABLE {
+            color: #16a34a !important;
+            font-weight: 600;
+        }
+        
+        .status-disabled {
+            color: #dc2626 !important;
+            font-weight: 600;
+        }
+        
+        .status-DISABLE {
+            color: #dc2626 !important;
+            font-weight: 600;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: var(--border-radius);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(200, 200, 200, 0.5);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            opacity: 0.3;
+            margin-bottom: 1.5rem;
+        }
+
+        .empty-state h5 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .empty-state p {
+            font-size: 1rem;
+            max-width: 500px;
+            margin: 0 auto 2rem;
+            color: var(--text-secondary);
+        }
+
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            padding: 4rem;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .mapping-details {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 引入统一侧边栏 -->
+    {% include 'sidebar.html' %}
+
+    <main class="main-content">
+        <!-- 统计卡片 -->
+        <div class="stats-grid">
+            <div class="stat-card primary">
+                <div class="stat-icon">
+                    <i class="bi bi-globe"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" id="totalCount">0</div>
+                    <div class="stat-label">域名映射总数</div>
+                </div>
+            </div>
+            <div class="stat-card success">
+                <div class="stat-icon">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" id="aCount">0</div>
+                    <div class="stat-label">启用</div>
+                </div>
+            </div>
+            <div class="stat-card warning">
+                <div class="stat-icon">
+                    <i class="bi bi-x-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" id="cnameCount">0</div>
+                    <div class="stat-label">停用</div>
+                </div>
+            </div>
+            <div class="stat-card info">
+                <div class="stat-icon">
+                    <i class="bi bi-stack"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label" style="margin-bottom: 0.75rem;">平台统计</div>
+                    <div class="platform-stats">
+                        <div class="platform-item">
+                            <span class="platform-name">数字引擎</span>
+                            <span class="platform-count" id="dnsdjcnCount">0</span>
+                        </div>
+                        <div class="platform-item">
+                            <span class="platform-name">阿里云</span>
+                            <span class="platform-count" id="alidnsCount">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 筛选区域 -->
+        <div class="filter-section">
+            <div class="row align-items-center">
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <input type="text" class="search-input form-control" id="searchInput" 
+                           placeholder="搜索域名、主机记录或记录值...">
+                </div>
+                <div class="col-md-8">
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" data-filter="all">
+                            <i class="bi bi-list"></i>
+                            全部
+                        </button>
+                        <button class="filter-btn" data-filter="a">
+                            <i class="bi bi-at"></i>
+                            A记录
+                        </button>
+                        <button class="filter-btn" data-filter="aaaa">
+                            <i class="bi bi-globe-americas"></i>
+                            AAAA记录
+                        </button>
+                        <button class="filter-btn" data-filter="cname">
+                            <i class="bi bi-arrow-repeat"></i>
+                            CNAME记录
+                        </button>
+                        <button class="filter-btn" data-filter="mx">
+                            <i class="bi bi-envelope"></i>
+                            MX记录
+                        </button>
+                        <button class="filter-btn" data-filter="txt">
+                            <i class="bi bi-card-text"></i>
+                            TXT记录
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 滚动内容区域 -->
+        <div class="loading-spinner" id="loadingSpinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">加载中...</span>
+            </div>
+        </div>
+
+        <div class="card-container" id="cardContainer" style="display: none;">
+            <div class="card-content" id="cardContent"></div>
+        </div>
+
+        <div class="scroll-container" id="scrollContainer" style="display: none;">
+            <div class="scroll-content" id="scrollContent"></div>
+        </div>
+
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <i class="bi bi-inbox"></i>
+            <h5>暂无域名记录</h5>
+            <p>当前没有任何域名映射配置，请添加第一个域名映射。</p>
+        </div>
+    </main>
+
+    <script src="/static/js/jquery-3.7.1.min.js"></script>
+    <script>
+        let allMappings = [];
+        let filteredMappings = [];
+        
+        // 防抖函数
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+        
+        // 分页渲染相关变量
+        const ITEMS_PER_PAGE = 50;
+        let currentPage = 1;
+
+        // 从下往上弹出动画
+        function animateElementsFromBottom() {
+            // 为统计卡片添加动画
+            const statsGrid = document.querySelector('.stats-grid');
+            if (statsGrid) {
+                statsGrid.classList.add('animate-stagger');
+            }
+            
+            // 为筛选区域添加动画
+            const filterSection = document.querySelector('.filter-section');
+            if (filterSection) {
+                filterSection.style.opacity = '0';
+                filterSection.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    filterSection.style.transition = 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    filterSection.style.opacity = '1';
+                    filterSection.style.transform = 'translateY(0)';
+                }, 300);
+            }
+        }
+
+        // Intersection Observer 配置
+        function setupIntersectionObserver() {
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.animationPlayState = 'running';
+                    }
+                });
+            }, observerOptions);
+
+            // 观察统计卡片
+            const statCards = document.querySelectorAll('.stat-card');
+            statCards.forEach(card => {
+                card.style.animation = 'slideUpFromBottom 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards';
+                card.style.animationDelay = '0.1s';
+                observer.observe(card);
+            });
+
+            // 观察映射卡片
+            const mappingCards = document.querySelectorAll('.mapping-card');
+            mappingCards.forEach((card, index) => {
+                card.style.animation = 'slideUpFromBottom 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards';
+                card.style.animationDelay = `${index * 0.1}s`;
+                observer.observe(card);
+            });
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadMappings();
+            animateElementsFromBottom();
+            setTimeout(setupIntersectionObserver, 500);
+            
+            // 搜索功能 - 使用防抖优化
+            const debouncedFilterMappings = debounce(filterMappings, 300);
+            document.getElementById('searchInput').addEventListener('input', debouncedFilterMappings);
+            
+            // 筛按钮
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    filterMappings();
+                });
+            });
+            
+            // 监听窗口大小变化，以在桌面端和移动端之间切换显示模式
+            window.addEventListener('resize', function() {
+                // 防抖处理，避免频繁触发
+                if (window.resizeTimeout) {
+                    clearTimeout(window.resizeTimeout);
+                }
+                window.resizeTimeout = setTimeout(function() {
+                    // 重新执行筛选以更新显示
+                    const currentSearch = document.getElementById('searchInput').value;
+                    if (currentSearch) {
+                        document.getElementById('searchInput').value = currentSearch; // 确保值保持
+                    }
+                    filterMappings();
+                }, 300);
+            });
+        });
+
+        // 加载映射数据
+        async function loadMappings() {
+            try {
+                const response = await fetch('/api/domain-records');
+                const data = await response.json();
+                allMappings = data.records || [];
+                
+                // 简化数据结构
+                allMappings = allMappings.map(record => ({
+                    id: record.id,
+                    platform: record.platform || 'default',
+                    domain: record.sub_domain ? `${record.sub_domain}.${record.domain_name}` : record.domain_name,
+                    display_domain: record.sub_domain || record.domain_name,  // 只显示主机记录或域名
+                    domain_name: record.domain_name,  // 一级域名
+                    record_type: record.record_type,
+                    host_record: record.sub_domain || '@',
+                    record_value: record.record_value,
+                    priority: record.mx_priority,
+                    weight: record.weight || 1,
+                    mx: record.mx_priority || 0,
+                    remark: record.comment || '',
+                    status: record.status,  // 保持原始大小写
+                    created_time: record.created_at,
+                    updated_time: record.updated_at
+                }));
+                
+                updateStats();
+                filterMappings();
+                
+                document.getElementById('loadingSpinner').style.display = 'none';
+                
+                // 根据屏幕尺寸决定显示哪个容器
+                const isMobile = window.innerWidth <= 768;
+                if (isMobile) {
+                    document.getElementById('cardContainer').style.display = 'block';
+                } else {
+                    document.getElementById('scrollContainer').style.display = 'block';
+                }
+                
+                if (allMappings.length === 0) {
+                    document.getElementById('emptyState').style.display = 'block';
+                    document.getElementById('scrollContainer').style.display = 'none';
+                    document.getElementById('cardContainer').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('加载数据失败:', error);
+            }
+        }
+
+        // 更新统计信息
+        function updateStats() {
+            document.getElementById('totalCount').textContent = allMappings.length;
+            document.getElementById('aCount').textContent = allMappings.filter(m => 
+                m.status === 'enabled' || m.status === 'ENABLE').length;
+            document.getElementById('cnameCount').textContent = allMappings.filter(m => 
+                m.status === 'disabled' || m.status === 'DISABLE').length;
+            
+            // 计算各平台记录数并更新显示
+            const dnsdjcnCount = allMappings.filter(m => m.platform === 'dnsdjcn').length;
+            const alidnsCount = allMappings.filter(m => m.platform === 'alidns').length;
+            document.getElementById('dnsdjcnCount').textContent = dnsdjcnCount;
+            document.getElementById('alidnsCount').textContent = alidnsCount;
+        }
+
+        // 优化的筛选映射函数
+        function filterMappings() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+            const activeFilter = document.querySelector('.filter-btn.active').dataset.filter;
+            
+            // 优化的搜索算法 - 一次遍历完成精确和模糊匹配
+            if (searchTerm) {
+                filteredMappings = [];
+                const exactMatches = [];
+                const fuzzyMatches = [];
+                
+                // 一次遍历完成所有匹配
+                for (const mapping of allMappings) {
+                    let isExactMatch = false;
+                    let isFuzzyMatch = false;
+                    
+                    // 检查精确匹配
+                    if (mapping.domain.toLowerCase() === searchTerm ||
+                        mapping.host_record.toLowerCase() === searchTerm ||
+                        mapping.record_value.toLowerCase() === searchTerm) {
+                        isExactMatch = true;
+                    }
+                    
+                    // 检查模糊匹配
+                    if (!isExactMatch && (
+                        mapping.domain.toLowerCase().includes(searchTerm) ||
+                        mapping.host_record.toLowerCase().includes(searchTerm) ||
+                        mapping.record_value.toLowerCase().includes(searchTerm))) {
+                        isFuzzyMatch = true;
+                    }
+                    
+                    if (isExactMatch) {
+                        exactMatches.push(mapping);
+                    } else if (isFuzzyMatch) {
+                        fuzzyMatches.push(mapping);
+                    }
+                }
+                
+                // 优先显示精确匹配结果，如果没有则显示模糊匹配结果
+                filteredMappings = exactMatches.length > 0 ? exactMatches : fuzzyMatches;
+            } else {
+                // 没有搜索词时显示所有映射
+                filteredMappings = [...allMappings];
+            }
+            
+            // 记录类型筛选
+            filteredMappings = filteredMappings.filter(mapping => {
+                if (activeFilter !== 'all' && mapping.record_type.toLowerCase() !== activeFilter) {
+                    return false;
+                }
+                
+                return true;
+            });
+            
+            // 重置分页
+            currentPage = 1;
+            renderMappings(searchTerm, searchTerm && filteredMappings.some(m => 
+                m.domain.toLowerCase() === searchTerm ||
+                m.host_record.toLowerCase() === searchTerm ||
+                m.record_value.toLowerCase() === searchTerm
+            ));
+        }
+
+        // 优化的渲染映射卡片函数
+        function renderMappings(searchTerm, hasExactMatch) {
+            const isMobile = window.innerWidth <= 768;
+            const scrollContent = document.getElementById('scrollContent');
+            const scrollContainer = document.getElementById('scrollContainer');
+            const cardContent = document.getElementById('cardContent');
+            const cardContainer = document.getElementById('cardContainer');
+            
+            // 根据屏幕尺寸决定显示哪个容器
+            if (isMobile) {
+                // 移动端显示卡片容器
+                cardContainer.style.display = 'block';
+                scrollContainer.style.display = 'none';
+            } else {
+                // 桌面端显示滚动容器
+                scrollContainer.style.display = 'block';
+                cardContainer.style.display = 'none';
+            }
+            
+            // 根据是否有搜索词来切换模式
+            if (searchTerm) {
+                // 搜索模式：手动滚动
+                scrollContainer.classList.add('search-mode');
+            } else {
+                // 默认模式：自动滚动
+                scrollContainer.classList.remove('search-mode');
+            }
+            
+            if (filteredMappings.length === 0) {
+                // 如果有搜索词但没有结果，显示特定的空状态提示
+                if (searchTerm) {
+                    document.getElementById('emptyState').innerHTML = `
+                        <i class="bi bi-search"></i>
+                        <h5>未找到匹配的域名记录</h5>
+                        <p>没有找到与"${searchTerm}"匹配的域名映射配置。</p>
+                    `;
+                } else {
+                    document.getElementById('emptyState').innerHTML = `
+                        <i class="bi bi-inbox"></i>
+                        <h5>暂无域名记录</h5>
+                        <p>当前没有任何域名映射配置，请添加第一个域名映射。</p>
+                    `;
+                }
+                document.getElementById('emptyState').style.display = 'block';
+                
+                // 隐藏两个容器
+                scrollContainer.style.display = 'none';
+                cardContainer.style.display = 'none';
+                return;
+            }
+            
+            document.getElementById('emptyState').style.display = 'none';
+            
+            // 分页渲染优化
+            const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+            const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, filteredMappings.length);
+            const pageItems = filteredMappings.slice(startIndex, endIndex);
+            
+            if (isMobile) {
+                // 移动端渲染卡片
+                renderMobileCards(pageItems, searchTerm, hasExactMatch, cardContent);
+            } else {
+                // 桌面端渲染滚动卡片
+                renderDesktopCards(pageItems, searchTerm, hasExactMatch, scrollContent, scrollContainer);
+            }
+        }
+        
+        // 渲染移动端卡片
+        function renderMobileCards(pageItems, searchTerm, hasExactMatch, cardContent) {
+            // 使用文档片段减少DOM操作
+            const fragment = document.createDocumentFragment();
+            
+            // 如果有搜索词且没有精确匹配，添加提示信息
+            if (searchTerm && !hasExactMatch) {
+                // 判断搜索词是域名还是记录值
+                const isDomain = searchTerm.includes('.');
+                const promptText = isDomain ? 
+                    `未搜索到域名${searchTerm}的映射，以下为${searchTerm}的模糊搜索结果` : 
+                    `未搜索到记录值${searchTerm}的映射，以下为${searchTerm}的模糊搜索结果`;
+                
+                const promptDiv = document.createElement('div');
+                promptDiv.className = 'no-exact-match';
+                promptDiv.textContent = promptText;
+                fragment.appendChild(promptDiv);
+            }
+            
+            // 生成移动端卡片内容
+            for (const mapping of pageItems) {
+                // 根据状态值确定显示文本和样式类
+                let statusText = '-';
+                let statusClass = '';
+                if (mapping.status === 'enabled' || mapping.status === 'ENABLE') {
+                    statusText = '启用';
+                    statusClass = 'status-enabled';
+                } else if (mapping.status === 'disabled' || mapping.status === 'DISABLE') {
+                    statusText = '停用';
+                    statusClass = 'status-disabled';
+                } else {
+                    statusText = mapping.status || '-';
+                }
+                
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'mapping-card-mobile';
+                
+                let mxHtml = '';
+                if (mapping.record_type === 'MX') {
+                    mxHtml = `
+                        <div class="card-field">
+                            <div class="field-label">优先级</div>
+                            <div class="field-value">${mapping.mx || '-'}</div>
+                        </div>
+                    `;
+                }
+                
+                cardDiv.innerHTML = `
+                    <div class="card-header">
+                        <div class="card-title">${mapping.display_domain || mapping.domain}</div>
+                        <div class="card-status ${statusClass}">${statusText}</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="card-field">
+                            <div class="field-label">平台</div>
+                            <div class="field-value">${mapping.platform === 'dnsdjcn' ? '数字引擎' : mapping.platform === 'alidns' ? '阿里云' : (mapping.platform || '-')}</div>
+                        </div>
+                        <div class="card-field">
+                            <div class="field-label">记录类型</div>
+                            <div class="field-value">${mapping.record_type || '-'}</div>
+                        </div>
+                        <div class="card-field field-full">
+                            <div class="field-label">主机记录</div>
+                            <div class="field-value">${mapping.host_record || '-'}</div>
+                        </div>
+                        <div class="card-field field-full">
+                            <div class="field-label">记录值</div>
+                            <div class="field-value">${mapping.record_value || '-'}</div>
+                        </div>
+                        ${mxHtml}
+                        <div class="card-field">
+                            <div class="field-label">创建时间</div>
+                            <div class="field-value">${mapping.created_time ? new Date(mapping.created_time).toLocaleDateString() : '-'}</div>
+                        </div>
+                        <div class="card-field">
+                            <div class="field-label">更新时间</div>
+                            <div class="field-value">${mapping.updated_time ? new Date(mapping.updated_time).toLocaleDateString() : '-'}</div>
+                        </div>
+                        <div class="card-field field-full">
+                            <div class="field-label">备注</div>
+                            <div class="field-value">${mapping.remark || '-'}</div>
+                        </div>
+                    </div>
+                `;
+                
+                fragment.appendChild(cardDiv);
+            }
+            
+            // 清空容器并添加新内容
+            cardContent.innerHTML = '';
+            cardContent.appendChild(fragment);
+        }
+        
+        // 渲染桌面端卡片
+        function renderDesktopCards(pageItems, searchTerm, hasExactMatch, scrollContent, scrollContainer) {
+            // 使用文档片段减少DOM操作
+            const fragment = document.createDocumentFragment();
+            
+            // 如果有搜索词且没有精确匹配，添加提示信息
+            if (searchTerm && !hasExactMatch) {
+                // 判断搜索词是域名还是记录值
+                const isDomain = searchTerm.includes('.');
+                const promptText = isDomain ? 
+                    `未搜索到域名${searchTerm}的映射，以下为${searchTerm}的模糊搜索结果` : 
+                    `未搜索到记录值${searchTerm}的映射，以下为${searchTerm}的模糊搜索结果`;
+                
+                const promptDiv = document.createElement('div');
+                promptDiv.className = 'no-exact-match';
+                promptDiv.textContent = promptText;
+                fragment.appendChild(promptDiv);
+            }
+            
+            // 生成卡片内容
+            for (const mapping of pageItems) {
+                // 根据状态值确定显示文本和样式类
+                let statusText = '-';
+                let statusClass = '';
+                if (mapping.status === 'enabled' || mapping.status === 'ENABLE') {
+                    statusText = '启用';
+                    statusClass = 'status-enabled';
+                } else if (mapping.status === 'disabled' || mapping.status === 'DISABLE') {
+                    statusText = '停用';
+                    statusClass = 'status-disabled';
+                } else {
+                    statusText = mapping.status || '-';
+                }
+                
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'mapping-card';
+                
+                let mxHtml = '';
+                if (mapping.record_type === 'MX') {
+                    mxHtml = `
+                        <div class="detail-item">
+                            <div class="detail-label">优先级</div>
+                            <div class="detail-value">${mapping.mx || '-'}</div>
+                        </div>
+                    `;
+                }
+                
+                cardDiv.innerHTML = `
+                    <div class="mapping-details">
+                        <div class="detail-item">
+                            <div class="detail-label">平台</div>
+                            <div class="detail-value">${mapping.platform === 'dnsdjcn' ? '数字引擎' : mapping.platform === 'alidns' ? '阿里云' : (mapping.platform || '-')}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">主机记录</div>
+                            <div class="detail-value">${mapping.host_record || '-'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">一级域名</div>
+                            <div class="detail-value">${mapping.domain_name || '-'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">记录值</div>
+                            <div class="detail-value">${mapping.record_value || '-'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">状态</div>
+                            <div class="detail-value ${statusClass}">${statusText}</div>
+                        </div>
+                        ${mxHtml}
+                        <div class="detail-item">
+                            <div class="detail-label">创建时间</div>
+                            <div class="detail-value">${mapping.created_time ? new Date(mapping.created_time).toLocaleString() : '-'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">更新时间</div>
+                            <div class="detail-value">${mapping.updated_time ? new Date(mapping.updated_time).toLocaleString() : '-'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">备注</div>
+                            <div class="detail-value">${mapping.remark || '-'}</div>
+                        </div>
+                    </div>
+                `;
+                
+                fragment.appendChild(cardDiv);
+            }
+            
+            // 清空容器并添加新内容
+            scrollContent.innerHTML = '';
+            scrollContent.appendChild(fragment);
+            
+            // 如果是搜索模式且还有更多数据，添加滚动加载
+            if (searchTerm && filteredMappings.length > ITEMS_PER_PAGE) {
+                // 添加滚动事件监听器实现无限滚动
+                scrollContainer.addEventListener('scroll', handleScroll);
+            } else {
+                scrollContainer.removeEventListener('scroll', handleScroll);
+            }
+            
+            // 默认模式的自动滚动保持不变
+            if (!searchTerm && window.innerWidth > 768) {
+                // 为默认模式复制内容实现无缝滚动
+                const cards = Array.from(scrollContent.children);
+                cards.forEach(card => {
+                    const clone = card.cloneNode(true);
+                    scrollContent.appendChild(clone);
+                });
+                
+                // 添加自动滚动动画（仅在电脑端）
+                scrollContent.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    animation: scrollVertical 500s linear infinite;
+                    padding: 1rem;
+                `;
+                
+                // 添加悬停暂停效果（仅在桌面端）
+                scrollContent.addEventListener('mouseover', function() {
+                    this.style.animationPlayState = 'paused';
+                });
+                
+                scrollContent.addEventListener('mouseout', function() {
+                    this.style.animationPlayState = 'running';
+                });
+                
+                // 添加动画样式
+                if (!document.getElementById('scrollAnimationStyle')) {
+                    const style = document.createElement('style');
+                    style.id = 'scrollAnimationStyle';
+                    style.textContent = `
+                        @keyframes scrollVertical {
+                            0% {
+                                transform: translateY(0);
+                            }
+                            100% {
+                                transform: translateY(-50%);
+                            }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+            } else if (!searchTerm) {
+                // 手机端移除动画相关代码
+                const existingStyle = document.getElementById('scrollAnimationStyle');
+                if (existingStyle) {
+                    existingStyle.remove();
+                }
+            }
+        }
+        
+        // 滚动加载处理函数
+        function handleScroll() {
+            const scrollContainer = document.getElementById('scrollContainer');
+            const scrollContent = document.getElementById('scrollContent');
+            
+            // 检查是否滚动到底部
+            if (scrollContainer.scrollTop + scrollContainer.clientHeight >= scrollContainer.scrollHeight - 100) {
+                loadMoreItems();
+            }
+        }
+        
+        // 加载更多项目
+        function loadMoreItems() {
+            const totalPages = Math.ceil(filteredMappings.length / ITEMS_PER_PAGE);
+            
+            if (currentPage < totalPages) {
+                currentPage++;
+                
+                // 计算下一页的数据范围
+                const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+                const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, filteredMappings.length);
+                const pageItems = filteredMappings.slice(startIndex, endIndex);
+                
+                // 使用文档片段减少DOM操作
+                const fragment = document.createDocumentFragment();
+                
+                // 生成卡片内容
+                for (const mapping of pageItems) {
+                    // 根据状态值确定显示文本和样式类
+                    let statusText = '-';
+                    let statusClass = '';
+                    if (mapping.status === 'enabled' || mapping.status === 'ENABLE') {
+                        statusText = '启用';
+                        statusClass = 'status-enabled';
+                    } else if (mapping.status === 'disabled' || mapping.status === 'DISABLE') {
+                        statusText = '停用';
+                        statusClass = 'status-disabled';
+                    } else {
+                        statusText = mapping.status || '-';
+                    }
+                    
+                    const cardDiv = document.createElement('div');
+                    cardDiv.className = 'mapping-card';
+                    
+                    let mxHtml = '';
+                    if (mapping.record_type === 'MX') {
+                        mxHtml = `
+                            <div class="detail-item">
+                                <div class="detail-label">优先级</div>
+                                <div class="detail-value">${mapping.mx || '-'}</div>
+                            </div>
+                        `;
+                    }
+                    
+                    cardDiv.innerHTML = `
+                        <div class="mapping-details">
+                            <div class="detail-item">
+                                <div class="detail-label">平台</div>
+                                <div class="detail-value">${mapping.platform === 'dnsdjcn' ? '数字引擎' : mapping.platform === 'alidns' ? '阿里云' : (mapping.platform || '-')}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">主机记录</div>
+                                <div class="detail-value">${mapping.host_record || '-'}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">一级域名</div>
+                                <div class="detail-value">${mapping.domain_name || '-'}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">记录值</div>
+                                <div class="detail-value">${mapping.record_value || '-'}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">状态</div>
+                                <div class="detail-value ${statusClass}">${statusText}</div>
+                            </div>
+                            ${mxHtml}
+                            <div class="detail-item">
+                                <div class="detail-label">创建时间</div>
+                                <div class="detail-value">${mapping.created_time ? new Date(mapping.created_time).toLocaleString() : '-'}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">更新时间</div>
+                                <div class="detail-value">${mapping.updated_time ? new Date(mapping.updated_time).toLocaleString() : '-'}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">备注</div>
+                                <div class="detail-value">${mapping.remark || '-'}</div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    fragment.appendChild(cardDiv);
+                }
+                
+                // 添加新内容
+                document.getElementById('scrollContent').appendChild(fragment);
+            }
+        }
+
+        // 定期刷新数据（优化移动端性能，减少刷新频率）
+        if (window.innerWidth > 768) {
+            // 桌面端每30秒刷新一次
+            setInterval(loadMappings, 30000);
+        } else {
+            // 移动端每60秒刷新一次，减少性能消耗
+            setInterval(loadMappings, 60000);
+        }
+    </script>
+</body>
+</html>
