@@ -1,0 +1,2666 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>IT运维管理平台 - 虚拟机管理</title>
+    <link rel="icon" type="image/png" href="/static/images/title.png">
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --success-color: #4ade80;
+            --warning-color: #facc15;
+            --danger-color: #f87171;
+            --info-color: #60a5fa;
+            --dark-color: #0f172a;
+            --light-color: #f8fafc;
+            --surface-1: #1e293b;
+            --surface-2: #334155;
+            --surface-3: #475569;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --gradient-primary: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+            --gradient-success: linear-gradient(135deg, #4ade80 0%, #16a34a 100%);
+            --gradient-warning: linear-gradient(135deg, #facc15 0%, #ea580c 100%);
+            --gradient-danger: linear-gradient(135deg, #f87171 0%, #dc2626 100%);
+            --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+            --border-radius: 12px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            margin-left: 280px;
+            padding: 1rem;
+            min-height: 100vh;
+        }
+
+        /* 页面标题 */
+        .page-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .page-title i {
+            color: var(--primary-color);
+        }
+
+        /* 统计卡片 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            perspective: 1000px;
+        }
+
+        /* 从下往上弹出动画 */
+        @keyframes slideUpFromBottom {
+            0% {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+                filter: blur(2px);
+            }
+            50% {
+                opacity: 0.7;
+                transform: translateY(-5px) scale(1.02);
+                filter: blur(0.5px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+                filter: blur(0);
+            }
+        }
+
+        .animate-stagger > * {
+            opacity: 0;
+            animation: slideUpFromBottom 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+        .animate-stagger > *:nth-child(1) { animation-delay: 0.1s; }
+        .animate-stagger > *:nth-child(2) { animation-delay: 0.2s; }
+        .animate-stagger > *:nth-child(3) { animation-delay: 0.3s; }
+        .animate-stagger > *:nth-child(4) { animation-delay: 0.4s; }
+        .animate-stagger > *:nth-child(5) { animation-delay: 0.5s; }
+        .animate-stagger > *:nth-child(6) { animation-delay: 0.6s; }
+        
+        .stat-card {
+            background: rgba(30, 41, 59, 0.9);
+            border-radius: 6px;
+            padding: 0.75rem;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(71, 85, 105, 0.5);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(67, 97, 238, 0.5);
+        }
+
+        .stat-card.primary {
+            box-shadow: 0 0 10px rgba(67, 97, 238, 0.3);
+        }
+
+        .stat-card.success {
+            box-shadow: 0 0 10px rgba(74, 222, 128, 0.3);
+        }
+
+        .stat-card.info {
+            box-shadow: 0 0 10px rgba(96, 165, 250, 0.3);
+        }
+
+        .stat-card.warning {
+            box-shadow: 0 0 10px rgba(250, 204, 21, 0.3);
+        }
+
+        .stat-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.5rem;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .stat-card.primary .stat-icon {
+            background: rgba(67, 97, 238, 0.3);
+            color: #93c5fd;
+        }
+
+        .stat-card.success .stat-icon {
+            background: rgba(74, 222, 128, 0.3);
+            color: #86efac;
+        }
+
+        .stat-card.info .stat-icon {
+            background: rgba(96, 165, 250, 0.3);
+            color: #bfdbfe;
+        }
+
+        .stat-card.warning .stat-icon {
+            background: rgba(250, 204, 21, 0.3);
+            color: #fde047;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+            color: white;
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #cbd5e1;
+            font-weight: 500;
+        }
+
+        /* 筛选区域 */
+        .filter-section {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 1.03rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(200, 200, 200, 0.5);
+            box-shadow: 0 4px 6px rgba(极, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-title i {
+            color: var(--primary-color);
+        }
+
+        /* 添加端口映射样式的搜索框 */
+        .search-input {
+            border: 1px solid rgba(200, 200, 200, 0.3);
+            border-radius: 10px;
+            padding: 0.5rem 0.8rem;
+            transition: all 0.2s ease;
+            font-size: 0.8rem;
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--text-primary);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+            background: rgba(255, 255, 255, 1);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        @media (max-width: 768px) {
+            .search-input {
+                padding: 0.75rem 1rem;
+                font-size: 0.9rem;
+            }
+        } 
+        .search-input {
+            border: 1px solid rgba(200, 200, 200, 0.3);
+            border-radius: 10px;
+            padding: 0.5rem 0.8rem;
+            transition: all 0.2s ease;
+            font-size: 0.8rem;
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--text-primary);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+            background: rgba(255, 255, 255, 1);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* 滚动容器 */
+        .scroll-container {
+            width: 100%;
+            height: 70vh;
+            overflow: hidden;
+            position: relative;
+            border-radius: var(--border-radius);
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(200, 200, 200, 0.5);
+            box-shadow: var(--card-shadow);
+        }
+        
+        .scroll-container.search-mode {
+            overflow-y: auto;
+            padding: 1rem;
+        }
+        
+        /* 手机端不滚动 */
+        @media (max-width: 768px) {
+            .scroll-container {
+                height: auto;
+                max-height: 70vh;
+                overflow-y: auto;
+                display: none !important;
+            }
+            
+            /* 确保移动端搜索模式下也隐藏滚动容器 */
+            .scroll-container.search-mode {
+                display: none !important;
+            }
+        }
+
+        .no-exact-match {
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid rgba(71, 85, 105, 0.5);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 1rem;
+            color: #cbd5e1;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .vm-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(200, 200, 200, 0.3);
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            gap: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 0.6rem;
+        }
+
+        .vm-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-color), #818cf8);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .vm-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+
+        .vm-card:hover::before {
+            opacity: 1;
+        }
+
+        .vm-header {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            min-width: 180px;
+            padding-right: 1rem;
+            border-right: 2px solid rgba(200, 200, 200, 0.3);
+        }
+
+        .vm-title {
+            font-weight: 700;
+            color: var(--text-primary);
+            font-size: 1rem;
+            margin: 0;
+            line-height: 1.3;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .vm-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .status-badge {
+            padding: 0.3rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            min-width: 60px;
+            text-align: center;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.3rem;
+        }
+
+        .status-badge.running {
+            background: linear-gradient(135deg, rgba(74, 222, 128, 0.15) 0%, rgba(34, 197, 94, 0.15) 100%);
+            color: #16a34a;
+            border: 1px solid rgba(74, 222, 128, 0.3);
+        }
+
+        .status-badge.stopped {
+            background: linear-gradient(135deg, rgba(250, 204, 21, 0.15) 0%, rgba(234, 179, 8, 0.15) 100%);
+            color: #ca8a04;
+            border: 1px solid rgba(250, 204, 21, 0.3);
+        }
+
+        .status-badge.error {
+            background: linear-gradient(135deg, rgba(248, 113, 113, 0.15) 0%, rgba(239, 68, 68, 0.15) 100%);
+            color: #dc2626;
+            border: 1px solid rgba(248, 113, 113, 0.3);
+        }
+
+        .vm-details {
+            display: flex;
+            flex-direction: row;
+            gap: 0.75rem;
+            flex-grow: 1;
+            overflow-x: auto;
+            padding-right: 0.5rem;
+        }
+
+        .vm-details::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .vm-details::-webkit-scrollbar-track {
+            background: rgba(200, 200, 200, 0.2);
+            border-radius: 2px;
+        }
+
+        .vm-details::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.3);
+            border-radius: 2px;
+        }
+
+        .detail-item {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
+            padding: 0.6rem 0.8rem;
+            border-radius: 8px;
+            border: 1px solid rgba(200, 200, 200, 0.25);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+            min-width: 110px;
+            flex: 1;
+            transition: all 0.2s ease;
+        }
+
+        .detail-item:hover {
+            border-color: rgba(99, 102, 241, 0.4);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+            transform: translateY(-1px);
+        }
+
+        .detail-label {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .detail-label::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            opacity: 0.6;
+        }
+
+        .detail-value {
+            font-weight: 700;
+            color: var(--text-primary);
+            font-size: 0.8rem;
+            word-break: break-all;
+            line-height: 1.3;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: var(--border-radius);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(200, 200, 200, 0.5);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            opacity: 0.3;
+            margin-bottom: 1.5rem;
+        }
+
+        .empty-state h5 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .empty-state p {
+            font-size: 1rem;
+            max-width: 500px;
+            margin: 0 auto 2rem;
+            color: var(--text-secondary);
+        }
+
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            padding: 4rem;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .vm-details {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .vm-card {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 0.75rem;
+            }
+            
+            .vm-header {
+                width: 100%;
+                min-width: auto;
+                margin-bottom: 0.5rem;
+            }
+            
+            .vm-details {
+                width: 100%;
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .detail-item {
+                min-width: auto;
+                width: 100%;
+                padding: 0.4rem;
+            }
+            
+            .detail-label {
+                font-size: 0.65rem;
+            }
+            
+            .detail-value {
+                font-size: 0.75rem;
+            }
+            
+            .vm-title {
+                font-size: 0.9rem;
+            }
+            
+            .status-badge {
+                font-size: 0.65rem;
+                padding: 0.15rem 0.4rem;
+            }
+            
+            .empty-state {
+                padding: 2rem 1rem;
+            }
+            
+            .empty-state i {
+                font-size: 3rem;
+                margin-bottom: 1rem;
+            }
+            
+            .empty-state h5 {
+                font-size: 1.25rem;
+                margin-bottom: 0.75rem;
+            }
+            
+            .empty-state p {
+                font-size: 0.9rem;
+                margin: 0 auto 1rem;
+            }
+            
+            .loading-spinner {
+                padding: 2rem;
+            }
+            
+            .main-content {
+                margin-left: 0;
+                padding: 0.5rem;
+            }
+            
+            .vm-details {
+                grid-template-columns: 1fr;
+            }
+            
+            .filter-section {
+                padding: 1rem;
+            }
+            
+            .scroll-container {
+                height: 60vh;
+                max-height: 60vh;
+            }
+            
+            /* 移动端卡片优化 */
+            .vm-card {
+                flex-direction: column;
+                padding: 1rem;
+            }
+            
+            .vm-details {
+                flex-direction: column;
+                width: 100%;
+                gap: 0.75rem;
+            }
+            
+            .detail-item {
+                min-width: 100%;
+                padding: 0.5rem;
+            }
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-refresh {
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: var(--transition);
+            box-shadow: var(--card-shadow);
+        }
+
+        .btn-refresh:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--card-shadow-hover);
+        }
+
+
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 3rem;
+        }
+
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+            border-width: 0.25rem;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+        }
+
+        .filter-btn {
+            border: 2px solid rgba(200, 200, 200, 0.5);
+            background: rgba(255, 255, 255, 0.8);
+            color: var(--text-primary);
+            border-radius: var(--border-radius);
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: var(--transition);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            white-space: nowrap;
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        @media (max-width: 768px) {
+            .filter-buttons {
+                gap: 0.5rem;
+            }
+            
+            .filter-btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.8rem;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stat-card,
+            .table-container {
+                padding: 1.5rem;
+            }
+            
+            .stat-number {
+                font-size: 2rem;
+            }
+            
+            .stat-icon {
+                font-size: 2.5rem;
+            }
+            
+            /* 移动端隐藏滚动容器，只显示卡片视图 */
+            .scroll-container {
+                display: none !important;
+            }
+        }
+        
+        /* 移动端卡片样式 */
+        .card-container {
+            display: none; /* 默认隐藏卡片视图，只在移动端显示 */
+        }
+
+        @media (max-width: 768px) {
+            /* 确保在移动端滚动容器及其内容完全隐藏 */
+            .scroll-container {
+                display: none !important;
+                position: static !important;
+                overflow: hidden !important;
+                height: 0 !important;
+                width: 0 !important;
+                opacity: 0 !important;
+                visibility: hidden !important;
+            }
+            
+            /* 确保滚动内容也被隐藏 */
+            .scroll-content {
+                display: none !important;
+                position: static !important;
+                animation: none !important;
+                transform: none !important;
+            }
+            
+            /* 显示卡片容器 */
+            .card-container {
+                display: block !important;
+                margin: 1rem 0;
+                padding: 0 0.5rem;
+            }
+            
+            /* 卡片样式优化 */
+            .vm-card-mobile {
+                background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+                border-radius: 10px;
+                padding: 0.75rem;
+                margin-bottom: 0.75rem;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+                border: 1px solid #e2e8f0;
+                transition: all 0.3s ease;
+            }
+
+            .vm-card-mobile:hover {
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                transform: translateY(-2px);
+                border-color: #cbd5e1;
+            }
+
+            /* 卡片头部优化 */
+            .card-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 0.5rem;
+                padding-bottom: 0.4rem;
+                border-bottom: 1px solid #e2e8f0;
+            }
+
+            .card-title {
+                font-weight: 600;
+                color: #1e293b;
+                font-size: 0.9rem;
+                letter-spacing: 0.1px;
+            }
+
+            .card-status {
+                display: flex;
+                align-items: center;
+                gap: 0.25rem;
+            }
+
+            /* 卡片状态样式优化 */
+            .status-badge {
+                font-weight: 500;
+                font-size: 0.7rem;
+                padding: 0.2rem 0.4rem;
+                border-radius: 8px;
+            }
+
+            /* 卡片内容垂直堆叠布局 */
+            .card-body {
+                display: flex;
+                flex-direction: column;
+                gap: 0.35rem;
+            }
+
+            /* 卡片字段样式优化 */
+            .card-field {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.15rem 0;
+            }
+
+            .field-label {
+                font-size: 0.75rem;
+                color: #64748b;
+                font-weight: 500;
+                min-width: 70px;
+                text-align: left;
+            }
+
+            .field-value {
+                font-size: 0.8rem;
+                color: #1e293b;
+                font-weight: 500;
+                text-align: right;
+                word-break: break-word;
+                max-width: 55%;
+            }
+
+            /* 卡片操作按钮区域 */
+            .card-actions {
+                display: flex;
+                gap: 0.5rem;
+                margin-top: 0.5rem;
+                padding-top: 0.5rem;
+                border-top: 1px solid #e2e8f0;
+            }
+
+            .btn-action {
+                flex: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.25rem;
+                padding: 0.4rem 0.6rem;
+                border-radius: 6px;
+                font-size: 0.75rem;
+                font-weight: 500;
+                border: none;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+
+            .btn-edit {
+                background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+                color: white;
+            }
+
+            .btn-edit:hover {
+                background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+                transform: translateY(-1px);
+                box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+            }
+
+            .btn-delete {
+                background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+                color: white;
+            }
+
+            .btn-delete:hover {
+                background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+                transform: translateY(-1px);
+                box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+            }
+
+            .btn-action i {
+                font-size: 0.85rem;
+            }
+            
+            /* 在小屏手机上进一步优化 */
+            @media (max-width: 480px) {
+                .vm-card-mobile {
+                    padding: 0.625rem;
+                    margin-bottom: 0.625rem;
+                }
+                
+                .card-header {
+                    margin-bottom: 0.4rem;
+                    padding-bottom: 0.35rem;
+                }
+                
+                .card-title {
+                    font-size: 0.85rem;
+                }
+                
+                .card-body {
+                    gap: 0.3rem;
+                }
+                
+                .field-label {
+                    font-size: 0.7rem;
+                    min-width: 65px;
+                }
+                
+                .field-value {
+                    font-size: 0.75rem;
+                }
+
+                .card-actions {
+                    margin-top: 0.4rem;
+                    padding-top: 0.4rem;
+                    gap: 0.4rem;
+                }
+
+                .btn-action {
+                    padding: 0.35rem 0.5rem;
+                    font-size: 0.7rem;
+                }
+
+                .btn-action i {
+                    font-size: 0.8rem;
+                }
+            }
+        }
+        /* 终极修复：确保移动端只显示卡片，完全隐藏滚动视图 */
+        @media (max-width: 768px) {
+            /* 隐藏所有与滚动相关的容器和内容 */
+            .scroll-container,
+            .scroll-content,
+            .scroll-container *,
+            .scroll-content * {
+                display: none !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+                position: static !important;
+                width: 0 !important;
+                height: 0 !important;
+                overflow: hidden !important;
+                animation: none !important;
+                transform: none !important;
+            }
+            
+            /* 确保卡片容器始终显示 */
+            .card-container {
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                position: relative !important;
+                width: auto !important;
+                height: auto !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 引入统一侧边栏 -->
+    {% include 'sidebar.html' %}
+    <!-- 引入模态框组件 -->
+    {% include 'modal.html' %}
+
+    <main class="main-content">
+        <!-- 统计卡片 -->
+        <div class="stats-grid">
+            <div class="stat-card primary">
+                <div class="stat-icon">
+                    <i class="bi bi-server"></i>
+                </div>
+                <div class="stat-number" id="totalVMs">0</div>
+                <div class="stat-label">虚拟机总数</div>
+            </div>
+            
+            <div class="stat-card success">
+                <div class="stat-icon">
+                    <i class="bi bi-play-circle"></i>
+                </div>
+                <div class="stat-number" id="runningVMs">0</div>
+                <div class="stat-label">运行中</div>
+            </div>
+            
+            <div class="stat-card info">
+                <div class="stat-icon">
+                    <i class="bi bi-pause-circle"></i>
+                </div>
+                <div class="stat-number" id="stoppedVMs">0</div>
+                <div class="stat-label">已停止</div>
+            </div>
+        </div>
+
+        <!-- 筛选区域 -->
+        <div class="filter-section">
+            <div class="row align-items-center">
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <input type="text" class="search-input form-control" id="searchInput" 
+                           placeholder="搜索虚拟机IP、申请人或用途...">
+                </div>
+                <div class="col-md-8">
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" data-filter="all">
+                            <i class="bi bi-list"></i>
+                            全部
+                        </button>
+                        <button class="filter-btn" data-filter="running">
+                            <i class="bi bi-play-circle"></i>
+                            运行中
+                        </button>
+                        <button class="filter-btn" data-filter="stopped">
+                            <i class="bi bi-pause-circle"></i>
+                            已停止
+                        </button>
+                        <button class="filter-btn" data-filter="error">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            异常
+                        </button>
+                        <!-- 新增按钮 -->
+                        <button class="filter-btn ms-auto" id="addVMButton">
+                            <i class="bi bi-plus-circle"></i>
+                            添加虚拟机
+                        </button>
+                        <button class="filter-btn" id="exportButton">
+                            <i class="bi bi-download"></i>
+                            导出Excel
+                        </button>
+                        <!-- 批量操作按钮 -->
+                        <button class="filter-btn" id="batchDeleteButton" style="display: none;">
+                            <i class="bi bi-trash"></i>
+                            批量删除
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 滚动内容区域 -->
+        <div class="loading-spinner" id="loadingSpinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">加载中...</span>
+            </div>
+        </div>
+
+        <div class="scroll-container" id="scrollContainer" style="display: none;">
+            <div class="scroll-content" id="scrollContent"></div>
+        </div>
+
+        <!-- 移动端卡片视图 -->
+        <div class="card-container" id="cardContainer" style="display: none;">
+            <div id="vmCardList"></div>
+        </div>
+
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <i class="bi bi-inbox"></i>
+            <h5>暂无虚拟机</h5>
+            <p>当前没有任何虚拟机配置，请添加第一个虚拟机。</p>
+        </div>
+    </main>
+
+    <!-- 确认删除模态框 -->
+    <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 15px; border: none; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);">
+                <div class="modal-body text-center" style="padding: 2rem;">
+                    <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #f87171 0%, #dc2626 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+                        <i class="bi bi-exclamation-triangle" style="font-size: 2.5rem; color: white;"></i>
+                    </div>
+                    <h5 style="color: #1e293b; font-weight: 700; margin-bottom: 1rem;">确认删除</h5>
+                    <p style="color: #64748b; font-size: 1rem; margin-bottom: 0;">确定要删除这台虚拟机吗？</p>
+                </div>
+                <div class="modal-footer" style="border-radius: 0 0 15px 15px; border: none; padding: 0.75rem; background-color: #f8fafc; justify-content: center;">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 6px; padding: 0.375rem 0.75rem; font-weight: 500; font-size: 0.85rem;">取消</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteButton" style="border-radius: 6px; padding: 0.375rem 0.75rem; font-weight: 500; font-size: 0.85rem;">确定删除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加虚拟机模态框 -->
+    <div class="modal fade" id="addVMModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content" style="border-radius: 15px; border: none; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);">
+                <div class="modal-header" style="border-radius: 15px 15px 0 0; border: none; padding: 0.75rem;">
+                    <h5 class="modal-title" style="color: #334155; font-weight: 600; font-size: 1.1rem;">添加虚拟机</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" style="padding: 0.75rem;">
+                    <form id="addVMForm">
+                        <!-- 主机信息 -->
+                        <div style="margin-bottom: 0.75rem;">
+                            <h6 style="color: #334155; font-weight: 600; margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem;">
+                                <i class="bi bi-info-circle"></i> 主机信息
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">主机IP <span style="color: #f87171;">*</span></label>
+                                    <input type="text" class="form-control" name="主机IP" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">虚拟机IP <span style="color: #f87171;">*</span></label>
+                                    <input type="text" class="form-control" name="虚拟机IP" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 操作系统信息 -->
+                        <div style="margin-bottom: 0.75rem;">
+                            <h6 style="color: #334155; font-weight: 600; margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem;">
+                                <i class="bi bi-terminal"></i> 操作系统信息
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">操作系统 <span style="color: #f87171;">*</span></label>
+                                    <input type="text" class="form-control" name="操作系统" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">系统版本 <span style="color: #f87171;">*</span></label>
+                                    <input type="text" class="form-control" name="系统版本" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 登录信息 -->
+                        <div style="margin-bottom: 0.75rem;">
+                            <h6 style="color: #334155; font-weight: 600; margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem;">
+                                <i class="bi bi-key"></i> 登录信息
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">登录名 <span style="color: #f87171;">*</span></label>
+                                    <input type="text" class="form-control" name="登录名" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">远程端口 <span style="color: #f87171;">*</span></label>
+                                    <input type="number" class="form-control" name="远程端口" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 密码 -->
+                        <div style="margin-bottom: 0.75rem;">
+                            <h6 style="color: #334155; font-weight: 600; margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem;">
+                                <i class="bi bi-shield-lock"></i> 密码
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">开机密码 <span style="color: #f87171;">*</span></label>
+                                    <input type="password" class="form-control" name="开机密码" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 硬件配置 -->
+                        <div style="margin-bottom: 0.75rem;">
+                            <h6 style="color: #334155; font-weight: 600; margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem;">
+                                <i class="bi bi-cpu"></i> 硬件配置
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-4 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">CPU (核) <span style="color: #f87171;">*</span></label>
+                                    <input type="number" class="form-control" name="CPU" min="1" max="128" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                                <div class="col-md-4 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">内存 (GB) <span style="color: #f87171;">*</span></label>
+                                    <input type="number" class="form-control" name="内存" min="1" max="1024" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                                <div class="col-md-4 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">硬盘 (GB) <span style="color: #f87171;">*</span></label>
+                                    <input type="number" class="form-control" name="硬盘" min="1" max="10000" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 申请人信息 -->
+                        <div style="margin-bottom: 0.75rem;">
+                            <h6 style="color: #334155; font-weight: 600; margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem;">
+                                <i class="bi bi-person"></i> 申请人信息
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">申请人 <span style="color: #f87171;">*</span></label>
+                                    <input type="text" class="form-control" name="申请人" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">部门 <span style="color: #f87171;">*</span></label>
+                                    <input type="text" class="form-control" name="部门" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 用途和环境 -->
+                        <div style="margin-bottom: 0.75rem;">
+                            <h6 style="color: #334155; font-weight: 600; margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem;">
+                                <i class="bi bi-tools"></i> 用途和环境
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">用途 <span style="color: #f87171;">*</span></label>
+                                    <input type="text" class="form-control" name="用途" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">环境 <span style="color: #f87171;">*</span></label>
+                                    <input type="text" class="form-control" name="环境" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 日期信息 -->
+                        <div style="margin-bottom: 0.75rem;">
+                            <h6 style="color: #334155; font-weight: 600; margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem;">
+                                <i class="bi bi-calendar"></i> 日期信息
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">开通日期 <span style="color: #f87171;">*</span></label>
+                                    <input type="date" class="form-control" name="开通日期" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">结束日期 <span style="color: #f87171;">*</span></label>
+                                    <input type="date" class="form-control" name="结束日期" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 状态 -->
+                        <div>
+                            <h6 style="color: #334155; font-weight: 600; margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem;">
+                                <i class="bi bi-power"></i> 状态
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">是否在用 <span style="color: #f87171;">*</span></label>
+                                    <select class="form-select" name="是否在用" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                        <option value="">请选择</option>
+                                        <option value="是">是</option>
+                                        <option value="否">否</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer" style="border-radius: 0 0 15px 15px; border: none; padding: 0.75rem; background-color: #f8fafc;">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 6px; padding: 0.375rem 0.75rem; font-weight: 500; font-size: 0.85rem;">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="addVM()" style="border-radius: 6px; padding: 0.375rem 0.75rem; font-weight: 500; background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%); border: 1px solid #cbd5e1; color: #334155; font-size: 0.85rem;">添加</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑虚拟机模态框 -->
+    <div class="modal fade" id="editVMModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content" style="border-radius: 15px; border: none; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);">
+                <div class="modal-header" style="border-radius: 15px 15px 0 0; border: none; padding: 0.75rem;">
+                    <h5 class="modal-title" style="color: #334155; font-weight: 600; font-size: 1.1rem;">编辑虚拟机</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" style="padding: 0.75rem;">
+                    <form id="editVMForm">
+                        <input type="hidden" id="editVMId" name="id">
+                        <!-- 主机信息 -->
+                        <div style="margin-bottom: 0.75rem;">
+                            <h6 style="color: #334155; font-weight: 600; margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem;">
+                                <i class="bi bi-info-circle"></i> 主机信息
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">主机IP <span style="color: #f87171;">*</span></label>
+                                    <input type="text" class="form-control" id="editHostIP" name="主机IP" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">虚拟机IP <span style="color: #f87171;">*</span></label>
+                                    <input type="text" class="form-control" id="editVMIP" name="虚拟机IP" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 操作系统信息 -->
+                        <div style="margin-bottom: 0.75rem;">
+                            <h6 style="color: #334155; font-weight: 600; margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem;">
+                                <i class="bi bi-terminal"></i> 操作系统信息
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">操作系统 <span style="color: #f87171;">*</span></label>
+                                    <input type="text" class="form-control" id="editOS" name="操作系统" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">系统版本 <span style="color: #f87171;">*</span></label>
+                                    <input type="text" class="form-control" id="editOSVersion" name="系统版本" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 登录信息 -->
+                        <div style="margin-bottom: 0.75rem;">
+                            <h6 style="color: #334155; font-weight: 600; margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem;">
+                                <i class="bi bi-key"></i> 登录信息
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">登录名 <span style="color: #f87171;">*</span></label>
+                                    <input type="text" class="form-control" id="editUsername" name="登录名" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">远程端口 <span style="color: #f87171;">*</span></label>
+                                    <input type="number" class="form-control" id="editPort" name="远程端口" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 密码 -->
+                        <div style="margin-bottom: 0.75rem;">
+                            <h6 style="color: #334155; font-weight: 600; margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem;">
+                                <i class="bi bi-shield-lock"></i> 密码
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">开机密码 <span style="color: #f87171;">*</span></label>
+                                    <input type="password" class="form-control" id="editPassword" name="开机密码" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 硬件配置 -->
+                        <div style="margin-bottom: 0.75rem;">
+                            <h6 style="color: #334155; font-weight: 600; margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem;">
+                                <i class="bi bi-cpu"></i> 硬件配置
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-4 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">CPU (核) <span style="color: #f87171;">*</span></label>
+                                    <input type="number" class="form-control" id="editCPU" name="CPU" min="1" max="128" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                                <div class="col-md-4 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">内存 (GB) <span style="color: #f87171;">*</span></label>
+                                    <input type="number" class="form-control" id="editMemory" name="内存" min="1" max="1024" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                                <div class="col-md-4 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">硬盘 (GB) <span style="color: #f87171;">*</span></label>
+                                    <input type="number" class="form-control" id="editDisk" name="硬盘" min="1" max="10000" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 申请人信息 -->
+                        <div style="margin-bottom: 0.75rem;">
+                            <h6 style="color: #334155; font-weight: 600; margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem;">
+                                <i class="bi bi-person"></i> 申请人信息
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">申请人 <span style="color: #f87171;">*</span></label>
+                                    <input type="text" class="form-control" id="editApplicant" name="申请人" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">部门 <span style="color: #f87171;">*</span></label>
+                                    <input type="text" class="form-control" id="editDepartment" name="部门" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 用途和环境 -->
+                        <div style="margin-bottom: 0.75rem;">
+                            <h6 style="color: #334155; font-weight: 600; margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem;">
+                                <i class="bi bi-tools"></i> 用途和环境
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">用途 <span style="color: #f87171;">*</span></label>
+                                    <input type="text" class="form-control" id="editPurpose" name="用途" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">环境 <span style="color: #f87171;">*</span></label>
+                                    <input type="text" class="form-control" id="editEnvironment" name="环境" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 日期信息 -->
+                        <div style="margin-bottom: 0.75rem;">
+                            <h6 style="color: #334155; font-weight: 600; margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem;">
+                                <i class="bi bi-calendar"></i> 日期信息
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">开通日期 <span style="color: #f87171;">*</span></label>
+                                    <input type="date" class="form-control" id="editStartDate" name="开通日期" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">结束日期 <span style="color: #f87171;">*</span></label>
+                                    <input type="date" class="form-control" id="editEndDate" name="结束日期" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 状态 -->
+                        <div>
+                            <h6 style="color: #334155; font-weight: 600; margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem;">
+                                <i class="bi bi-power"></i> 状态
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label" style="font-weight: 500; color: #334155; font-size: 0.85rem;">是否在用 <span style="color: #f87171;">*</span></label>
+                                    <select class="form-select" id="editStatus" name="是否在用" required style="border-radius: 6px; padding: 0.375rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+                                        <option value="">请选择</option>
+                                        <option value="是">是</option>
+                                        <option value="否">否</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer" style="border-radius: 0 0 15px 15px; border: none; padding: 0.75rem; background-color: #f8fafc;">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 6px; padding: 0.375rem 0.75rem; font-weight: 500; font-size: 0.85rem;">取消</button>
+                    <button type="button" class="btn btn-primary" id="updateVMButton" style="border-radius: 6px; padding: 0.375rem 0.75rem; font-weight: 500; background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%); border: 1px solid #cbd5e1; color: #334155; font-size: 0.85rem;">更新</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/jquery-3.7.1.min.js"></script>
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let allVMs = [];
+        let filteredVMs = [];
+        
+        // 防抖函数
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+        
+        // 分页渲染相关变量
+        const ITEMS_PER_PAGE = 50;
+        let currentPage = 1;
+
+        // 从下往上弹出动画
+        function animateElementsFromBottom() {
+            // 为统计卡片添加动画
+            const statsGrid = document.querySelector('.stats-grid');
+            if (statsGrid) {
+                statsGrid.classList.add('animate-stagger');
+            }
+            
+            // 为筛选区域添加动画
+            const filterSection = document.querySelector('.filter-section');
+            if (filterSection) {
+                filterSection.style.opacity = '0';
+                filterSection.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    filterSection.style.transition = 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    filterSection.style.opacity = '1';
+                    filterSection.style.transform = 'translateY(0)';
+                }, 300);
+            }
+        }
+
+        // Intersection Observer 配置
+        function setupIntersectionObserver() {
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.animationPlayState = 'running';
+                    }
+                });
+            }, observerOptions);
+
+            // 观察统计卡片
+            const statCards = document.querySelectorAll('.stat-card');
+            statCards.forEach(card => {
+                card.style.animation = 'slideUpFromBottom 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards';
+                card.style.animationDelay = '0.1s';
+                observer.observe(card);
+            });
+
+            // 观察虚拟机卡片
+            const vmCards = document.querySelectorAll('.vm-card');
+            vmCards.forEach((card, index) => {
+                card.style.animation = 'slideUpFromBottom 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards';
+                card.style.animationDelay = `${index * 0.1}s`;
+                observer.observe(card);
+            });
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadVMData();
+            animateElementsFromBottom();
+            
+            // 延迟设置观察器，等待内容加载
+            setTimeout(setupIntersectionObserver, 500);
+            
+            // 搜索功能 - 使用防抖优化
+            const debouncedFilterVMs = debounce(filterVMs, 300);
+            document.getElementById('searchInput').addEventListener('input', debouncedFilterVMs);
+            
+            // 筛选按钮
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    filterVMs();
+                });
+            });
+            
+            // 添加虚拟机按钮
+            document.getElementById('addVMButton').addEventListener('click', function() {
+                showAddVMModal();
+            });
+            
+            // 导出按钮
+            document.getElementById('exportButton').addEventListener('click', function() {
+                exportToExcel();
+            });
+            
+            // 批量删除按钮
+            document.getElementById('batchDeleteButton').addEventListener('click', function() {
+                batchDeleteVMs();
+            });
+        });
+
+        // 加载虚拟机数据
+        async function loadVMData() {
+            try {
+                const response = await fetch('/api/assets');
+                const result = await response.json();
+                
+                if (result.error) {
+                    console.error('获取虚拟机数据失败:', result.error);
+                    return;
+                }
+                
+                allVMs = result.assets || [];
+                
+                // 简化数据结构
+                allVMs = allVMs.map(vm => ({
+                    id: vm.id,
+                    hostIP: vm['主机IP'] || '-',  // 添加主机IP字段
+                    ip: vm['虚拟机IP'] || '-',     // 保持虚拟机IP字段
+                    os: vm['操作系统'] || '-',
+                    version: vm['系统版本'] || '-',
+                    username: vm['登录名'] || '-',
+                    port: vm['远程端口'] || '-',
+                    password: vm['开机密码'] || '-',
+                    cpu: vm['CPU'] || 0,
+                    memory: vm['内存'] || 0,
+                    disk: vm['硬盘'] || 0,
+                    applicant: vm['申请人'] || '-',
+                    department: vm['部门'] || '-',
+                    purpose: vm['用途'] || '-',
+                    environment: vm['环境'] || '-',
+                    startDate: vm['开通日期'] || '-',
+                    endDate: vm['结束日期'] || '-',
+                    status: vm['是否在用'] || '-'
+                }));
+                
+                // 去重处理：根据id字段去除重复记录
+                const vmMap = new Map();
+                for (const vm of allVMs) {
+                    if (!vmMap.has(vm.id)) {
+                        vmMap.set(vm.id, vm);
+                    }
+                }
+                allVMs = Array.from(vmMap.values());
+                
+                updateStats();
+                filterVMs();
+                
+                document.getElementById('loadingSpinner').style.display = 'none';
+                document.getElementById('scrollContainer').style.display = 'block';
+                
+                if (allVMs.length === 0) {
+                    document.getElementById('emptyState').style.display = 'block';
+                    document.getElementById('scrollContainer').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('加载虚拟机数据失败:', error);
+            }
+        }
+
+        // 更新统计信息
+        function updateStats() {
+            document.getElementById('totalVMs').textContent = allVMs.length;
+            
+            const running = allVMs.filter(vm => vm.status === '是').length;
+            document.getElementById('runningVMs').textContent = running;
+            
+            const stopped = allVMs.filter(vm => vm.status === '否').length;
+            document.getElementById('stoppedVMs').textContent = stopped;
+        }
+
+        // 优化的筛选虚拟机函数
+        function filterVMs() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+            const activeFilter = document.querySelector('.filter-btn.active').dataset.filter;
+            
+            // 优化的搜索算法 - 一次遍历完成精确和模糊匹配
+            if (searchTerm) {
+                filteredVMs = [];
+                const exactMatches = [];
+                const fuzzyMatches = [];
+                
+                // 一次遍历完成所有匹配
+                for (const vm of allVMs) {
+                    let isExactMatch = false;
+                    let isFuzzyMatch = false;
+                    
+                    // 检查精确匹配
+                    if (vm.ip.toLowerCase() === searchTerm ||
+                        vm.applicant.toLowerCase() === searchTerm) {
+                        isExactMatch = true;
+                    }
+                    
+                    // 检查模糊匹配
+                    if (!isExactMatch && (
+                        vm.ip.toLowerCase().includes(searchTerm) ||
+                        vm.applicant.toLowerCase().includes(searchTerm) ||
+                        vm.purpose.toLowerCase().includes(searchTerm))) {
+                        isFuzzyMatch = true;
+                    }
+                    
+                    if (isExactMatch) {
+                        exactMatches.push(vm);
+                    } else if (isFuzzyMatch) {
+                        fuzzyMatches.push(vm);
+                    }
+                }
+                
+                // 优先显示精确匹配结果，如果没有则显示模糊匹配结果
+                filteredVMs = exactMatches.length > 0 ? exactMatches : fuzzyMatches;
+            } else {
+                // 没有搜索词时显示所有虚拟机
+                filteredVMs = [...allVMs];
+            }
+            
+            // 状态筛选
+            filteredVMs = filteredVMs.filter(vm => {
+                if (activeFilter === 'running' && vm.status !== '是') {
+                    return false;
+                }
+                if (activeFilter === 'stopped' && vm.status !== '否') {
+                    return false;
+                }
+                if (activeFilter === 'error' && (vm.status === '是' || vm.status === '否')) {
+                    return false;
+                }
+                
+                return true;
+            });
+            
+            // 二次去重：确保filteredVMs中没有重复记录
+            const filteredVMMap = new Map();
+            for (const vm of filteredVMs) {
+                if (!filteredVMMap.has(vm.id)) {
+                    filteredVMMap.set(vm.id, vm);
+                }
+            }
+            filteredVMs = Array.from(filteredVMMap.values());
+            
+            // 重置分页
+            currentPage = 1;
+            renderVMs(searchTerm, searchTerm && filteredVMs.some(vm => 
+                vm.ip.toLowerCase() === searchTerm ||
+                vm.applicant.toLowerCase() === searchTerm
+            ));
+        }
+
+        // 优化的渲染虚拟机卡片函数
+        function renderVMs(searchTerm, hasExactMatch) {
+            const scrollContent = document.getElementById('scrollContent');
+            const scrollContainer = document.getElementById('scrollContainer');
+            const cardContainer = document.getElementById('cardContainer');
+            const batchDeleteButton = document.getElementById('batchDeleteButton');
+            
+            // 根据屏幕尺寸决定显示哪种视图
+            const isMobile = window.innerWidth <= 768;
+            
+            // 根据是否有搜索词来切换模式
+            if (searchTerm) {
+                // 搜索模式：手动滚动
+                scrollContainer.classList.add('search-mode');
+                // 显示批量删除按钮
+                batchDeleteButton.style.display = 'flex';
+                // 停止自动滚动动画
+                if (scrollContent.style.animation) {
+                    scrollContent.style.animationPlayState = 'paused';
+                }
+            } else {
+                // 默认模式：自动滚动
+                scrollContainer.classList.remove('search-mode');
+                // 隐藏批量删除按钮
+                batchDeleteButton.style.display = 'none';
+                // 恢复自动滚动动画
+                if (scrollContent.style.animation) {
+                    scrollContent.style.animationPlayState = 'running';
+                }
+            }
+            
+            if (filteredVMs.length === 0) {
+                // 如果有搜索词但没有结果，显示特定的空状态提示
+                if (searchTerm) {
+                    document.getElementById('emptyState').innerHTML = `
+                        <i class="bi bi-search"></i>
+                        <h5>未找到匹配的虚拟机</h5>
+                        <p>没有找到与"${searchTerm}"匹配的虚拟机配置。</p>
+                    `;
+                } else {
+                    document.getElementById('emptyState').innerHTML = `
+                        <i class="bi bi-inbox"></i>
+                        <h5>暂无虚拟机</h5>
+                        <p>当前没有任何虚拟机配置，请添加第一个虚拟机。</p>
+                    `;
+                }
+                document.getElementById('emptyState').style.display = 'block';
+                
+                // 隐藏所有容器
+                scrollContainer.style.display = 'none';
+                cardContainer.style.display = 'none';
+                return;
+            }
+            
+            document.getElementById('emptyState').style.display = 'none';
+            
+            // 根据屏幕尺寸显示相应的视图
+            if (isMobile) {
+                scrollContainer.style.display = 'none';
+                cardContainer.style.display = 'block';
+            } else {
+                scrollContainer.style.display = 'block';
+                cardContainer.style.display = 'none';
+            }
+            
+            // 分页渲染优化
+            const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+            const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, filteredVMs.length);
+            const pageItems = filteredVMs.slice(startIndex, endIndex);
+            
+            // 使用文档片段减少DOM操作
+            const fragment = document.createDocumentFragment();
+            
+            // 如果有搜索词且没有精确匹配，添加提示信息
+            if (searchTerm && !hasExactMatch) {
+                // 判断搜索词是IP地址还是其他
+                const isIP = searchTerm.includes('.');
+                const promptText = isIP ? 
+                    `未搜索到IP地址${searchTerm}的虚拟机，以下为${searchTerm}的模糊搜索结果` : 
+                    `未搜索到包含"${searchTerm}"的虚拟机，以下为模糊搜索结果`;
+                
+                const promptDiv = document.createElement('div');
+                promptDiv.className = 'no-exact-match';
+                promptDiv.textContent = promptText;
+                fragment.appendChild(promptDiv);
+            }
+            
+            // 生成卡片内容
+            // 使用Set跟踪已添加的vm id，防止重复添加
+            const addedVmIds = new Set();
+            for (const vm of pageItems) {
+                // 跳过已添加的vm
+                if (addedVmIds.has(vm.id)) {
+                    continue;
+                }
+                addedVmIds.add(vm.id);
+                
+                // 根据状态值确定显示文本和样式类
+                let statusText = '-';
+                let statusClass = '';
+                if (vm.status === '是') {
+                    statusText = '运行中';
+                    statusClass = 'running';
+                } else if (vm.status === '否') {
+                    statusText = '已停止';
+                    statusClass = 'stopped';
+                } else {
+                    statusText = '异常';
+                    statusClass = 'error';
+                }
+                
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'vm-card';
+                cardDiv.setAttribute('data-id', vm.id);
+                
+                // 操作按钮HTML（仅在搜索模式下显示）
+                let actionButtonsHtml = '';
+                if (searchTerm) {
+                    actionButtonsHtml = `
+                        <div class="detail-item" style="min-width: 120px;">
+                            <div class="detail-label">操作</div>
+                            <div class="detail-value">
+                                <button class="btn btn-sm btn-primary edit-btn" data-id="${vm.id}" style="padding: 0.1rem 0.3rem; font-size: 0.7rem;">
+                                    <i class="bi bi-pencil"></i> 
+                                </button>
+                                <button class="btn btn-sm btn-danger delete-btn" data-id="${vm.id}" style="padding: 0.1rem 0.3rem; font-size: 0.7rem; margin-left: 0.2rem;">
+                                    <i class="bi bi-trash"></i> 
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                cardDiv.innerHTML = `
+                    <div class="vm-details">
+                        <div class="detail-item">
+                            <div class="detail-label">主机IP</div>
+                            <div class="detail-value">${vm.hostIP}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">虚拟机IP</div>
+                            <div class="detail-value">${vm.ip}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">操作系统</div>
+                            <div class="detail-value">${vm.os} ${vm.version}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">CPU/内存/硬盘</div>
+                            <div class="detail-value">${vm.cpu}核/${vm.memory}GB/${vm.disk}GB</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">远程端口</div>
+                            <div class="detail-value">${vm.port}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">开机密码</div>
+                            <div class="detail-value">
+                                <button class="btn btn-sm btn-primary" onclick="copyPassword('${vm.password}', this)" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
+                                    <i class="bi bi-clipboard"></i> 复制密码
+                                </button>
+                            </div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">申请人</div>
+                            <div class="detail-value">${vm.applicant}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">用途</div>
+                            <div class="detail-value">${vm.purpose}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">状态</div>
+                            <div class="detail-value">
+                                <span class="status-badge ${statusClass}">${statusText}</span>
+                            </div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">开通日期</div>
+                            <div class="detail-value">${vm.startDate}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">结束日期</div>
+                            <div class="detail-value">${vm.endDate}</div>
+                        </div>
+                        ${actionButtonsHtml}
+                    </div>
+                `;
+                
+                fragment.appendChild(cardDiv);
+            }
+            
+            // 清空容器并添加新内容
+            scrollContent.innerHTML = '';
+            scrollContent.appendChild(fragment);
+            
+            // 如果是搜索模式，绑定编辑和删除按钮事件
+            if (searchTerm) {
+                // 绑定编辑和删除按钮事件
+                document.querySelectorAll('.edit-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        editVM(id);
+                    });
+                });
+                
+                document.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        deleteVM(id);
+                    });
+                });
+            }
+            
+            // 如果是搜索模式且还有更多数据，添加滚动加载
+            if (searchTerm && filteredVMs.length > ITEMS_PER_PAGE) {
+                // 添加滚动事件监听器实现无限滚动
+                scrollContainer.addEventListener('scroll', handleScroll);
+            } else {
+                scrollContainer.removeEventListener('scroll', handleScroll);
+            }
+            
+            // 默认模式的自动滚动保持不变
+            if (!searchTerm && window.innerWidth > 768) {
+                // 移除旧的动画样式和克隆卡片
+                scrollContent.innerHTML = '';
+                
+                // 重新生成卡片内容，不添加克隆卡片
+                // 使用文档片段减少DOM操作
+                const fragment = document.createDocumentFragment();
+                
+                // 生成卡片内容
+                // 使用Set跟踪已添加的vm id，防止重复添加
+                const addedVmIds = new Set();
+                for (const vm of pageItems) {
+                    // 跳过已添加的vm
+                    if (addedVmIds.has(vm.id)) {
+                        continue;
+                    }
+                    addedVmIds.add(vm.id);
+                    
+                    // 根据状态值确定显示文本和样式类
+                    let statusText = '-';
+                    let statusClass = '';
+                    if (vm.status === '是') {
+                        statusText = '运行中';
+                        statusClass = 'running';
+                    } else if (vm.status === '否') {
+                        statusText = '已停止';
+                        statusClass = 'stopped';
+                    } else {
+                        statusText = '异常';
+                        statusClass = 'error';
+                    }
+                    
+                    const cardDiv = document.createElement('div');
+                    cardDiv.className = 'vm-card';
+                    cardDiv.setAttribute('data-id', vm.id);
+                    
+                    cardDiv.innerHTML = `
+                        <div class="vm-header">
+                            <h3 class="vm-title">${vm.ip}</h3>
+                            <div class="vm-subtitle">${vm.hostIP}</div>
+                            <span class="status-badge ${statusClass}">${statusText}</span>
+                        </div>
+                        <div class="vm-details">
+                            <div class="detail-item">
+                                <div class="detail-label">操作系统</div>
+                                <div class="detail-value">${vm.os} ${vm.version}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">CPU/内存/硬盘</div>
+                                <div class="detail-value">${vm.cpu}核/${vm.memory}GB/${vm.disk}GB</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">远程端口</div>
+                                <div class="detail-value">${vm.port}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">开机密码</div>
+                                <div class="detail-value">
+                                    <button class="btn btn-sm btn-primary" onclick="copyPassword('${vm.password}', this)" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
+                                        <i class="bi bi-clipboard"></i> 复制密码
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">申请人</div>
+                                <div class="detail-value">${vm.applicant}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">用途</div>
+                                <div class="detail-value">${vm.purpose}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">开通日期</div>
+                                <div class="detail-value">${vm.startDate}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">结束日期</div>
+                                <div class="detail-value">${vm.endDate}</div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    fragment.appendChild(cardDiv);
+                }
+                
+                scrollContent.appendChild(fragment);
+                
+                // 添加自动滚动动画（仅在电脑端）
+                scrollContent.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.5rem;
+                    animation: scrollVertical 500s linear infinite;
+                    padding: 0.5rem;
+                `;
+                
+                // 添加悬停暂停效果（仅在桌面端）
+                scrollContent.addEventListener('mouseover', function() {
+                    this.style.animationPlayState = 'paused';
+                });
+                
+                scrollContent.addEventListener('mouseout', function() {
+                    this.style.animationPlayState = 'running';
+                });
+                
+                // 添加动画样式
+                if (!document.getElementById('scrollAnimationStyle')) {
+                    const style = document.createElement('style');
+                    style.id = 'scrollAnimationStyle';
+                    style.textContent = `
+                        @keyframes scrollVertical {
+                            0% {
+                                transform: translateY(0);
+                            }
+                            100% {
+                                transform: translateY(-50%);
+                            }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+            } else if (!searchTerm) {
+                // 手机端移除动画相关代码和样式
+                scrollContent.style.cssText = '';
+                const existingStyle = document.getElementById('scrollAnimationStyle');
+                if (existingStyle) {
+                    existingStyle.remove();
+                }
+            }
+            
+            // 确保在移动端，滚动内容没有绝对定位
+            if (window.innerWidth <= 768) {
+                scrollContent.style.position = 'static';
+                scrollContent.style.animation = 'none';
+            }
+            
+            // 渲染移动端卡片视图
+            renderVMsMobile(searchTerm);
+        }
+        
+        // 渲染移动端卡片
+        function renderVMsMobile(searchTerm) {
+            const cardContainer = document.getElementById('vmCardList');
+            const cardContainerWrapper = document.getElementById('cardContainer');
+            const scrollContainer = document.getElementById('scrollContainer');
+            const scrollContent = document.getElementById('scrollContent');
+            
+            // 判断是否为移动端
+            const isMobile = window.innerWidth <= 768;
+            
+            if (isMobile) {
+                // 移动端：只显示卡片视图，完全隐藏滚动视图
+                cardContainerWrapper.style.display = 'block';
+                scrollContainer.style.display = 'none';
+                scrollContainer.style.visibility = 'hidden';
+                scrollContainer.style.height = '0';
+                scrollContainer.style.overflow = 'hidden';
+                scrollContent.style.display = 'none';
+                scrollContent.style.visibility = 'hidden';
+                scrollContent.style.height = '0';
+                scrollContent.style.overflow = 'hidden';
+                
+                if (filteredVMs.length === 0) {
+                    cardContainerWrapper.style.display = 'none';
+                    return;
+                }
+                
+                // 生成卡片HTML
+                const cardHTML = filteredVMs.map(vm => {
+                    // 根据状态值确定显示文本和样式类
+                    let statusText = '-';
+                    let statusClass = '';
+                    if (vm.status === '是') {
+                        statusText = '运行中';
+                        statusClass = 'running';
+                    } else if (vm.status === '否') {
+                        statusText = '已停止';
+                        statusClass = 'stopped';
+                    } else {
+                        statusText = '异常';
+                        statusClass = 'error';
+                    }
+                    
+                    return `
+                        <div class="vm-card-mobile" data-id="${vm.id}">
+                            <div class="card-header">
+                                <div class="card-title">虚拟机IP: ${vm.ip}</div>
+                                <div class="card-status">
+                                    <span class="status-badge ${statusClass}">${statusText}</span>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="card-field">
+                                    <div class="field-label">主机IP</div>
+                                    <div class="field-value">${vm.hostIP}</div>
+                                </div>
+                                <div class="card-field">
+                                    <div class="field-label">操作系统</div>
+                                    <div class="field-value">${vm.os} ${vm.version}</div>
+                                </div>
+                                <div class="card-field">
+                                    <div class="field-label">CPU/内存/硬盘</div>
+                                    <div class="field-value">${vm.cpu}核/${vm.memory}GB/${vm.disk}GB</div>
+                                </div>
+                                <div class="card-field">
+                                    <div class="field-label">远程端口</div>
+                                    <div class="field-value">${vm.port}</div>
+                                </div>
+                                <div class="card-field">
+                                    <div class="field-label">开机密码</div>
+                                    <div class="field-value">
+                                        <button class="btn btn-sm btn-primary" onclick="copyPassword('${vm.password}', this)" style="font-size: 0.7rem; padding: 0.15rem 0.4rem;">
+                                            <i class="bi bi-clipboard"></i> 复制密码
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="card-field">
+                                    <div class="field-label">申请人</div>
+                                    <div class="field-value">${vm.applicant}</div>
+                                </div>
+                                <div class="card-field">
+                                    <div class="field-label">用途</div>
+                                    <div class="field-value">${vm.purpose}</div>
+                                </div>
+                                <div class="card-field">
+                                    <div class="field-label">开通日期</div>
+                                    <div class="field-value">${vm.startDate}</div>
+                                </div>
+                                <div class="card-field">
+                                    <div class="field-label">结束日期</div>
+                                    <div class="field-value">${vm.endDate}</div>
+                                </div>
+                            </div>
+                            <div class="card-actions">
+                                <button class="btn-action btn-edit" onclick="editVM(${vm.id})">
+                                    <i class="bi bi-pencil"></i> 编辑
+                                </button>
+                                <button class="btn-action btn-delete" onclick="deleteVM(${vm.id})">
+                                    <i class="bi bi-trash"></i> 删除
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                cardContainer.innerHTML = cardHTML;
+            } else {
+                // 非移动端：隐藏卡片视图，显示滚动视图
+                cardContainerWrapper.style.display = 'none';
+                scrollContainer.style.display = 'block';
+                scrollContainer.style.visibility = 'visible';
+                scrollContainer.style.height = '';
+                scrollContainer.style.overflow = '';
+                scrollContent.style.display = '';
+                scrollContent.style.visibility = 'visible';
+                scrollContent.style.height = '';
+                scrollContent.style.overflow = '';
+            }
+        }
+        
+        // 滚动加载处理函数
+        function handleScroll() {
+            const scrollContainer = document.getElementById('scrollContainer');
+            const scrollContent = document.getElementById('scrollContent');
+            
+            // 检查是否滚动到底部
+            if (scrollContainer.scrollTop + scrollContainer.clientHeight >= scrollContainer.scrollHeight - 100) {
+                loadMoreItems();
+            }
+        }
+        
+        // 加载更多项目
+        function loadMoreItems() {
+            const totalPages = Math.ceil(filteredVMs.length / ITEMS_PER_PAGE);
+            
+            if (currentPage < totalPages) {
+                currentPage++;
+                
+                // 计算下一页的数据范围
+                const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+                const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, filteredVMs.length);
+                const pageItems = filteredVMs.slice(startIndex, endIndex);
+                
+                // 使用文档片段减少DOM操作
+                const fragment = document.createDocumentFragment();
+                
+                // 生成卡片内容
+                for (const vm of pageItems) {
+                    // 根据状态值确定显示文本和样式类
+                    let statusText = '-';
+                    let statusClass = '';
+                    if (vm.status === '是') {
+                        statusText = '运行中';
+                        statusClass = 'running';
+                    } else if (vm.status === '否') {
+                        statusText = '已停止';
+                        statusClass = 'stopped';
+                    } else {
+                        statusText = '异常';
+                        statusClass = 'error';
+                    }
+                    
+                    const cardDiv = document.createElement('div');
+                    cardDiv.className = 'vm-card';
+                    cardDiv.setAttribute('data-id', vm.id);
+                    
+                    cardDiv.innerHTML = `
+                        <div class="vm-details">
+                            <div class="detail-item">
+                                <div class="detail-label">主机IP</div>
+                                <div class="detail-value">${vm.hostIP}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">虚拟机IP</div>
+                                <div class="detail-value">${vm.ip}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">操作系统</div>
+                                <div class="detail-value">${vm.os} ${vm.version}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">CPU/内存</div>
+                                <div class="detail-value">${vm.cpu}核/${vm.memory}GB</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">远程端口</div>
+                                <div class="detail-value">${vm.port}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">开机密码</div>
+                                <div class="detail-value">
+                                    <button class="btn btn-sm btn-primary" onclick="copyPassword('${vm.password}', this)" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
+                                        <i class="bi bi-clipboard"></i> 复制密码
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">申请人</div>
+                                <div class="detail-value">${vm.applicant}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">用途</div>
+                                <div class="detail-value">${vm.purpose}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">状态</div>
+                                <div class="detail-value">
+                                    <span class="status-badge ${statusClass}">${statusText}</span>
+                                </div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">开通日期</div>
+                                <div class="detail-value">${vm.startDate}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">结束日期</div>
+                                <div class="detail-value">${vm.endDate}</div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    fragment.appendChild(cardDiv);
+                }
+                
+                // 添加新内容
+                document.getElementById('scrollContent').appendChild(fragment);
+            }
+        }
+
+        // 定期刷新数据（优化移动端性能，减少刷新频率）
+        if (window.innerWidth > 768) {
+            // 桌面端每30秒刷新一次
+            setInterval(loadVMData, 30000);
+        } else {
+            // 移动端每60秒刷新一次，减少性能消耗
+            setInterval(loadVMData, 60000);
+        }
+        
+        // 导出到Excel功能
+        function exportToExcel() {
+            // 发送请求到后端导出接口
+            window.location.href = '/api/assets/export';
+        }
+        
+        // 格式化日期为 YYYY-MM-DD 格式
+        function formatDateForInput(dateStr) {
+            if (!dateStr) return '';
+            
+            // 如果已经是 YYYY-MM-DD 格式，直接返回
+            if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+                return dateStr;
+            }
+            
+            // 处理 YYYY/MM/DD 格式
+            if (/^\d{4}\/\d{2}\/\d{2}$/.test(dateStr)) {
+                return dateStr.replace(/\//g, '-');
+            }
+            
+            // 处理 YYYY年MM月DD日 格式
+            const yearMonthDayMatch = dateStr.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
+            if (yearMonthDayMatch) {
+                const year = yearMonthDayMatch[1];
+                const month = yearMonthDayMatch[2].padStart(2, '0');
+                const day = yearMonthDayMatch[3].padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+            
+            // 尝试解析其他格式
+            const date = new Date(dateStr);
+            if (!isNaN(date.getTime())) {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+            
+            return '';
+        }
+        
+        // 复制密码功能
+        function copyPassword(password, button) {
+            // 创建临时输入元素
+            const tempInput = document.createElement('input');
+            tempInput.value = password;
+            document.body.appendChild(tempInput);
+            
+            // 选择并复制文本
+            tempInput.select();
+            document.execCommand('copy');
+            
+            // 移除临时元素
+            document.body.removeChild(tempInput);
+            
+            // 更改按钮文本以提供反馈
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="bi bi-clipboard-check"></i> 已复制';
+            button.classList.remove('btn-primary');
+            button.classList.add('btn-success');
+            
+            // 2秒后恢复原始状态
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.classList.remove('btn-success');
+                button.classList.add('btn-primary');
+            }, 2000);
+        }
+
+        // 编辑虚拟机
+        function editVM(id) {
+            fetch(`/api/assets/${id}`)
+            .then(response => response.json())
+            .then(result => {
+                if (result.error) {
+                    alert('获取虚拟机数据失败：' + result.error);
+                    return;
+                }
+                
+                const vm = result;
+                
+                // 填充表单数据
+                document.getElementById('editVMId').value = vm.id;
+                document.getElementById('editHostIP').value = vm['主机IP'] || '';
+                document.getElementById('editVMIP').value = vm['虚拟机IP'] || '';
+                document.getElementById('editOS').value = vm['操作系统'] || '';
+                document.getElementById('editOSVersion').value = vm['系统版本'] || '';
+                document.getElementById('editUsername').value = vm['登录名'] || '';
+                document.getElementById('editPort').value = vm['远程端口'] || '';
+                document.getElementById('editPassword').value = vm['开机密码'] || '';
+                document.getElementById('editCPU').value = vm['CPU'] || '';
+                document.getElementById('editMemory').value = vm['内存'] || '';
+                document.getElementById('editDisk').value = vm['硬盘'] || '';
+                document.getElementById('editApplicant').value = vm['申请人'] || '';
+                document.getElementById('editDepartment').value = vm['部门'] || '';
+                document.getElementById('editPurpose').value = vm['用途'] || '';
+                document.getElementById('editEnvironment').value = vm['环境'] || '';
+                document.getElementById('editStartDate').value = formatDateForInput(vm['开通日期']);
+                document.getElementById('editEndDate').value = formatDateForInput(vm['结束日期']);
+                document.getElementById('editStatus').value = vm['是否在用'] || '';
+                
+                // 显示编辑模态框
+                new bootstrap.Modal(document.getElementById('editVMModal')).show();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('加载虚拟机数据时出现错误，请重试。');
+            });
+        }
+        
+        // 删除虚拟机
+        function deleteVM(id) {
+            // 显示确认删除模态框
+            const confirmModal = new bootstrap.Modal(document.getElementById('confirmDeleteModal'));
+            confirmModal.show();
+            
+            // 绑定确认删除按钮事件
+            document.getElementById('confirmDeleteButton').onclick = function() {
+                // 隐藏确认模态框
+                confirmModal.hide();
+                
+                // 显示加载模态框
+                showLoadingModal();
+                
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+                fetch(`/api/assets/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': csrfToken
+                    }
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        // 显示成功模态框
+                        showSuccessModal('虚拟机删除成功！');
+                        // 重新加载数据
+                        loadVMData();
+                    } else {
+                        // 显示错误模态框
+                        showErrorModal('删除失败：' + result.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // 显示错误模态框
+                    showErrorModal('删除过程中出现错误，请重试。');
+                });
+            };
+        }
+        
+        // 批量删除虚拟机
+        function batchDeleteVMs() {
+            if (confirm('确定要删除所有搜索结果中的虚拟机吗？')) {
+                // 显示加载模态框
+                showLoadingModal();
+                
+                // 获取当前显示的所有虚拟机ID
+                const ids = filteredVMs.map(vm => vm.id);
+                
+                if (ids.length === 0) {
+                    // 显示错误模态框
+                    showErrorModal('没有可删除的虚拟机');
+                    return;
+                }
+                
+                // 这里可以实现批量删除的逻辑
+                // 为了简化，我们逐个删除
+                let deleteCount = 0;
+                const total = ids.length;
+                
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+                function deleteNext() {
+                    if (deleteCount >= total) {
+                        // 显示成功模态框
+                        showSuccessModal(`成功删除 ${deleteCount} 台虚拟机！`);
+                        // 重新加载数据
+                        loadVMData();
+                        return;
+                    }
+                    
+                    fetch(`/api/assets/${ids[deleteCount]}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRFToken': csrfToken
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        if (result.success) {
+                            deleteCount++;
+                            deleteNext();
+                        } else {
+                            // 显示错误模态框
+                            showErrorModal(`删除虚拟机 ${ids[deleteCount]} 失败：${result.message}`);
+                            deleteCount++;
+                            deleteNext();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        // 显示错误模态框
+                        showErrorModal(`删除虚拟机 ${ids[deleteCount]} 时出现错误，请重试。`);
+                        deleteCount++;
+                        deleteNext();
+                    });
+                }
+                
+                deleteNext();
+            }
+        }
+        
+        // 显示添加虚拟机模态框
+        function showAddVMModal() {
+            document.getElementById('addVMForm').reset();
+            new bootstrap.Modal(document.getElementById('addVMModal')).show();
+        }
+        
+        // 添加虚拟机
+        function addVM() {
+            const form = document.getElementById('addVMForm');
+            const formData = new FormData(form);
+            
+            // 构造虚拟机数据
+            const vmData = {
+                '主机IP': formData.get('主机IP'),
+                '虚拟机IP': formData.get('虚拟机IP'),
+                '操作系统': formData.get('操作系统'),
+                '系统版本': formData.get('系统版本'),
+                '登录名': formData.get('登录名'),
+                '远程端口': formData.get('远程端口'),
+                '开机密码': formData.get('开机密码'),
+                'CPU': formData.get('CPU'),
+                '内存': formData.get('内存'),
+                '硬盘': formData.get('硬盘'),
+                '申请人': formData.get('申请人'),
+                '部门': formData.get('部门'),
+                '用途': formData.get('用途'),
+                '环境': formData.get('环境'),
+                '开通日期': formData.get('开通日期'),
+                '是否在用': formData.get('是否在用'),
+                '结束日期': formData.get('结束日期')
+            };
+            
+            // 显示加载模态框
+            showLoadingModal();
+            
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+            // 发送请求到后端API
+            fetch('/api/assets', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify(vmData)
+            })
+            .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        // 显示成功模态框
+                        showSuccessModal('虚拟机添加成功！');
+                        // 关闭模态框
+                        bootstrap.Modal.getInstance(document.getElementById('addVMModal')).hide();
+                        // 重新加载数据
+                        setTimeout(loadVMData, 500);
+                    } else {
+                        // 显示错误模态框
+                        showErrorModal('添加失败：' + result.message);
+                    }
+                })
+            .catch(error => {
+                console.error('Error:', error);
+                // 显示错误模态框
+                showErrorModal('添加过程中出现错误，请重试。');
+            });
+        }
+        
+        // 更新虚拟机
+        function updateVM() {
+            const form = document.getElementById('editVMForm');
+            const id = document.getElementById('editVMId').value;
+            
+            // 构造虚拟机数据
+            const vmData = {
+                '主机IP': document.getElementById('editHostIP').value,
+                '虚拟机IP': document.getElementById('editVMIP').value,
+                '操作系统': document.getElementById('editOS').value,
+                '系统版本': document.getElementById('editOSVersion').value,
+                '登录名': document.getElementById('editUsername').value,
+                '远程端口': document.getElementById('editPort').value,
+                '开机密码': document.getElementById('editPassword').value,
+                'CPU': document.getElementById('editCPU').value,
+                '内存': document.getElementById('editMemory').value,
+                '硬盘': document.getElementById('editDisk').value,
+                '申请人': document.getElementById('editApplicant').value,
+                '部门': document.getElementById('editDepartment').value,
+                '用途': document.getElementById('editPurpose').value,
+                '环境': document.getElementById('editEnvironment').value,
+                '开通日期': document.getElementById('editStartDate').value,
+                '是否在用': document.getElementById('editStatus').value,
+                '结束日期': document.getElementById('editEndDate').value
+            };
+            
+            // 显示加载模态框
+            showLoadingModal();
+            
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+            // 发送请求到后端API
+            fetch(`/api/assets/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify(vmData)
+            })
+            .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        // 显示成功模态框
+                        showSuccessModal('虚拟机更新成功！', true);
+                        // 关闭模态框
+                        bootstrap.Modal.getInstance(document.getElementById('editVMModal')).hide();
+                        // 延迟重新加载数据，确保缓存已清除
+                        setTimeout(loadVMData, 500);
+                    } else {
+                        // 显示错误模态框
+                        showErrorModal('更新失败：' + result.message, false);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // 显示错误模态框
+                    showErrorModal('更新过程中出现错误，请重试。', false);
+                });
+        }
+        
+        // 在DOM加载完成后绑定更新按钮事件
+        document.addEventListener('DOMContentLoaded', function() {
+            // 绑定更新虚拟机按钮事件
+            document.getElementById('updateVMButton').addEventListener('click', updateVM);
+        });
+        
+        // 监听窗口大小变化，以在桌面端和移动端之间切换视图
+        window.addEventListener('resize', function() {
+            // 重新加载虚拟机数据以根据新窗口大小调整视图
+            if (typeof searchTerm !== 'undefined' && searchTerm !== null) {
+                renderVMs(searchTerm, searchTerm && filteredVMs.some(vm => 
+                    vm.ip.includes(searchTerm) || 
+                    vm.hostIP.includes(searchTerm) || 
+                    vm.applicant.includes(searchTerm) || 
+                    vm.purpose.includes(searchTerm)
+                ));
+            } else {
+                renderVMs('', false);
+            }
+        });
+
+    </script>
+</body>
+</html>
